@@ -1,0 +1,24 @@
+# Dependencias y build
+node_modules/
+dist/
+dist-ssr/
+
+# Entorno
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Cache
+.cache/
+*.local
