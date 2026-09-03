@@ -1,38 +1,14 @@
-<script setup>
+<script setup lang="ts">
 // Tarjeta de estadística para dashboards
-defineProps({
-  title: { type: String, required: true },
-  value: { type: [String, Number], required: true },
-  icon: { type: String, default: '' },
+withDefaults(defineProps<{ title: string; value: string | number; icon?: string }>(), {
+  icon: '',
 })
 </script>
 
 <template>
-  <div class="card stat-card">
-    <span v-if="icon" class="stat-icon">{{ icon }}</span>
-    <p class="stat-title text-muted">{{ title }}</p>
-    <p class="stat-value">{{ value }}</p>
+  <div class="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
+    <span v-if="icon" class="text-3xl">{{ icon }}</span>
+    <p class="my-1 text-sm text-slate-500">{{ title }}</p>
+    <p class="m-0 text-2xl font-bold text-primary-dark">{{ value }}</p>
   </div>
 </template>
-
-<style scoped>
-.stat-card {
-  text-align: center;
-}
-
-.stat-icon {
-  font-size: 1.8rem;
-}
-
-.stat-title {
-  margin: var(--space-xs) 0;
-  font-size: 0.9rem;
-}
-
-.stat-value {
-  margin: 0;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--color-primary-dark);
-}
-</style>

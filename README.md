@@ -8,9 +8,12 @@ Proyecto del curso **Ingeniería de Desarrollo Web** — Equipo **KeyRing**.
 
 ## Características
 
-- SPA en **Vue 3** (Composition API, `<script setup>`) + Vite, JavaScript plano.
-- "Base de datos" en **LocalStorage** del navegador: se siembra con datos ficticios la primera vez
-  que se abre la app.
+- SPA en **Vue 3** (Composition API, `<script setup>`) + Vite + **TypeScript** (estricto).
+- Estilos con **Tailwind CSS v4** (plugin de Vite) y tema claro.
+- Estado con **Pinia**; "base de datos" en **LocalStorage** del navegador, sembrada con datos
+  ficticios la primera vez que se abre la app.
+- Arquitectura por capas: `interfaces/` (modelos + enums), `dtos/`, `services/`, `stores/`,
+  `router/`, `components/`, `views/`.
 - Autenticación ficticia con roles (`admin` / `user`) y rutas protegidas.
 - 11 vistas, incluidas 2 exclusivas para administradores (Reportes y Usuarios).
 - Componentes reutilizables: `DataTable`, `FilterSelect`, `ChartCard`, `StatCard`, `AppNavbar`,
@@ -37,7 +40,7 @@ La app queda en `http://localhost:5173/` (ruta principal `/`).
 | Usuario | `user@keyring.co` | `user123` |
 
 Para reiniciar los datos de prueba, borra el LocalStorage del sitio en el navegador (o ejecuta
-`resetDatabase()` desde `src/services/seed.js` en la consola).
+`resetDatabase()` desde `src/services/seed.ts` en la consola).
 
 ## Scripts
 
@@ -46,23 +49,27 @@ Para reiniciar los datos de prueba, borra el LocalStorage del sitio en el navega
 | `npm run dev` | Servidor de desarrollo (Vite) |
 | `npm run build` | Build de producción en `dist/` |
 | `npm run preview` | Sirve el build de producción |
-| `npm run lint` | ESLint (flat config + eslint-plugin-vue) |
+| `npm run type-check` | Verificación de tipos con `vue-tsc --noEmit` |
+| `npm run lint` | ESLint (flat config + eslint-plugin-vue + typescript-eslint) |
 | `npm run format` | Prettier sobre `src/` y archivos raíz |
 
 ## Estructura del proyecto
 
 ```
 src/
-├── assets/main.css        # Tokens de diseño (variables CSS) y estilos base
+├── assets/main.css        # Entrada Tailwind v4 (@import "tailwindcss") + tokens de marca
 ├── components/            # Componentes reutilizables (PascalCase)
-├── models/enums.js        # Constantes del dominio (objetos congelados) + etiquetas
-├── router/index.js        # Rutas + guardas (requiresAuth / requiresAdmin)
-├── services/              # camelCase: storage.js (repositorio genérico),
-│                          # seed.js (datos ficticios), auth.service.js (sesión)
-├── stores/auth.js         # Store Pinia de autenticación
+├── dtos/                  # DTOs de creación (campos de la entidad menos id)
+├── interfaces/            # UserInterface, PropertyInterface, ContractInterface,
+│                          # TransactionInterface y enums.ts (enums TS + etiquetas en español)
+├── router/index.ts        # Rutas + guardas (requiresAuth / requiresAdmin)
+├── services/              # camelCase: storage.ts (repositorio genérico tipado),
+│                          # seed.ts (datos ficticios), auth.service.ts (sesión)
+├── stores/auth.ts         # Store Pinia de autenticación (tipado)
 ├── views/                 # Una vista por ruta (PascalCase)
+├── env.d.ts               # Tipos de Vite
 ├── App.vue
-└── main.js                # Siembra de datos + montaje de la app
+└── main.ts                # Siembra de datos + montaje de la app
 ```
 
 ## Rutas
@@ -82,6 +89,7 @@ src/
 
 ## Convenciones
 
-- Componentes y vistas en **PascalCase**; servicios y stores en **camelCase**.
+- Componentes y vistas en **PascalCase**; servicios y stores en **camelCase**; interfaces y DTOs en
+  **PascalCase** (`UserInterface.ts`, `CreatePropertyDTO.ts`).
 - Todo el texto de la UI en **español**; comentarios de código mínimos y en español.
-- Antes de subir cambios: `npm run lint` y `npm run format`.
+- Antes de subir cambios: `npm run type-check`, `npm run lint` y `npm run format`.

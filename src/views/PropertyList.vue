@@ -1,18 +1,23 @@
-<script setup>
+<script setup lang="ts">
 // Lista de propiedades con filtro por ciudad y tabla reutilizable.
 // TODO equipo: acciones de eliminar, detalle y paginación.
 import { computed, ref } from 'vue'
-import DataTable from '../components/DataTable.vue'
+import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect from '../components/FilterSelect.vue'
 import { getAll, KEYS } from '../services/storage'
-import { PropertyTypeLabel, RentalModeLabel, PropertyStatusLabel } from '../models/enums'
+import {
+  PropertyTypeLabel,
+  RentalModeLabel,
+  PropertyStatusLabel,
+} from '../interfaces/enums'
+import type { PropertyInterface } from '../interfaces/PropertyInterface'
 
-const properties = getAll(KEYS.properties)
+const properties = getAll<PropertyInterface>(KEYS.properties)
 
 const city = ref('')
 const cities = [...new Set(properties.map((p) => p.city))]
 
-const columns = [
+const columns: TableColumn[] = [
   { key: 'name', label: 'Nombre' },
   { key: 'city', label: 'Ciudad' },
   { key: 'typeLabel', label: 'Tipo' },
@@ -34,18 +39,28 @@ const rows = computed(() =>
 
 <template>
   <section>
-    <div class="page-header">
-      <h1>Propiedades</h1>
-      <router-link class="btn" :to="{ name: 'property-new' }">+ Nueva propiedad</router-link>
+    <div class="mb-6 flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Propiedades</h1>
+      <router-link
+        class="rounded-lg bg-primary px-4 py-2 text-sm text-white no-underline hover:bg-primary-dark"
+        :to="{ name: 'property-new' }"
+      >
+        + Nueva propiedad
+      </router-link>
     </div>
 
-    <div class="filters-bar">
+    <div class="mb-4 flex flex-wrap items-end gap-4">
       <FilterSelect v-model="city" label="Ciudad" :options="cities" />
     </div>
 
     <DataTable :columns="columns" :rows="rows">
       <template #actions="{ row }">
-        <router-link :to="{ name: 'property-edit', params: { id: row.id } }">Editar</router-link>
+        <router-link
+          class="text-primary hover:underline"
+          :to="{ name: 'property-edit', params: { id: String(row.id) } }"
+        >
+          Editar
+        </router-link>
       </template>
     </DataTable>
   </section>

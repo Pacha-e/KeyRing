@@ -1,15 +1,17 @@
-<script setup>
+<script setup lang="ts">
 // Administración de usuarios (solo admin).
 // TODO equipo: crear/editar usuarios y cambiar roles.
-import DataTable from '../components/DataTable.vue'
+import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import { getAll, KEYS } from '../services/storage'
+import type { UserInterface } from '../interfaces/UserInterface'
 
-const users = getAll(KEYS.users).map((u) => ({
+const users = getAll<UserInterface>(KEYS.users).map((u) => ({
   ...u,
+  password: '••••••••', // nunca mostrar el password real
   propertiesCount: (u.properties ?? []).length,
 }))
 
-const columns = [
+const columns: TableColumn[] = [
   { key: 'fullName', label: 'Nombre' },
   { key: 'email', label: 'Correo' },
   { key: 'phone', label: 'Teléfono' },
@@ -22,8 +24,8 @@ const columns = [
 
 <template>
   <section>
-    <h1>Administración de usuarios</h1>
-    <p class="text-muted">Página exclusiva para administradores.</p>
+    <h1 class="mb-4 text-2xl font-bold">Administración de usuarios</h1>
+    <p class="mb-4 text-slate-500">Página exclusiva para administradores.</p>
     <DataTable :columns="columns" :rows="users" />
   </section>
 </template>

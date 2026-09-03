@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 // Login: formulario funcional contra auth.service vía el store de Pinia
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -19,26 +19,46 @@ function onSubmit() {
     error.value = 'Credenciales incorrectas. Verifica correo y contraseña.'
     return
   }
-  router.push(route.query.redirect ?? { name: 'dashboard' })
+  const redirect = route.query.redirect
+  router.push(typeof redirect === 'string' ? redirect : { name: 'dashboard' })
 }
 </script>
 
 <template>
-  <section class="card" style="max-width: 420px; margin-inline: auto">
-    <h1>Ingresar</h1>
+  <section
+    class="mx-auto max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+  >
+    <h1 class="mb-4 text-2xl font-bold">Ingresar</h1>
     <form @submit.prevent="onSubmit">
-      <label class="form-group">
-        <span>Correo</span>
-        <input v-model="email" type="email" required autocomplete="username" />
+      <label class="mb-4 flex flex-col gap-1">
+        <span class="text-sm font-medium">Correo</span>
+        <input
+          v-model="email"
+          type="email"
+          required
+          autocomplete="username"
+          class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary"
+        />
       </label>
-      <label class="form-group">
-        <span>Contraseña</span>
-        <input v-model="password" type="password" required autocomplete="current-password" />
+      <label class="mb-4 flex flex-col gap-1">
+        <span class="text-sm font-medium">Contraseña</span>
+        <input
+          v-model="password"
+          type="password"
+          required
+          autocomplete="current-password"
+          class="rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary"
+        />
       </label>
-      <p v-if="error" class="error-msg">{{ error }}</p>
-      <button class="btn" type="submit">Entrar</button>
+      <p v-if="error" class="mb-4 text-sm text-red-600">{{ error }}</p>
+      <button
+        class="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-dark"
+        type="submit"
+      >
+        Entrar
+      </button>
     </form>
-    <p class="text-muted">
+    <p class="mt-4 text-sm text-slate-500">
       Demo: <code>admin@keyring.co / admin123</code> · <code>user@keyring.co / user123</code>
     </p>
   </section>
