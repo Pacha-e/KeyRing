@@ -1,11 +1,9 @@
 <script setup lang="ts">
 // Formulario de propiedad: sirve para crear (/properties/new) y editar (/properties/:id/edit).
-// TODO equipo: validaciones más estrictas y selección de propietario.
-import { reactive, computed } from 'vue'
+import { reactive, computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { create, update, getById, KEYS } from '../services/storage'
+import { getPropertyById, createProperty, updateProperty } from '../services/property.service'
 import { PropertyType, RentalMode, PropertyStatus } from '../interfaces/enums'
-import type { PropertyInterface } from '../interfaces/PropertyInterface'
 import type { CreatePropertyDTO } from '../dtos/CreatePropertyDTO'
 import { useAuthStore } from '../stores/auth'
 
@@ -15,9 +13,7 @@ const auth = useAuthStore()
 
 const propertyId = String(route.params.id ?? '')
 const editing = computed(() => Boolean(propertyId))
-const existente = editing.value
-  ? getById<PropertyInterface>(KEYS.properties, propertyId)
-  : null
+const existente = editing.value ? getPropertyById(propertyId) : null
 
 const form = reactive<CreatePropertyDTO>({
   name: existente?.name ?? '',
@@ -39,12 +35,28 @@ const statusOptions = Object.values(PropertyStatus)
 const inputClass =
   'rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary'
 
+// --- validaciones básicas ---
+const errors = ref<string[]>([])
+
+function validate(): boolean {
+  const problems: string[] = []
+  if (form.name.trim().length < 3) problems.push('El nombre debe tener al menos 3 caracteres.')
+  if (form.address.trim().length < 5) problems.push('La dirección parece incompleta.')
+  if (form.city.trim().length < 2) problems.push('La ciudad es obligatoria.')
+  if (form.estimatedMonthlyRent <= 0) problems.push('El arriendo mensual estimado debe ser mayor a 0.')
+  if (form.adminFee < 0) problems.push('La cuota de administración no puede ser negativa.')
+  if (form.otherFixedCosts < 0) problems.push('Los otros costos fijos no pueden ser negativos.')
+  errors.value = problems
+  return problems.length === 0
+}
+
 function onSubmit() {
+  if (!validate()) return
   const data: CreatePropertyDTO = { ...form, ownerId: form.ownerId ?? auth.user?.id ?? null }
   if (editing.value) {
-    update<PropertyInterface>(KEYS.properties, propertyId, data)
+    updateProperty(propertyId, data)
   } else {
-    create<PropertyInterface>(KEYS.properties, data)
+    createProperty(data)
   }
   router.push({ name: 'properties' })
 }
@@ -53,6 +65,11 @@ function onSubmit() {
 <template>
   <section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
     <h1 class="mb-4 text-2xl font-bold">{{ editing ? 'Editar propiedad' : 'Nueva propiedad' }}</h1>
+
+    <ul v-if="errors.length" class="mb-4 list-disc rounded-lg bg-red-50 py-3 pr-3 pl-8 text-sm text-red-700">
+      <li v-for="err in errors" :key="err">{{ err }}</li>
+    </ul>
+
     <form @submit.prevent="onSubmit">
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Nombre</span>
