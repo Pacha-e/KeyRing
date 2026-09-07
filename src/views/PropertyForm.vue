@@ -1,11 +1,16 @@
 <script setup lang="ts">
 // Formulario de propiedad: sirve para crear (/properties/new) y editar (/properties/:id/edit).
-// TODO equipo: validaciones más estrictas y selección de propietario.
-import { reactive, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { create, update, getById, KEYS } from '../services/storage'
-import { PropertyType, RentalMode, PropertyStatus } from '../interfaces/enums'
-import type { PropertyInterface } from '../interfaces/PropertyInterface'
+import * as propertyService from '../services/property.service'
+import {
+  PropertyType,
+  PropertyTypeLabel,
+  RentalMode,
+  RentalModeLabel,
+  PropertyStatus,
+  PropertyStatusLabel,
+} from '../interfaces/enums'
 import type { CreatePropertyDTO } from '../dtos/CreatePropertyDTO'
 import { useAuthStore } from '../stores/auth'
 
@@ -13,24 +18,49 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
-const propertyId = String(route.params.id ?? '')
-const editing = computed(() => Boolean(propertyId))
-const existente = editing.value
-  ? getById<PropertyInterface>(KEYS.properties, propertyId)
-  : null
+const propertyId = computed(() => String(route.params.id ?? ''))
+const editing = computed(() => Boolean(propertyId.value))
+const error = ref('')
 
-const form = reactive<CreatePropertyDTO>({
-  name: existente?.name ?? '',
-  address: existente?.address ?? '',
-  city: existente?.city ?? '',
-  type: existente?.type ?? PropertyType.APARTMENT,
-  rentalMode: existente?.rentalMode ?? RentalMode.AIRBNB,
-  status: existente?.status ?? PropertyStatus.VACANT,
-  estimatedMonthlyRent: existente?.estimatedMonthlyRent ?? 0,
-  adminFee: existente?.adminFee ?? 0,
-  otherFixedCosts: existente?.otherFixedCosts ?? 0,
-  ownerId: existente?.ownerId ?? null,
-})
+/** Propiedad vacía con los valores por defecto del dominio. */
+function emptyForm(): CreatePropertyDTO {
+  return {
+    name: '',
+    address: '',
+    city: '',
+    type: PropertyType.APARTMENT,
+    rentalMode: RentalMode.AIRBNB,
+    status: PropertyStatus.VACANT,
+    estimatedMonthlyRent: 0,
+    adminFee: 0,
+    otherFixedCosts: 0,
+    ownerId: null,
+  }
+}
+
+const form = ref<CreatePropertyDTO>(emptyForm())
+
+/**
+ * Carga en el formulario la propiedad indicada por la ruta.
+ * Si el id no existe, redirige al listado en lugar de guardar sobre la nada.
+ */
+function load(): void {
+  error.value = ''
+  if (!editing.value) {
+    form.value = emptyForm()
+    return
+  }
+  const existente = propertyService.findById(propertyId.value)
+  if (!existente) {
+    router.replace({ name: 'properties' })
+    return
+  }
+  const { id: _id, ...datos } = existente
+  form.value = datos
+}
+
+// Recargar también al navegar entre /properties/:id/edit sin desmontar la vista
+watch(propertyId, load, { immediate: true })
 
 const typeOptions = Object.values(PropertyType)
 const modeOptions = Object.values(RentalMode)
@@ -39,12 +69,35 @@ const statusOptions = Object.values(PropertyStatus)
 const inputClass =
   'rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary'
 
-function onSubmit() {
-  const data: CreatePropertyDTO = { ...form, ownerId: form.ownerId ?? auth.user?.id ?? null }
+/**
+ * Valida las reglas de negocio de la propiedad.
+ * @returns mensaje de error en español, o null si el formulario es válido
+ */
+function validate(): string | null {
+  if (!form.value.name.trim()) return 'El nombre de la propiedad es obligatorio.'
+  if (!form.value.city.trim()) return 'La ciudad es obligatoria.'
+  if (form.value.estimatedMonthlyRent < 0 || form.value.adminFee < 0) {
+    return 'Los montos no pueden ser negativos.'
+  }
+  if (form.value.otherFixedCosts < 0) return 'Los montos no pueden ser negativos.'
+  return null
+}
+
+/** Valida y persiste la propiedad, luego vuelve al listado. */
+function onSubmit(): void {
+  const problema = validate()
+  if (problema) {
+    error.value = problema
+    return
+  }
+  const datos: CreatePropertyDTO = {
+    ...form.value,
+    ownerId: form.value.ownerId ?? auth.user?.id ?? null,
+  }
   if (editing.value) {
-    update<PropertyInterface>(KEYS.properties, propertyId, data)
+    propertyService.update(propertyId.value, datos)
   } else {
-    create<PropertyInterface>(KEYS.properties, data)
+    propertyService.create(datos)
   }
   router.push({ name: 'properties' })
 }
@@ -69,24 +122,31 @@ function onSubmit() {
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Tipo</span>
         <select v-model="form.type" :class="inputClass">
-          <option v-for="t in typeOptions" :key="t" :value="t">{{ t }}</option>
+          <option v-for="t in typeOptions" :key="t" :value="t">{{ PropertyTypeLabel[t] }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Modalidad de arriendo</span>
         <select v-model="form.rentalMode" :class="inputClass">
-          <option v-for="m in modeOptions" :key="m" :value="m">{{ m }}</option>
+          <option v-for="m in modeOptions" :key="m" :value="m">{{ RentalModeLabel[m] }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Estado</span>
         <select v-model="form.status" :class="inputClass">
-          <option v-for="s in statusOptions" :key="s" :value="s">{{ s }}</option>
+          <option v-for="s in statusOptions" :key="s" :value="s">
+            {{ PropertyStatusLabel[s] }}
+          </option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Arriendo mensual estimado (COP)</span>
-        <input v-model.number="form.estimatedMonthlyRent" type="number" min="0" :class="inputClass" />
+        <input
+          v-model.number="form.estimatedMonthlyRent"
+          type="number"
+          min="0"
+          :class="inputClass"
+        />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Cuota de administración (COP)</span>
@@ -96,6 +156,8 @@ function onSubmit() {
         <span class="text-sm font-medium">Otros costos fijos (COP)</span>
         <input v-model.number="form.otherFixedCosts" type="number" min="0" :class="inputClass" />
       </label>
+      <p v-if="error" aria-live="polite" class="mb-4 text-sm text-red-600">{{ error }}</p>
+
       <div class="flex gap-3">
         <button
           class="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-dark"

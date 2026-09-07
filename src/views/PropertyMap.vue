@@ -7,9 +7,12 @@ import 'leaflet/dist/leaflet.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
-import { getAll, KEYS } from '../services/storage'
+import * as propertyService from '../services/property.service'
 import { PropertyStatusLabel } from '../interfaces/enums'
+import { useAuthStore } from '../stores/auth'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
+
+const auth = useAuthStore()
 
 // Fix de íconos por defecto de Leaflet con Vite
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
@@ -29,9 +32,36 @@ const FALLBACK: [number, number] = [4.711, -74.072] // Centro de Colombia aprox.
 const mapEl = ref<HTMLElement | null>(null)
 let map: L.Map | null = null
 
+/**
+ * Construye el contenido del popup con nodos del DOM.
+ * Se usa textContent (no HTML crudo) para que un nombre de propiedad
+ * con etiquetas no pueda inyectar marcado en el mapa.
+ * @param property propiedad a describir
+ * @returns elemento listo para pasarle a bindPopup
+ */
+function buildPopup(property: PropertyInterface): HTMLElement {
+  const contenedor = document.createElement('div')
+
+  const titulo = document.createElement('strong')
+  titulo.textContent = property.name
+  contenedor.appendChild(titulo)
+  contenedor.appendChild(document.createElement('br'))
+
+  const direccion = document.createElement('span')
+  direccion.textContent = `${property.address}, ${property.city}`
+  contenedor.appendChild(direccion)
+  contenedor.appendChild(document.createElement('br'))
+
+  const estado = document.createElement('span')
+  estado.textContent = `Estado: ${PropertyStatusLabel[property.status] ?? property.status}`
+  contenedor.appendChild(estado)
+
+  return contenedor
+}
+
 onMounted(() => {
   if (!mapEl.value) return
-  const properties = getAll<PropertyInterface>(KEYS.properties)
+  const properties = propertyService.listForUser(auth.user)
 
   map = L.map(mapEl.value).setView([5.5, -74.5], 6)
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -45,11 +75,7 @@ onMounted(() => {
     const base = CITY_COORDS[p.city] ?? FALLBACK
     const n = (seen[p.city] = (seen[p.city] ?? 0) + 1)
     const coords: [number, number] = [base[0] + n * 0.03, base[1] + n * 0.03]
-    L.marker(coords)
-      .addTo(map!)
-      .bindPopup(
-        `<strong>${p.name}</strong><br>${p.address}, ${p.city}<br>Estado: ${PropertyStatusLabel[p.status] ?? p.status}`,
-      )
+    L.marker(coords).addTo(map!).bindPopup(buildPopup(p))
   })
 })
 

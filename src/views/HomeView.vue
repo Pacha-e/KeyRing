@@ -11,9 +11,7 @@
       gastos, con reportes gráficos y mapa de ubicaciones.
     </p>
     <p class="mb-6 text-slate-500">
-      Equipo: <strong>KeyRing</strong> —
-      <!-- TODO equipo: reemplazar con los nombres de los 3 integrantes -->
-      Integrante 1 · Integrante 2 · Integrante 3
+      Equipo: <strong>KeyRing</strong> — Emmanuel Hernández · Paula Arroyave · Juan Andrés Salcedo
     </p>
     <router-link
       class="inline-block rounded-lg bg-primary px-4 py-2 text-sm text-white no-underline hover:bg-primary-dark"

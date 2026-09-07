@@ -1,21 +1,38 @@
 <script setup lang="ts">
-// Lista de propiedades con filtro por ciudad y tabla reutilizable.
-// TODO equipo: acciones de eliminar, detalle y paginación.
-import { computed, ref } from 'vue'
+// Propiedades: selector + tabla + gráfico Chart.js, con CRUD completo.
+import { computed, onMounted, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
-import FilterSelect from '../components/FilterSelect.vue'
-import { getAll, KEYS } from '../services/storage'
+import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
+import ChartCard from '../components/ChartCard.vue'
+import * as propertyService from '../services/property.service'
 import {
+  PropertyType,
   PropertyTypeLabel,
   RentalModeLabel,
   PropertyStatusLabel,
 } from '../interfaces/enums'
+import { useAuthStore } from '../stores/auth'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
+import type { ChartData } from 'chart.js'
 
-const properties = getAll<PropertyInterface>(KEYS.properties)
+const auth = useAuthStore()
 
+const properties = ref<PropertyInterface[]>([])
 const city = ref('')
-const cities = [...new Set(properties.map((p) => p.city))]
+const type = ref('')
+
+/** Recarga las propiedades visibles para la sesión actual. */
+function load(): void {
+  properties.value = propertyService.listForUser(auth.user)
+}
+
+onMounted(load)
+
+const cities = computed(() => propertyService.cities(properties.value))
+const typeOptions: SelectOption[] = Object.values(PropertyType).map((v) => ({
+  value: v,
+  label: PropertyTypeLabel[v],
+}))
 
 const columns: TableColumn[] = [
   { key: 'name', label: 'Nombre' },
@@ -23,18 +40,53 @@ const columns: TableColumn[] = [
   { key: 'typeLabel', label: 'Tipo' },
   { key: 'rentalLabel', label: 'Modalidad' },
   { key: 'statusLabel', label: 'Estado' },
+  { key: 'rent', label: 'Arriendo estimado (COP)' },
 ]
 
-const rows = computed(() =>
-  properties
-    .filter((p) => !city.value || p.city === city.value)
-    .map((p) => ({
-      ...p,
-      typeLabel: PropertyTypeLabel[p.type] ?? p.type,
-      rentalLabel: RentalModeLabel[p.rentalMode] ?? p.rentalMode,
-      statusLabel: PropertyStatusLabel[p.status] ?? p.status,
-    })),
+const filtered = computed(() =>
+  properties.value.filter(
+    (p) => (!city.value || p.city === city.value) && (!type.value || p.type === type.value),
+  ),
 )
+
+const rows = computed(() =>
+  filtered.value.map((p) => ({
+    ...p,
+    typeLabel: PropertyTypeLabel[p.type] ?? p.type,
+    rentalLabel: RentalModeLabel[p.rentalMode] ?? p.rentalMode,
+    statusLabel: PropertyStatusLabel[p.status] ?? p.status,
+    rent: p.estimatedMonthlyRent.toLocaleString('es-CO'),
+  })),
+)
+
+// Gráfico: cuántas propiedades hay de cada tipo, según el filtro aplicado
+const chartData = computed<ChartData<'bar'>>(() => {
+  const porTipo = propertyService.countByType(filtered.value)
+  const tipos = Object.keys(porTipo) as PropertyType[]
+  return {
+    labels: tipos.map((t) => PropertyTypeLabel[t] ?? t),
+    datasets: [
+      {
+        label: 'Propiedades',
+        backgroundColor: '#2563eb',
+        data: tipos.map((t) => porTipo[t]),
+      },
+    ],
+  }
+})
+
+/**
+ * Elimina una propiedad tras confirmación del usuario.
+ * @param id identificador de la propiedad
+ * @param nombre nombre mostrado en la confirmación
+ */
+function onDelete(id: string, nombre: string): void {
+  if (!window.confirm(`¿Eliminar la propiedad "${nombre}"? Esta acción no se puede deshacer.`)) {
+    return
+  }
+  propertyService.remove(id)
+  load()
+}
 </script>
 
 <template>
@@ -51,17 +103,31 @@ const rows = computed(() =>
 
     <div class="mb-4 flex flex-wrap items-end gap-4">
       <FilterSelect v-model="city" label="Ciudad" :options="cities" />
+      <FilterSelect v-model="type" label="Tipo" :options="typeOptions" />
     </div>
 
-    <DataTable :columns="columns" :rows="rows">
-      <template #actions="{ row }">
-        <router-link
-          class="text-primary hover:underline"
-          :to="{ name: 'property-edit', params: { id: String(row.id) } }"
-        >
-          Editar
-        </router-link>
-      </template>
-    </DataTable>
+    <ChartCard title="Propiedades por tipo" type="bar" :chart-data="chartData" />
+
+    <div class="mt-6">
+      <DataTable :columns="columns" :rows="rows">
+        <template #actions="{ row }">
+          <div class="flex gap-3">
+            <router-link
+              class="text-primary hover:underline"
+              :to="{ name: 'property-edit', params: { id: String(row.id) } }"
+            >
+              Editar
+            </router-link>
+            <button
+              class="text-red-600 hover:underline"
+              type="button"
+              @click="onDelete(String(row.id), String(row.name))"
+            >
+              Eliminar
+            </button>
+          </div>
+        </template>
+      </DataTable>
+    </div>
   </section>
 </template>

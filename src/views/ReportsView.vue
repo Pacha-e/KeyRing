@@ -1,26 +1,37 @@
 <script setup lang="ts">
 // Reportes (solo admin): filtros + gráficos Chart.js + tabla resumen por propiedad.
-// TODO equipo: exportar a CSV/PDF y más métricas (ocupación, rentabilidad neta).
-import { computed, ref } from 'vue'
+// Es la vista global del negocio, por eso no se filtra por propietario.
+import { computed, onMounted, ref } from 'vue'
 import ChartCard from '../components/ChartCard.vue'
 import FilterSelect from '../components/FilterSelect.vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
-import { getAll, KEYS } from '../services/storage'
+import * as propertyService from '../services/property.service'
+import * as transactionService from '../services/transaction.service'
 import { TransactionType, TransactionSourceLabel } from '../interfaces/enums'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 import type { TransactionInterface } from '../interfaces/TransactionInterface'
 import type { ChartData } from 'chart.js'
 
-const properties = getAll<PropertyInterface>(KEYS.properties)
-const transactions = getAll<TransactionInterface>(KEYS.transactions)
+const properties = ref<PropertyInterface[]>([])
+const transactions = ref<TransactionInterface[]>([])
+
+/** Recarga los datos globales del reporte. */
+function load(): void {
+  properties.value = propertyService.list()
+  transactions.value = transactionService.list()
+}
+
+onMounted(load)
 
 const city = ref('')
-const cities = [...new Set(properties.map((p) => p.city))]
+const cities = computed(() => propertyService.cities(properties.value))
 
-const cityProperties = computed(() => properties.filter((p) => !city.value || p.city === city.value))
+const cityProperties = computed(() =>
+  properties.value.filter((p) => !city.value || p.city === city.value),
+)
 const cityTransactions = computed(() => {
   const ids = new Set(cityProperties.value.map((p) => p.id))
-  return transactions.filter((t) => ids.has(t.propertyId))
+  return transactions.value.filter((t) => ids.has(t.propertyId))
 })
 
 // Gráfico 1: ingresos vs gastos por mes (filtrado por ciudad)
@@ -76,20 +87,16 @@ const columns: TableColumn[] = [
 
 const rows = computed(() =>
   cityProperties.value.map((p) => {
-    const tx = transactions.filter((t) => t.propertyId === p.id)
-    const income = tx
-      .filter((t) => t.type === TransactionType.INCOME)
-      .reduce((s, t) => s + t.amount, 0)
-    const expense = tx
-      .filter((t) => t.type === TransactionType.EXPENSE)
-      .reduce((s, t) => s + t.amount, 0)
+    const { income, expense, net } = transactionService.totals(
+      transactions.value.filter((t) => t.propertyId === p.id),
+    )
     return {
       id: p.id,
       name: p.name,
       city: p.city,
       income: income.toLocaleString('es-CO'),
       expense: expense.toLocaleString('es-CO'),
-      net: (income - expense).toLocaleString('es-CO'),
+      net: net.toLocaleString('es-CO'),
     }
   }),
 )
