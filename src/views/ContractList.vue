@@ -1,52 +1,100 @@
 <script setup lang="ts">
-// Lista de contratos con filtro por estado.
-// TODO equipo: crear/editar contratos y asociarlos a propiedades desde un formulario.
-import { computed, ref } from 'vue'
+// Contratos: filtro por estado + tabla, con CRUD completo vía ContractForm.
+import { computed, onMounted, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
-import { getAll, KEYS } from '../services/storage'
+import * as contractService from '../services/contract.service'
+import * as propertyService from '../services/property.service'
 import { ContractStatus, ContractStatusLabel } from '../interfaces/enums'
+import { useAuthStore } from '../stores/auth'
 import type { ContractInterface } from '../interfaces/ContractInterface'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 
-const contracts = getAll<ContractInterface>(KEYS.contracts)
-const properties = getAll<PropertyInterface>(KEYS.properties)
+const auth = useAuthStore()
 
+const contracts = ref<ContractInterface[]>([])
+const properties = ref<PropertyInterface[]>([])
 const status = ref('')
+
+/** Recarga los contratos y propiedades visibles para la sesión actual. */
+function load(): void {
+  contracts.value = contractService.listForUser(auth.user)
+  properties.value = propertyService.listForUser(auth.user)
+}
+
+onMounted(load)
+
 const statusOptions: SelectOption[] = Object.values(ContractStatus).map((v) => ({
   value: v,
-  label: ContractStatusLabel[v] ?? v,
+  label: ContractStatusLabel[v],
 }))
 
 const columns: TableColumn[] = [
   { key: 'propertyName', label: 'Propiedad' },
   { key: 'tenantName', label: 'Arrendatario' },
-  { key: 'fixedRent', label: 'Canon (COP)' },
+  { key: 'rent', label: 'Canon (COP)' },
   { key: 'startDate', label: 'Inicio' },
   { key: 'endDate', label: 'Fin' },
   { key: 'statusLabel', label: 'Estado' },
 ]
 
 const rows = computed(() =>
-  contracts
+  contracts.value
     .filter((c) => !status.value || c.status === status.value)
     .map((c) => ({
       ...c,
-      propertyName: properties.find((p) => p.id === c.propertyId)?.name ?? '—',
-      fixedRent: c.fixedRent.toLocaleString('es-CO'),
+      propertyName: properties.value.find((p) => p.id === c.propertyId)?.name ?? '—',
+      rent: c.fixedRent.toLocaleString('es-CO'),
       statusLabel: ContractStatusLabel[c.status] ?? c.status,
     })),
 )
+
+/**
+ * Elimina un contrato tras confirmación del usuario.
+ * @param id identificador del contrato
+ * @param arrendatario nombre mostrado en la confirmación
+ */
+function onDelete(id: string, arrendatario: string): void {
+  if (!window.confirm(`¿Eliminar el contrato de "${arrendatario}"? No se puede deshacer.`)) return
+  contractService.remove(id)
+  load()
+}
 </script>
 
 <template>
   <section>
-    <h1 class="mb-4 text-2xl font-bold">Contratos</h1>
+    <div class="mb-6 flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Contratos</h1>
+      <router-link
+        class="rounded-lg bg-primary px-4 py-2 text-sm text-white no-underline hover:bg-primary-dark"
+        :to="{ name: 'contract-new' }"
+      >
+        + Nuevo contrato
+      </router-link>
+    </div>
 
     <div class="mb-4 flex flex-wrap items-end gap-4">
       <FilterSelect v-model="status" label="Estado" :options="statusOptions" />
     </div>
 
-    <DataTable :columns="columns" :rows="rows" />
+    <DataTable :columns="columns" :rows="rows">
+      <template #actions="{ row }">
+        <div class="flex gap-3">
+          <router-link
+            class="text-primary hover:underline"
+            :to="{ name: 'contract-edit', params: { id: String(row.id) } }"
+          >
+            Editar
+          </router-link>
+          <button
+            class="text-red-600 hover:underline"
+            type="button"
+            @click="onDelete(String(row.id), String(row.tenantName))"
+          >
+            Eliminar
+          </button>
+        </div>
+      </template>
+    </DataTable>
   </section>
 </template>

@@ -37,6 +37,18 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/contracts/new',
+      name: 'contract-new',
+      component: () => import('../views/ContractForm.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/contracts/:id/edit',
+      name: 'contract-edit',
+      component: () => import('../views/ContractForm.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/transactions',
       name: 'transactions',
       component: () => import('../views/TransactionList.vue'),
