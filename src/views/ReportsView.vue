@@ -1,48 +1,56 @@
 <script setup lang="ts">
-// Reportes (solo admin): filtros + gráficos Chart.js + tabla resumen por propiedad.
-// TODO equipo: exportar a CSV/PDF y más métricas (ocupación, rentabilidad neta).
+// Reportes (solo admin): selectores (ciudad, tipo de propiedad, rango de meses) + gráficos
+// Chart.js (utilidad por ciudad, ingreso por fuente) + tabla resumen por propiedad + export CSV.
 import { computed, ref } from 'vue'
 import ChartCard from '../components/ChartCard.vue'
-import FilterSelect from '../components/FilterSelect.vue'
+import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
-import { getAll, KEYS } from '../services/storage'
-import { TransactionType, TransactionSourceLabel } from '../interfaces/enums'
-import type { PropertyInterface } from '../interfaces/PropertyInterface'
-import type { TransactionInterface } from '../interfaces/TransactionInterface'
+import { getProperties } from '../services/property.service'
+import { getTransactions } from '../services/transaction.service'
+import { calculateProfitByCity, calculatePropertyBalance } from '../utils/finance'
+import { PropertyType, PropertyTypeLabel, TransactionType, TransactionSourceLabel } from '../interfaces/enums'
 import type { ChartData } from 'chart.js'
 
-const properties = getAll<PropertyInterface>(KEYS.properties)
-const transactions = getAll<TransactionInterface>(KEYS.transactions)
+const properties = getProperties()
+const transactions = getTransactions()
 
 const city = ref('')
-const cities = [...new Set(properties.map((p) => p.city))]
+const propertyType = ref('')
+const monthFrom = ref('')
+const monthTo = ref('')
 
-const cityProperties = computed(() => properties.filter((p) => !city.value || p.city === city.value))
+const cities = [...new Set(properties.map((p) => p.city))]
+const typeOptions: SelectOption[] = Object.values(PropertyType).map((v) => ({
+  value: v,
+  label: PropertyTypeLabel[v] ?? v,
+}))
+// Meses reales presentes en los datos (evita depender de <input type="month">, que Safari no soporta)
+const monthOptions = [...new Set(transactions.map((t) => t.date.slice(0, 7)))].sort()
+
+const cityProperties = computed(() =>
+  properties.filter(
+    (p) => (!city.value || p.city === city.value) && (!propertyType.value || p.type === propertyType.value),
+  ),
+)
+
 const cityTransactions = computed(() => {
   const ids = new Set(cityProperties.value.map((p) => p.id))
-  return transactions.filter((t) => ids.has(t.propertyId))
+  return transactions.filter((t) => {
+    if (!ids.has(t.propertyId)) return false
+    const month = t.date.slice(0, 7)
+    if (monthFrom.value && month < monthFrom.value) return false
+    if (monthTo.value && month > monthTo.value) return false
+    return true
+  })
 })
 
-// Gráfico 1: ingresos vs gastos por mes (filtrado por ciudad)
-const monthlyChart = computed<ChartData<'bar'>>(() => {
-  const months = [...new Set(cityTransactions.value.map((t) => t.date.slice(0, 7)))].sort()
-  const sumBy = (tt: TransactionType, month: string) =>
-    cityTransactions.value
-      .filter((t) => t.type === tt && t.date.startsWith(month))
-      .reduce((s, t) => s + t.amount, 0)
+// Gráfico 1: utilidad (ingresos - gastos) por ciudad, sobre las propiedades filtradas
+const profitChart = computed<ChartData<'bar'>>(() => {
+  const byCity = calculateProfitByCity(cityProperties.value, cityTransactions.value)
   return {
-    labels: months,
+    labels: byCity.map((c) => c.city),
     datasets: [
-      {
-        label: 'Ingresos',
-        backgroundColor: '#16a34a',
-        data: months.map((m) => sumBy(TransactionType.INCOME, m)),
-      },
-      {
-        label: 'Gastos',
-        backgroundColor: '#dc2626',
-        data: months.map((m) => sumBy(TransactionType.EXPENSE, m)),
-      },
+      { label: 'Utilidad (COP)', backgroundColor: '#b3543a', data: byCity.map((c) => c.profit) },
     ],
   }
 })
@@ -76,23 +84,35 @@ const columns: TableColumn[] = [
 
 const rows = computed(() =>
   cityProperties.value.map((p) => {
-    const tx = transactions.filter((t) => t.propertyId === p.id)
-    const income = tx
-      .filter((t) => t.type === TransactionType.INCOME)
-      .reduce((s, t) => s + t.amount, 0)
-    const expense = tx
-      .filter((t) => t.type === TransactionType.EXPENSE)
-      .reduce((s, t) => s + t.amount, 0)
+    const { income, expense, net } = calculatePropertyBalance(p.id, cityTransactions.value)
     return {
       id: p.id,
       name: p.name,
       city: p.city,
       income: income.toLocaleString('es-CO'),
       expense: expense.toLocaleString('es-CO'),
-      net: (income - expense).toLocaleString('es-CO'),
+      net: net.toLocaleString('es-CO'),
     }
   }),
 )
+
+// Exporta la tabla resumen actual (según los filtros activos) a un archivo CSV
+function exportCsv() {
+  const headers = columns.map((c) => c.label)
+  const lines = rows.value.map((r) =>
+    columns
+      .map((c) => `"${String((r as Record<string, unknown>)[c.key]).replace(/"/g, '""')}"`)
+      .join(','),
+  )
+  const csv = [headers.join(','), ...lines].join('\n')
+  const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `reporte-keyring-${new Date().toISOString().slice(0, 10)}.csv`
+  link.click()
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
@@ -100,12 +120,24 @@ const rows = computed(() =>
     <h1 class="mb-4 text-2xl font-bold">Reportes</h1>
     <p class="mb-4 text-slate-500">Página exclusiva para administradores.</p>
 
-    <div class="mb-4 flex flex-wrap items-end gap-4">
-      <FilterSelect v-model="city" label="Ciudad" :options="cities" />
+    <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+      <div class="flex flex-wrap items-end gap-4">
+        <FilterSelect v-model="city" label="Ciudad" :options="cities" />
+        <FilterSelect v-model="propertyType" label="Tipo de propiedad" :options="typeOptions" />
+        <FilterSelect v-model="monthFrom" label="Desde (mes)" :options="monthOptions" />
+        <FilterSelect v-model="monthTo" label="Hasta (mes)" :options="monthOptions" />
+      </div>
+      <button
+        class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+        type="button"
+        @click="exportCsv"
+      >
+        Exportar CSV
+      </button>
     </div>
 
     <div class="grid gap-4 md:grid-cols-2">
-      <ChartCard title="Ingresos vs gastos por mes" type="bar" :chart-data="monthlyChart" />
+      <ChartCard title="Utilidad por ciudad" type="bar" :chart-data="profitChart" />
       <ChartCard title="Ingresos por fuente" type="doughnut" :chart-data="sourceChart" />
     </div>
 

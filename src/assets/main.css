@@ -1,12 +1,37 @@
-/* KeyRing — entrada Tailwind v4 + tokens mínimos donde Tailwind no aplica */
+/* KeyRing — entrada Tailwind v4 + tokens de marca (paleta tomada del mockup) */
 
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 /* Tokens de marca disponibles como utilidades: bg-primary, text-primary, etc. */
 @theme {
-  --color-primary: #2563eb;
-  --color-primary-dark: #1e40af;
-  --color-accent: #f59e0b;
+  --color-primary: #b3543a;
+  --color-primary-dark: #973f28;
+  --color-accent: #b3543a;
+
+  --color-sidebar: #1b2438;
+  --color-sidebar-hover: #2a3550;
+
+  --color-page: #f3efe6;
+  --color-ink: #262420;
+
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+.font-brand {
+  font-family: var(--font-serif);
 }
 
 /* Leaflet necesita altura explícita en el contenedor del mapa */
