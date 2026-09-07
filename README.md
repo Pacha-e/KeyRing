@@ -25,12 +25,18 @@ Proyecto del curso **Ingeniería de Desarrollo Web** — Equipo **KeyRing**.
 
 ## Instalación y ejecución
 
+El proyecto Vue vive en la carpeta `frontend/`, siguiendo la estructura de proyectos del curso.
+Desde la raíz del repositorio:
+
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-La app queda en `http://localhost:5173/` (ruta principal `/`).
+La app queda en **`http://localhost:5173/`** y la **ruta principal que se debe invocar es `/`**
+(página Home, pública). Desde ahí se entra con el botón *Ingresar* usando las credenciales de
+prueba de la siguiente sección.
 
 ## Credenciales de prueba
 
@@ -53,7 +59,22 @@ Para reiniciar los datos de prueba, borra el LocalStorage del sitio en el navega
 | `npm run lint` | ESLint (flat config + eslint-plugin-vue + typescript-eslint) |
 | `npm run format` | Prettier sobre `src/` y archivos raíz |
 
-## Estructura del proyecto
+## Estructura del repositorio
+
+```
+KeyRing/
+├── .gitignore             # Reglas del repositorio (dist/ SÍ se versiona, ver Despliegue)
+├── README.md              # Este archivo
+└── frontend/              # Proyecto Vue 3 (SPA)
+    ├── Dockerfile         # Imagen nginx:alpine que sirve el build
+    ├── nginx.conf         # Fallback a index.html para las rutas del router
+    ├── dist/              # Build de producción versionado (lo consume el despliegue)
+    └── src/
+```
+
+En el Entregable 2 se añadirá una carpeta `fullstack/` con la API, al lado de `frontend/`.
+
+## Estructura de `frontend/src`
 
 ```
 src/
@@ -64,7 +85,9 @@ src/
 │                          # TransactionInterface y enums.ts (enums TS + etiquetas en español)
 ├── router/index.ts        # Rutas + guardas (requiresAuth / requiresAdmin)
 ├── services/              # camelCase: storage.ts (repositorio genérico tipado),
-│                          # seed.ts (datos ficticios), auth.service.ts (sesión)
+│                          # seed.ts (datos ficticios), auth.service.ts (sesión) y
+│                          # un servicio por entidad: property, contract,
+│                          # transaction y user. Ninguna vista toca storage.ts
 ├── stores/auth.ts         # Store Pinia de autenticación (tipado)
 ├── views/                 # Una vista por ruta (PascalCase)
 ├── env.d.ts               # Tipos de Vite
@@ -82,10 +105,36 @@ src/
 | `/properties` | Lista de propiedades | Autenticado |
 | `/properties/new`, `/properties/:id/edit` | Formulario de propiedad | Autenticado |
 | `/contracts` | Contratos | Autenticado |
+| `/contracts/new`, `/contracts/:id/edit` | Formulario de contrato | Autenticado |
 | `/transactions` | Transacciones | Autenticado |
 | `/map` | Mapa (Leaflet) | Autenticado |
 | `/reports` | Reportes (Chart.js) | Solo admin |
 | `/admin/users` | Administración de usuarios | Solo admin |
+
+## Despliegue
+
+El despliegue se hace sobre una máquina virtual de Google Cloud (Compute Engine `e2-micro`,
+Debian 13, con tráfico HTTP y HTTPS permitido), siguiendo el tutorial del curso. La imagen Docker
+se construye a partir del build ya compilado, por eso `frontend/dist/` se versiona.
+
+Antes de desplegar, desde `frontend/`:
+
+```bash
+npm run build
+```
+
+Y en la terminal SSH de la máquina virtual, con Docker ya instalado:
+
+```bash
+sudo git clone https://github.com/Pacha-e/KeyRing.git
+cd KeyRing/frontend
+sudo docker image build -t vue-image .
+sudo docker container run -d --name vue-container -p 80:80 vue-image
+```
+
+La aplicación queda disponible en la IP externa de la instancia usando **HTTP** (no HTTPS: la
+instancia no tiene certificado). Para publicar cambios: `npm run build`, commit del nuevo `dist/`,
+`git pull` en la máquina virtual y reconstruir la imagen y el contenedor.
 
 ## Convenciones
 

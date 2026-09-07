@@ -1,0 +1,15 @@
+# Dependencias
+node_modules/
+
+# Build alternativo de SSR (no se usa en este proyecto)
+dist-ssr/
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Cache de herramientas
+.cache/
+*.local

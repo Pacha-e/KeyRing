@@ -1,33 +1,27 @@
 # Dependencias
-node_modules/
-dist-ssr/
+**/node_modules/
 
-# La carpeta dist/ SÍ se versiona: el despliegue en GCP clona el repositorio
-# dentro de la máquina virtual y construye la imagen Docker a partir del build
-# ya compilado, según el tutorial del curso.
-
-# Material del curso: no se publica en el repositorio
-*.pdf
-*.docx
-*.pptx
-
-# Entorno
-.env
-.env.local
-.env.*.local
-!.env.example
+# La carpeta dist/ SÍ se versiona: el despliegue clona el repositorio dentro de
+# la máquina virtual y construye la imagen Docker a partir del build ya
+# compilado, según el tutorial de despliegue del curso.
 
 # Logs
-*.log
-npm-debug.log*
+**/*.log
+**/npm-debug.log*
 
-# Editores / SO
+# Variables de entorno (la plantilla de ejemplo sí se versiona)
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Editores y sistema operativo
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 __MACOSX/
 
-# Cache
-.cache/
-*.local
+# Material del curso: no se publica en el repositorio
+*.pdf
+*.docx
+*.pptx
