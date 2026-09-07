@@ -20,6 +20,12 @@ export default tseslint.config(
     },
     rules: {
       'vue/multi-word-component-names': 'off',
+      // Convención del proyecto: un identificador con prefijo _ se descarta a propósito
+      // (p. ej. al desestructurar una entidad para quedarse con el DTO sin su id).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
     },
   },
 )
