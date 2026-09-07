@@ -187,7 +187,9 @@ const inputClass =
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Propiedad</span>
         <select v-model="form.propertyId" required :class="inputClass">
-          <option v-for="p in propertyOptions" :key="p.value" :value="p.value">{{ p.label }}</option>
+          <option v-for="p in propertyOptions" :key="p.value" :value="p.value">
+            {{ p.label }}
+          </option>
         </select>
       </label>
       <label class="flex flex-col gap-1">

@@ -8,7 +8,12 @@ import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import { getProperties } from '../services/property.service'
 import { getTransactions } from '../services/transaction.service'
 import { calculateProfitByCity, calculatePropertyBalance } from '../utils/finance'
-import { PropertyType, PropertyTypeLabel, TransactionType, TransactionSourceLabel } from '../interfaces/enums'
+import {
+  PropertyType,
+  PropertyTypeLabel,
+  TransactionType,
+  TransactionSourceLabel,
+} from '../interfaces/enums'
 import type { ChartData } from 'chart.js'
 
 const properties = getProperties()
@@ -29,7 +34,9 @@ const monthOptions = [...new Set(transactions.map((t) => t.date.slice(0, 7)))].s
 
 const cityProperties = computed(() =>
   properties.filter(
-    (p) => (!city.value || p.city === city.value) && (!propertyType.value || p.type === propertyType.value),
+    (p) =>
+      (!city.value || p.city === city.value) &&
+      (!propertyType.value || p.type === propertyType.value),
   ),
 )
 

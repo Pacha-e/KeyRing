@@ -32,24 +32,24 @@ npm run dev
 
 ## Credenciales de prueba
 
-| Rol | Correo | Contraseña |
-| --- | --- | --- |
+| Rol           | Correo             | Contraseña |
+| ------------- | ------------------ | ---------- |
 | Administrador | `admin@keyring.co` | `admin123` |
-| Usuario | `user@keyring.co` | `user123` |
+| Usuario       | `user@keyring.co`  | `user123`  |
 
 Para reiniciar los datos de prueba, borra el LocalStorage del sitio en el navegador (o ejecuta
 `resetDatabase()` desde `src/services/seed.ts` en la consola).
 
 ## Scripts
 
-| Comando | Descripción |
-| --- | --- |
-| `npm run dev` | Servidor de desarrollo (Vite) |
-| `npm run build` | Build de producción en `dist/` |
-| `npm run preview` | Sirve el build de producción |
-| `npm run type-check` | Verificación de tipos con `vue-tsc --noEmit` |
-| `npm run lint` | ESLint (flat config + eslint-plugin-vue + typescript-eslint) |
-| `npm run format` | Prettier sobre `src/` y archivos raíz |
+| Comando              | Descripción                                                  |
+| -------------------- | ------------------------------------------------------------ |
+| `npm run dev`        | Servidor de desarrollo (Vite)                                |
+| `npm run build`      | Build de producción en `dist/`                               |
+| `npm run preview`    | Sirve el build de producción                                 |
+| `npm run type-check` | Verificación de tipos con `vue-tsc --noEmit`                 |
+| `npm run lint`       | ESLint (flat config + eslint-plugin-vue + typescript-eslint) |
+| `npm run format`     | Prettier sobre `src/` y archivos raíz                        |
 
 ## Estructura del proyecto
 
@@ -72,18 +72,18 @@ src/
 
 ## Rutas
 
-| Ruta | Vista | Acceso |
-| --- | --- | --- |
-| `/` | Home | Pública |
-| `/login` | Login | Pública |
-| `/dashboard` | Dashboard | Autenticado |
-| `/properties` | Lista de propiedades | Autenticado |
-| `/properties/new`, `/properties/:id/edit` | Formulario de propiedad | Autenticado |
-| `/contracts` | Contratos | Autenticado |
-| `/transactions` | Transacciones | Autenticado |
-| `/map` | Mapa (Leaflet) | Autenticado |
-| `/reports` | Reportes (Chart.js) | Solo admin |
-| `/admin/users` | Administración de usuarios | Solo admin |
+| Ruta                                      | Vista                      | Acceso      |
+| ----------------------------------------- | -------------------------- | ----------- |
+| `/`                                       | Home                       | Pública     |
+| `/login`                                  | Login                      | Pública     |
+| `/dashboard`                              | Dashboard                  | Autenticado |
+| `/properties`                             | Lista de propiedades       | Autenticado |
+| `/properties/new`, `/properties/:id/edit` | Formulario de propiedad    | Autenticado |
+| `/contracts`                              | Contratos                  | Autenticado |
+| `/transactions`                           | Transacciones              | Autenticado |
+| `/map`                                    | Mapa (Leaflet)             | Autenticado |
+| `/reports`                                | Reportes (Chart.js)        | Solo admin  |
+| `/admin/users`                            | Administración de usuarios | Solo admin  |
 
 ## Convenciones
 

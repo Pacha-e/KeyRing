@@ -15,10 +15,7 @@ export function createProperty(data: CreatePropertyDTO): PropertyInterface {
   return create<PropertyInterface>(KEYS.properties, data)
 }
 
-export function updateProperty(
-  id: string,
-  data: CreatePropertyDTO,
-): PropertyInterface | null {
+export function updateProperty(id: string, data: CreatePropertyDTO): PropertyInterface | null {
   return update<PropertyInterface>(KEYS.properties, id, data)
 }
 

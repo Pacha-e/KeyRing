@@ -23,8 +23,7 @@ function onChange(event: Event) {
 
 const optValue = (opt: SelectOption | string): string | number =>
   typeof opt === 'string' ? opt : opt.value
-const optLabel = (opt: SelectOption | string): string =>
-  typeof opt === 'string' ? opt : opt.label
+const optLabel = (opt: SelectOption | string): string => (typeof opt === 'string' ? opt : opt.label)
 </script>
 
 <template>

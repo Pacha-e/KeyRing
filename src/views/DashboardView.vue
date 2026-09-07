@@ -72,7 +72,11 @@ const occupancyChart = computed<ChartData<'doughnut'>>(() => {
     </div>
 
     <div class="mt-6 grid gap-4 md:grid-cols-2">
-      <ChartCard title="Evolución mensual: ingresos vs gastos" type="line" :chart-data="evolutionChart" />
+      <ChartCard
+        title="Evolución mensual: ingresos vs gastos"
+        type="line"
+        :chart-data="evolutionChart"
+      />
       <ChartCard title="Ocupación de propiedades" type="doughnut" :chart-data="occupancyChart" />
     </div>
   </section>

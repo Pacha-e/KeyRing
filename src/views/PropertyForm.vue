@@ -43,7 +43,8 @@ function validate(): boolean {
   if (form.name.trim().length < 3) problems.push('El nombre debe tener al menos 3 caracteres.')
   if (form.address.trim().length < 5) problems.push('La dirección parece incompleta.')
   if (form.city.trim().length < 2) problems.push('La ciudad es obligatoria.')
-  if (form.estimatedMonthlyRent <= 0) problems.push('El arriendo mensual estimado debe ser mayor a 0.')
+  if (form.estimatedMonthlyRent <= 0)
+    problems.push('El arriendo mensual estimado debe ser mayor a 0.')
   if (form.adminFee < 0) problems.push('La cuota de administración no puede ser negativa.')
   if (form.otherFixedCosts < 0) problems.push('Los otros costos fijos no pueden ser negativos.')
   errors.value = problems
@@ -66,7 +67,10 @@ function onSubmit() {
   <section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
     <h1 class="mb-4 text-2xl font-bold">{{ editing ? 'Editar propiedad' : 'Nueva propiedad' }}</h1>
 
-    <ul v-if="errors.length" class="mb-4 list-disc rounded-lg bg-red-50 py-3 pr-3 pl-8 text-sm text-red-700">
+    <ul
+      v-if="errors.length"
+      class="mb-4 list-disc rounded-lg bg-red-50 py-3 pr-3 pl-8 text-sm text-red-700"
+    >
       <li v-for="err in errors" :key="err">{{ err }}</li>
     </ul>
 
@@ -103,7 +107,12 @@ function onSubmit() {
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Arriendo mensual estimado (COP)</span>
-        <input v-model.number="form.estimatedMonthlyRent" type="number" min="0" :class="inputClass" />
+        <input
+          v-model.number="form.estimatedMonthlyRent"
+          type="number"
+          min="0"
+          :class="inputClass"
+        />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Cuota de administración (COP)</span>

@@ -68,7 +68,11 @@ const chartData = computed<ChartData<'bar'>>(() => {
   return {
     labels: byCity.map((c) => c.city),
     datasets: [
-      { label: 'Ingreso estimado (COP)', backgroundColor: '#b3543a', data: byCity.map((c) => c.amount) },
+      {
+        label: 'Ingreso estimado (COP)',
+        backgroundColor: '#b3543a',
+        data: byCity.map((c) => c.amount),
+      },
     ],
   }
 })
