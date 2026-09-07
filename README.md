@@ -30,8 +30,6 @@ npm install
 npm run dev
 ```
 
-La app queda en `http://localhost:5173/` (ruta principal `/`).
-
 ## Credenciales de prueba
 
 | Rol | Correo | Contraseña |
