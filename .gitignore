@@ -1,7 +1,15 @@
-# Dependencias y build
+# Dependencias
 node_modules/
-dist/
 dist-ssr/
+
+# La carpeta dist/ SÍ se versiona: el despliegue en GCP clona el repositorio
+# dentro de la máquina virtual y construye la imagen Docker a partir del build
+# ya compilado, según el tutorial del curso.
+
+# Material del curso: no se publica en el repositorio
+*.pdf
+*.docx
+*.pptx
 
 # Entorno
 .env
