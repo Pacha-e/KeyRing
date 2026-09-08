@@ -14,6 +14,9 @@
 **/.env.local
 **/.env.*.local
 
+# Artefactos de las sesiones de Playwright durante el QA
+.playwright-mcp/
+
 # Editores y sistema operativo
 .vscode/
 .idea/

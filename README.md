@@ -15,9 +15,11 @@ Proyecto del curso **Ingeniería de Desarrollo Web** — Equipo **KeyRing**.
 - Arquitectura por capas: `interfaces/` (modelos + enums), `dtos/`, `services/`, `stores/`,
   `router/`, `components/`, `views/`.
 - Autenticación ficticia con roles (`admin` / `user`) y rutas protegidas.
-- 11 vistas, incluidas 2 exclusivas para administradores (Reportes y Usuarios).
-- Componentes reutilizables: `DataTable`, `FilterSelect`, `ChartCard`, `StatCard`, `AppNavbar`,
-  `AppFooter`.
+- 13 páginas más la de «no encontrada», incluidas 2 exclusivas para administradores (Reportes y
+  Usuarios).
+- Cuatro CRUD completos: propiedades, contratos, transacciones y usuarios.
+- Componentes reutilizables: `DataTable`, `SelectField`, `FilterSelect`, `FilterBar`, `ChartCard`,
+  `StatCard`, `StatusBadge`, `PageHeader`, `AppIcon`, `AppNavbar`, `AppFooter`, `PublicHeader`.
 
 ## Requisitos
 
@@ -45,8 +47,18 @@ prueba de la siguiente sección.
 | Administrador | `admin@keyring.co` | `admin123` |
 | Usuario | `user@keyring.co` | `user123` |
 
-Para reiniciar los datos de prueba, borra el LocalStorage del sitio en el navegador (o ejecuta
-`resetDatabase()` desde `src/services/seed.ts` en la consola).
+En la pantalla de ingreso las dos cuentas aparecen como botones que rellenan el formulario, así que
+no hace falta teclearlas.
+
+Para volver a los datos de prueba, abre la consola del navegador (F12) y ejecuta:
+
+```js
+localStorage.clear()
+```
+
+Luego recarga: la siembra vuelve a correr. Los datos también se resiembran solos la primera vez que
+se abre una versión del proyecto con datos de ejemplo nuevos, porque la bandera de siembra lleva
+número de versión (`keyring_seeded_v2`).
 
 ## Scripts
 
@@ -58,6 +70,7 @@ Para reiniciar los datos de prueba, borra el LocalStorage del sitio en el navega
 | `npm run type-check` | Verificación de tipos con `vue-tsc --noEmit` |
 | `npm run lint` | ESLint (flat config + eslint-plugin-vue + typescript-eslint) |
 | `npm run format` | Prettier sobre `src/` y archivos raíz |
+| `npm run verify` | Las tres suites de verificación: servicios, guardas y vistas |
 
 ## Estructura del repositorio
 
@@ -89,6 +102,11 @@ src/
 │                          # un servicio por entidad: property, contract,
 │                          # transaction y user. Ninguna vista toca storage.ts
 ├── stores/auth.ts         # Store Pinia de autenticación (tipado)
+├── utils/                 # finance.ts (aritmética del negocio, funciones puras),
+│                          # format.ts (formato del peso colombiano) y
+│                          # badges.ts (color de cada estado del dominio)
+├── config/                # app.config.ts (variables de entorno) y
+│                          # chart.config.ts (paleta de los gráficos)
 ├── views/                 # Una vista por ruta (PascalCase)
 ├── env.d.ts               # Tipos de Vite
 ├── App.vue
@@ -135,6 +153,23 @@ sudo docker container run -d --name vue-container -p 80:80 vue-image
 La aplicación queda disponible en la IP externa de la instancia usando **HTTP** (no HTTPS: la
 instancia no tiene certificado). Para publicar cambios: `npm run build`, commit del nuevo `dist/`,
 `git pull` en la máquina virtual y reconstruir la imagen y el contenedor.
+
+El procedimiento completo —crear la instancia, abrir el firewall, instalar Docker y comprobar que
+responde— está en la wiki:
+[Despliegue en GCP](https://github.com/Pacha-e/KeyRing/wiki/Despliegue-en-GCP).
+
+## Documentación
+
+La [wiki del repositorio](https://github.com/Pacha-e/KeyRing/wiki) tiene el detalle:
+
+| Página | Para qué |
+| --- | --- |
+| [Entregable](https://github.com/Pacha-e/KeyRing/wiki/Entregable) | Logo, modelo verbal, diagrama de clases y de arquitectura |
+| [Arquitectura del código](https://github.com/Pacha-e/KeyRing/wiki/Arquitectura-del-codigo) | Recorrido archivo por archivo de todas las capas |
+| [Reglas de programación](https://github.com/Pacha-e/KeyRing/wiki/Reglas-de-programacion) | Reglas por categoría: rutas, vistas, componentes, servicios |
+| [Guía de estilo](https://github.com/Pacha-e/KeyRing/wiki/Guia-de-estilo) | Cómo se usan ESLint y Prettier |
+| [Preguntas y respuestas](https://github.com/Pacha-e/KeyRing/wiki/Preguntas-y-respuestas) | Material de estudio del proyecto |
+| [Pantallazos](https://github.com/Pacha-e/KeyRing/wiki/Pantallazos) | Capturas de las tres secciones principales |
 
 ## Convenciones
 
