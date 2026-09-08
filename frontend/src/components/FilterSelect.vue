@@ -1,13 +1,15 @@
 <script setup lang="ts">
 // Selector de filtro reutilizable. options: [{ value, label }] o strings.
-// Pensado para ir dentro de FilterBar: por eso la etiqueta va en versalitas
-// pequeñas, como encabezado del control, y no como texto de formulario.
-export interface SelectOption {
-  value: string | number
-  label: string
-}
+//
+// Añade la opción “Todos” delante y delega el resto en SelectField, para que un
+// filtro y un campo de formulario sean exactamente el mismo control y no haya
+// que mantener dos desplegables distintos.
+import { computed } from 'vue'
+import SelectField, { type SelectOption } from './SelectField.vue'
 
-withDefaults(
+export type { SelectOption }
+
+const props = withDefaults(
   defineProps<{
     label: string
     options?: (SelectOption | string)[]
@@ -19,23 +21,23 @@ withDefaults(
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
-function onChange(event: Event) {
-  emit('update:modelValue', (event.target as HTMLSelectElement).value)
-}
-
-const optValue = (opt: SelectOption | string): string | number =>
-  typeof opt === 'string' ? opt : opt.value
-const optLabel = (opt: SelectOption | string): string => (typeof opt === 'string' ? opt : opt.label)
+// “Todos” es una opción más de la lista, con la cadena vacía como valor: así
+// quitar el filtro se hace igual que ponerlo.
+const optionsWithAll = computed<SelectOption[]>(() => [
+  { value: '', label: props.allLabel },
+  ...props.options.map((option) =>
+    typeof option === 'string' ? { value: option, label: option } : option,
+  ),
+])
 </script>
 
 <template>
-  <label class="flex min-w-40 flex-col gap-1.5">
-    <span class="text-xs font-semibold tracking-wide text-slate-500 uppercase">{{ label }}</span>
-    <select :value="modelValue" class="field-input" @change="onChange">
-      <option value="">{{ allLabel }}</option>
-      <option v-for="opt in options" :key="String(optValue(opt))" :value="optValue(opt)">
-        {{ optLabel(opt) }}
-      </option>
-    </select>
-  </label>
+  <SelectField
+    class="min-w-48"
+    :label="label"
+    label-variant="filter"
+    :model-value="modelValue"
+    :options="optionsWithAll"
+    @update:model-value="(value) => emit('update:modelValue', String(value))"
+  />
 </template>

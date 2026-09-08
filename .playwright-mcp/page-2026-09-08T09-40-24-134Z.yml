@@ -1,0 +1,31 @@
+- generic [ref=f40e13]:
+  - complementary [ref=f40e14]:
+    - link "KeyRing" [ref=f40e15] [cursor=pointer]:
+      - /url: /
+    - generic [ref=f40e18]:
+      - paragraph [ref=f40e19]: Propiedades en equilibrio
+      - paragraph [ref=f40e20]: Todo tu portafolio de arriendos en un mismo tablero.
+    - list [ref=f40e21]:
+      - listitem [ref=f40e22]: El estado de cada inmueble
+      - listitem [ref=f40e25]: Contratos y sus vencimientos
+      - listitem [ref=f40e28]: Ingresos, gastos y utilidad real
+  - generic [ref=f40e31]:
+    - heading "Entrar" [level=1] [ref=f40e32]
+    - paragraph [ref=f40e33]: Administra tus propiedades y tus contratos.
+    - generic [ref=f40e34]:
+      - generic [ref=f40e35]:
+        - generic [ref=f40e36]: Correo
+        - textbox "Correo" [ref=f40e37]: admin@keyring.co
+      - generic [ref=f40e38]:
+        - generic [ref=f40e39]: Contraseña
+        - textbox "Contraseña" [ref=f40e40]: admin123
+      - button "Entrar" [ref=f40e41]
+    - generic [ref=f40e42]:
+      - paragraph [ref=f40e43]: Cuentas de prueba
+      - generic [ref=f40e44]:
+        - button "Administrador admin@keyring.co" [active] [ref=f40e45]:
+          - generic [ref=f40e46]: Administrador
+          - text: admin@keyring.co
+        - button "Propietario user@keyring.co" [ref=f40e47]:
+          - generic [ref=f40e48]: Propietario
+          - text: user@keyring.co

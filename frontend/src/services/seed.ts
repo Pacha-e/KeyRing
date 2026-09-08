@@ -16,7 +16,10 @@ import type { CreatePropertyDTO } from '../dtos/CreatePropertyDTO'
 import type { CreateContractDTO } from '../dtos/CreateContractDTO'
 import type { CreateTransactionDTO } from '../dtos/CreateTransactionDTO'
 
-const SEED_FLAG = 'keyring_seeded'
+// La bandera lleva versión: al cambiar los datos sembrados (por ejemplo al
+// añadirles coordenadas) hay que resembrar los navegadores que ya tenían la
+// versión anterior guardada, o seguirían viendo los datos viejos para siempre.
+const SEED_FLAG = 'keyring_seeded_v2'
 
 // Fecha ISO hace N días (para que los datos siempre se vean "recientes")
 function isoDateDaysAgo(n: number): string {
@@ -25,9 +28,14 @@ function isoDateDaysAgo(n: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-// Crea datos ficticios la primera vez que se abre la app (bandera keyring_seeded)
+// Crea datos ficticios la primera vez que se abre la app (bandera SEED_FLAG)
 export function seedDatabase(): void {
   if (localStorage.getItem(SEED_FLAG)) return
+
+  // Se parte de cero antes de sembrar. La siembra usa insert, que añade al
+  // final de la colección: si quedaban datos de una versión anterior de la
+  // semilla, los nuevos se sumarían a ellos y todo aparecería por duplicado.
+  Object.values(storage.STORAGE_KEYS).forEach((key) => localStorage.removeItem(key))
 
   // --- Usuarios ---
   const admin = storage.insert<UserInterface>(storage.STORAGE_KEYS.users, {
@@ -52,6 +60,8 @@ export function seedDatabase(): void {
   })
 
   // --- Propiedades (2 por ciudad) ---
+  // Las coordenadas son las del barrio de cada inmueble, no las del centro de
+  // la ciudad: “Apartamento El Poblado” tiene que caer en El Poblado.
   const propertiesToSeed: CreatePropertyDTO[] = [
     {
       name: 'Apartamento El Poblado',
@@ -64,6 +74,8 @@ export function seedDatabase(): void {
       adminFee: 320000,
       otherFixedCosts: 250000,
       ownerId: null,
+      latitude: 6.2086,
+      longitude: -75.5676,
     },
     {
       name: 'Casa Laureles',
@@ -76,6 +88,8 @@ export function seedDatabase(): void {
       adminFee: 450000,
       otherFixedCosts: 380000,
       ownerId: null,
+      latitude: 6.2447,
+      longitude: -75.5963,
     },
     {
       name: 'Apartamento Chapinero',
@@ -88,6 +102,8 @@ export function seedDatabase(): void {
       adminFee: 280000,
       otherFixedCosts: 300000,
       ownerId: null,
+      latitude: 4.6418,
+      longitude: -74.0645,
     },
     {
       name: 'Casa Usaquén',
@@ -100,6 +116,8 @@ export function seedDatabase(): void {
       adminFee: 520000,
       otherFixedCosts: 420000,
       ownerId: null,
+      latitude: 4.6959,
+      longitude: -74.0305,
     },
     {
       name: 'Apartamento San Antonio',
@@ -112,6 +130,8 @@ export function seedDatabase(): void {
       adminFee: 210000,
       otherFixedCosts: 180000,
       ownerId: null,
+      latitude: 3.4455,
+      longitude: -76.5412,
     },
     {
       name: 'Finca La Loma',
@@ -124,6 +144,8 @@ export function seedDatabase(): void {
       adminFee: 600000,
       otherFixedCosts: 500000,
       ownerId: null,
+      latitude: 3.4181,
+      longitude: -76.5851,
     },
   ]
   // El usuario demo es dueño de las propiedades de Cali; el admin, del resto
@@ -301,11 +323,11 @@ export function seedDatabase(): void {
 }
 
 /**
- * Utilidad de desarrollo: borra las cuatro colecciones y vuelve a sembrar.
+ * Utilidad de desarrollo: vuelve a dejar la base como recién instalada.
  * Se invoca desde la consola del navegador cuando se quiere partir de cero.
+ * El borrado de las colecciones lo hace ya seedDatabase.
  */
 export function resetDatabase(): void {
-  Object.values(storage.STORAGE_KEYS).forEach((key) => localStorage.removeItem(key))
   localStorage.removeItem(SEED_FLAG)
   seedDatabase()
 }

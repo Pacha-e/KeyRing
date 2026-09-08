@@ -1,7 +1,12 @@
 <script setup lang="ts">
-// Mapa Leaflet con marcadores de las propiedades sembradas.
-// Coordenadas fijas por ciudad + pequeño desplazamiento para no superponer marcadores.
+// Mapa Leaflet con un marcador por propiedad.
+//
+// Cada inmueble se sitúa en sus propias coordenadas. Solo cuando no las tiene
+// se cae al centro de su ciudad, y en ese caso se desplaza un poco para no
+// taparse con otros inmuebles sin ubicar de esa misma ciudad.
+// Al pulsar un marcador se abre la ficha de esa propiedad.
 import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
@@ -15,6 +20,7 @@ import { useAuthStore } from '../stores/auth'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 
 const authStore = useAuthStore()
+const router = useRouter()
 
 // Fix de íconos por defecto de Leaflet con Vite
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
@@ -31,8 +37,9 @@ const CITY_COORDS: Record<string, [number, number]> = {
 }
 const FALLBACK: [number, number] = [4.711, -74.072] // Centro de Colombia aprox.
 
-// Cuánto se separa del centro de la ciudad cada marcador. Con menos de esto los
-// inmuebles de una misma ciudad se apilan y parece haber menos de los que hay.
+// Cuánto se separa del centro de la ciudad un inmueble sin coordenadas. Con
+// menos que esto los que caen en la misma ciudad se apilan y parece haber menos
+// de los que hay.
 const SPREAD_DEGREES = 0.09
 
 const mapEl = ref<HTMLElement | null>(null)
@@ -65,8 +72,29 @@ function buildPopup(property: PropertyInterface): HTMLElement {
   const estado = document.createElement('span')
   estado.textContent = `Estado: ${PropertyStatusLabel[property.status] ?? property.status}`
   contenedor.appendChild(estado)
+  contenedor.appendChild(document.createElement('br'))
+
+  const pista = document.createElement('span')
+  pista.textContent = 'Pulsa el marcador para abrir la ficha'
+  pista.className = 'text-slate-400'
+  contenedor.appendChild(pista)
 
   return contenedor
+}
+
+/**
+ * Dónde dibujar el marcador de una propiedad.
+ * @param property propiedad a situar
+ * @param unlocatedIndex cuántos inmuebles sin coordenadas van ya en su ciudad
+ * @returns par [latitud, longitud]
+ */
+function coordsFor(property: PropertyInterface, unlocatedIndex: number): [number, number] {
+  if (typeof property.latitude === 'number' && typeof property.longitude === 'number') {
+    return [property.latitude, property.longitude]
+  }
+  const base = CITY_COORDS[property.city] ?? FALLBACK
+  const angle = unlocatedIndex * (Math.PI / 3)
+  return [base[0] + Math.sin(angle) * SPREAD_DEGREES, base[1] + Math.cos(angle) * SPREAD_DEGREES]
 }
 
 onMounted(() => {
@@ -78,20 +106,30 @@ onMounted(() => {
     maxZoom: 19,
   }).addTo(map)
 
-  // Los inmuebles de una misma ciudad se reparten en círculo alrededor de su
-  // centro, en vez de en diagonal: así ninguno tapa a otro por muchos que haya.
-  const seen: Record<string, number> = {}
+  // Solo se lleva la cuenta de los inmuebles sin coordenadas: son los únicos
+  // que hay que repartir alrededor del centro de su ciudad.
+  const unlocatedByCity: Record<string, number> = {}
   const placed: [number, number][] = []
-  markedProperties.forEach((p) => {
-    const base = CITY_COORDS[p.city] ?? FALLBACK
-    const n = (seen[p.city] = (seen[p.city] ?? 0) + 1)
-    const angle = (n - 1) * (Math.PI / 3)
-    const coords: [number, number] = [
-      base[0] + Math.sin(angle) * SPREAD_DEGREES,
-      base[1] + Math.cos(angle) * SPREAD_DEGREES,
-    ]
+
+  markedProperties.forEach((property) => {
+    const hasOwnCoords =
+      typeof property.latitude === 'number' && typeof property.longitude === 'number'
+    const unlocatedIndex = hasOwnCoords
+      ? 0
+      : (unlocatedByCity[property.city] = (unlocatedByCity[property.city] ?? 0) + 1) - 1
+
+    const coords = coordsFor(property, unlocatedIndex)
     placed.push(coords)
-    L.marker(coords).addTo(map!).bindPopup(buildPopup(p))
+
+    const marker = L.marker(coords).addTo(map!).bindPopup(buildPopup(property))
+
+    // El popup se muestra al pasar por encima y el clic navega, que es lo que
+    // se espera de un marcador que representa algo con ficha propia.
+    marker.on('mouseover', () => marker.openPopup())
+    marker.on('mouseout', () => marker.closePopup())
+    marker.on('click', () => {
+      void router.push({ name: 'property-edit', params: { id: property.id } })
+    })
   })
 
   // Se encuadra sobre los marcadores en vez de dejar la vista fija: con la
@@ -112,7 +150,7 @@ onBeforeUnmount(() => {
   <section>
     <PageHeader
       title="Mapa de propiedades"
-      :subtitle="`${markedProperties.length} inmueble(s) ubicados de forma aproximada por ciudad`"
+      :subtitle="`${markedProperties.length} inmueble(s) en el mapa`"
     />
 
     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
@@ -120,9 +158,9 @@ onBeforeUnmount(() => {
     </div>
 
     <p class="mt-3 mb-0 text-sm text-slate-500">
-      Las coordenadas son el centro de cada ciudad con un pequeño desplazamiento, para que dos
-      inmuebles de la misma ciudad no queden uno encima del otro. Toca un marcador para ver la
-      dirección y el estado.
+      Pasa por encima de un marcador para ver la dirección y el estado, y púlsalo para abrir la
+      ficha de esa propiedad. Los inmuebles registrados sin coordenadas se sitúan cerca del centro
+      de su ciudad.
     </p>
   </section>
 </template>

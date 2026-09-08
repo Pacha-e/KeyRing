@@ -1,0 +1,136 @@
+- generic [ref=f43e3]:
+  - complementary [ref=f43e4]:
+    - link [ref=f43e6] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f43e7]
+      - text: KeyRing
+    - navigation [ref=f43e8]:
+      - link "Dashboard" [ref=f43e9] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Propiedades" [ref=f43e10] [cursor=pointer]:
+        - /url: /properties
+      - link "Contratos" [ref=f43e11] [cursor=pointer]:
+        - /url: /contracts
+      - link "Transacciones" [ref=f43e12] [cursor=pointer]:
+        - /url: /transactions
+      - link "Mapa" [ref=f43e13] [cursor=pointer]:
+        - /url: /map
+      - link "Reportes" [ref=f43e14] [cursor=pointer]:
+        - /url: /reports
+      - link "Usuarios" [ref=f43e15] [cursor=pointer]:
+        - /url: /admin/users
+    - generic [ref=f43e16]:
+      - generic [ref=f43e17]:
+        - generic [ref=f43e18]: A
+        - generic [ref=f43e19]: Admin KeyRing
+      - button "Salir" [ref=f43e20]
+  - main [ref=f43e21]:
+    - generic [ref=f43e22]:
+      - generic [ref=f43e23]:
+        - generic [ref=f43e24]:
+          - heading "Propiedades" [level=1] [ref=f43e25]
+          - paragraph [ref=f43e26]: 6 de 6 inmuebles en tu portafolio
+        - link "+ Nueva propiedad" [ref=f43e28] [cursor=pointer]:
+          - /url: /properties/new
+      - generic [ref=f43e29]:
+        - paragraph [ref=f43e30]: Filtros
+        - generic [ref=f43e31]:
+          - generic [ref=f43e32]:
+            - generic [ref=f43e33]: Ciudad
+            - combobox "Ciudad" [expanded] [active] [ref=f43e34]:
+              - generic [ref=f43e35]: Todos
+            - listbox "Ciudad" [ref=f43e38]:
+              - option "Todos" [selected] [ref=f43e39] [cursor=pointer]
+              - option "Bogotá" [ref=f43e42] [cursor=pointer]
+              - option "Cali" [ref=f43e43] [cursor=pointer]
+              - option "Medellín" [ref=f43e44] [cursor=pointer]
+          - generic [ref=f43e45]:
+            - generic [ref=f43e46]: Tipo
+            - combobox "Ciudad" [ref=f43e47]:
+              - generic [ref=f43e48]: Todos
+      - generic [ref=f43e51]:
+        - heading "Propiedades por tipo" [level=3] [ref=f43e53]
+        - heading "Ingreso estimado por ciudad" [level=3] [ref=f43e57]
+      - table [ref=f43e62]:
+        - rowgroup [ref=f43e63]:
+          - row [ref=f43e64]:
+            - columnheader "Nombre" [ref=f43e65]
+            - columnheader "Ciudad" [ref=f43e66]
+            - columnheader "Tipo" [ref=f43e67]
+            - columnheader "Modalidad" [ref=f43e68]
+            - columnheader "Estado" [ref=f43e69]
+            - columnheader "Arriendo estimado (COP)" [ref=f43e70]
+            - columnheader "Acciones" [ref=f43e71]
+        - rowgroup [ref=f43e72]:
+          - row [ref=f43e73]:
+            - cell "Apartamento El Poblado" [ref=f43e74]
+            - cell "Medellín" [ref=f43e75]
+            - cell "Apartamento" [ref=f43e76]
+            - cell "Airbnb" [ref=f43e77]
+            - cell "Activa" [ref=f43e78]
+            - cell "3.200.000" [ref=f43e79]
+            - cell [ref=f43e80]:
+              - generic [ref=f43e81]:
+                - link "Editar" [ref=f43e82] [cursor=pointer]:
+                  - /url: /properties/f762af75-9be1-401e-8005-57491d888d60/edit
+                - button "Eliminar" [ref=f43e83]
+          - row [ref=f43e84]:
+            - cell "Casa Laureles" [ref=f43e85]
+            - cell "Medellín" [ref=f43e86]
+            - cell "Casa" [ref=f43e87]
+            - cell "Ambos" [ref=f43e88]
+            - cell "Activa" [ref=f43e89]
+            - cell "4.500.000" [ref=f43e90]
+            - cell [ref=f43e91]:
+              - generic [ref=f43e92]:
+                - link "Editar" [ref=f43e93] [cursor=pointer]:
+                  - /url: /properties/f5bcf312-b53c-4ad1-b777-7607376e6000/edit
+                - button "Eliminar" [ref=f43e94]
+          - row [ref=f43e95]:
+            - cell "Apartamento Chapinero" [ref=f43e96]
+            - cell "Bogotá" [ref=f43e97]
+            - cell "Apartamento" [ref=f43e98]
+            - cell "Contrato fijo" [ref=f43e99]
+            - cell "Activa" [ref=f43e100]
+            - cell "2.800.000" [ref=f43e101]
+            - cell [ref=f43e102]:
+              - generic [ref=f43e103]:
+                - link "Editar" [ref=f43e104] [cursor=pointer]:
+                  - /url: /properties/a7c0c5bf-81b8-479b-982d-041c67a4f435/edit
+                - button "Eliminar" [ref=f43e105]
+          - row [ref=f43e106]:
+            - cell "Casa Usaquén" [ref=f43e107]
+            - cell "Bogotá" [ref=f43e108]
+            - cell "Casa" [ref=f43e109]
+            - cell "Ambos" [ref=f43e110]
+            - cell "Vacante" [ref=f43e111]
+            - cell "5.200.000" [ref=f43e112]
+            - cell [ref=f43e113]:
+              - generic [ref=f43e114]:
+                - link "Editar" [ref=f43e115] [cursor=pointer]:
+                  - /url: /properties/9824c937-9701-4cf9-b137-445c4ab6906a/edit
+                - button "Eliminar" [ref=f43e116]
+          - row [ref=f43e117]:
+            - cell "Apartamento San Antonio" [ref=f43e118]
+            - cell "Cali" [ref=f43e119]
+            - cell "Apartamento" [ref=f43e120]
+            - cell "Airbnb" [ref=f43e121]
+            - cell "Activa" [ref=f43e122]
+            - cell "2.100.000" [ref=f43e123]
+            - cell [ref=f43e124]:
+              - generic [ref=f43e125]:
+                - link "Editar" [ref=f43e126] [cursor=pointer]:
+                  - /url: /properties/1a703d5e-56df-49f9-8694-d1372e2a57e1/edit
+                - button "Eliminar" [ref=f43e127]
+          - row [ref=f43e128]:
+            - cell "Finca La Loma" [ref=f43e129]
+            - cell "Cali" [ref=f43e130]
+            - cell "Finca" [ref=f43e131]
+            - cell "Contrato fijo" [ref=f43e132]
+            - cell "Activa" [ref=f43e133]
+            - cell "6.000.000" [ref=f43e134]
+            - cell [ref=f43e135]:
+              - generic [ref=f43e136]:
+                - link "Editar" [ref=f43e137] [cursor=pointer]:
+                  - /url: /properties/8a257c72-e9fd-4e5c-998b-36172441e6ba/edit
+                - button "Eliminar" [ref=f43e138]

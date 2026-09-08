@@ -6,7 +6,6 @@ import { computed, ref } from 'vue'
 import PageHeader from '../components/PageHeader.vue'
 import StatCard from '../components/StatCard.vue'
 import ChartCard from '../components/ChartCard.vue'
-import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import * as propertyService from '../services/property.service'
 import * as contractService from '../services/contract.service'
@@ -91,13 +90,10 @@ const monthlyChart = computed<ChartData<'line'>>(() => {
   }
 })
 
-// Contratos que vencen antes: es lo primero que un propietario necesita ver
-const contractColumns: TableColumn[] = [
-  { key: 'propertyName', label: 'Propiedad' },
-  { key: 'endDate', label: 'Vence', align: 'right' },
-  { key: 'statusLabel', label: 'Estado' },
-]
-
+// Contratos que vencen antes: es lo primero que un propietario necesita ver.
+// Se pintan como lista y no como tabla porque el panel ocupa un tercio del
+// ancho y una tabla de tres columnas ahí dentro obligaba a desplazarse en
+// horizontal para leerla entera.
 const upcomingContracts = computed(() =>
   contracts.value
     .filter((contract) => contract.status === ContractStatus.ACTIVE)
@@ -166,19 +162,35 @@ const upcomingContracts = computed(() =>
         <p class="mt-0 mb-4 text-xs text-slate-500">
           Contratos activos, del más cercano al más lejano
         </p>
-        <DataTable
-          :columns="contractColumns"
-          :rows="upcomingContracts"
-          empty-message="No hay contratos activos"
-          empty-hint="Cuando registres uno, aparecerá aquí su fecha de vencimiento."
-        >
-          <template #cell-statusLabel="{ value, row }">
-            <StatusBadge
-              :label="String(value)"
-              :tone="CONTRACT_STATUS_TONE[row.status as ContractStatus]"
-            />
-          </template>
-        </DataTable>
+
+        <ul v-if="upcomingContracts.length > 0" class="m-0 flex list-none flex-col gap-2 p-0">
+          <li v-for="contract in upcomingContracts" :key="contract.id">
+            <router-link
+              class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 px-3 py-2.5 no-underline transition hover:border-primary hover:bg-primary/[0.04]"
+              :to="{ name: 'contract-edit', params: { id: contract.id } }"
+            >
+              <span class="min-w-0">
+                <span class="block truncate text-sm font-medium text-ink">
+                  {{ contract.propertyName }}
+                </span>
+                <span class="mt-0.5 block text-xs text-slate-500">
+                  Vence el {{ contract.endDate }}
+                </span>
+              </span>
+              <StatusBadge
+                :label="contract.statusLabel"
+                :tone="CONTRACT_STATUS_TONE[contract.status]"
+              />
+            </router-link>
+          </li>
+        </ul>
+
+        <div v-else class="rounded-lg border border-dashed border-slate-200 px-4 py-8 text-center">
+          <p class="m-0 text-sm font-medium text-slate-500">No hay contratos activos</p>
+          <p class="mt-1 mb-0 text-sm text-slate-400">
+            Cuando registres uno, aparecerá aquí su fecha de vencimiento.
+          </p>
+        </div>
       </div>
     </div>
   </section>

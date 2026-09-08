@@ -1,0 +1,69 @@
+- generic [ref=f41e3]:
+  - complementary [ref=f41e4]:
+    - link [ref=f41e6] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f41e7]
+      - text: KeyRing
+    - navigation [ref=f41e8]:
+      - link "Dashboard" [ref=f41e9] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Propiedades" [ref=f41e10] [cursor=pointer]:
+        - /url: /properties
+      - link "Contratos" [ref=f41e11] [cursor=pointer]:
+        - /url: /contracts
+      - link "Transacciones" [ref=f41e12] [cursor=pointer]:
+        - /url: /transactions
+      - link "Mapa" [ref=f41e13] [cursor=pointer]:
+        - /url: /map
+      - link "Reportes" [ref=f41e14] [cursor=pointer]:
+        - /url: /reports
+      - link "Usuarios" [ref=f41e15] [cursor=pointer]:
+        - /url: /admin/users
+    - generic [ref=f41e16]:
+      - generic [ref=f41e17]:
+        - generic [ref=f41e18]: A
+        - generic [ref=f41e19]: Admin KeyRing
+      - button "Salir" [ref=f41e20]
+  - main [ref=f41e21]:
+    - generic [ref=f41e22]:
+      - heading "Nueva propiedad" [level=1] [ref=f41e23]
+      - paragraph [ref=f41e24]: Datos del inmueble, su modalidad de arriendo y sus costos fijos.
+      - generic [ref=f41e25]:
+        - generic [ref=f41e26]:
+          - generic [ref=f41e27]: Nombre
+          - textbox "Nombre" [ref=f41e28]
+        - generic [ref=f41e29]:
+          - generic [ref=f41e30]: Dirección
+          - textbox "Dirección" [ref=f41e31]
+        - generic [ref=f41e32]:
+          - generic [ref=f41e33]: Ciudad
+          - textbox "Ciudad" [ref=f41e34]
+        - generic [ref=f41e35]:
+          - generic [ref=f41e36]: Tipo
+          - combobox "Tipo" [ref=f41e37]:
+            - generic [ref=f41e38]: Apartamento
+        - generic [ref=f41e41]:
+          - generic [ref=f41e42]: Modalidad de arriendo
+          - combobox "Tipo" [expanded] [active] [ref=f41e43]:
+            - generic [ref=f41e44]: Airbnb
+          - listbox "Tipo" [ref=f41e47]:
+            - option "Airbnb" [selected] [ref=f41e48] [cursor=pointer]
+            - option "Contrato fijo" [ref=f41e51] [cursor=pointer]
+            - option "Ambos" [ref=f41e52] [cursor=pointer]
+        - generic [ref=f41e53]:
+          - generic [ref=f41e54]: Estado
+          - combobox "Tipo" [ref=f41e55]:
+            - generic [ref=f41e56]: Vacante
+        - generic [ref=f41e59]:
+          - generic [ref=f41e60]: Arriendo mensual estimado (COP)
+          - spinbutton "Arriendo mensual estimado (COP)" [ref=f41e61]: "0"
+        - generic [ref=f41e62]:
+          - generic [ref=f41e63]: Cuota de administración (COP)
+          - spinbutton "Cuota de administración (COP)" [ref=f41e64]: "0"
+        - generic [ref=f41e65]:
+          - generic [ref=f41e66]: Otros costos fijos (COP)
+          - spinbutton "Otros costos fijos (COP)" [ref=f41e67]: "0"
+        - generic [ref=f41e68]:
+          - button "Guardar" [ref=f41e69]
+          - link "Cancelar" [ref=f41e70] [cursor=pointer]:
+            - /url: /properties

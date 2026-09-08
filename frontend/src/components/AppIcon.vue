@@ -3,7 +3,8 @@
 // todas las pantallas usen el mismo grosor y el mismo tamaño, y para que el
 // color lo herede del texto que los rodea en vez de venir fijo como pasaría
 // con un emoji.
-export type IconName = 'home' | 'contract' | 'income' | 'balance' | 'map' | 'users' | 'arrow'
+export type IconName =
+  'home' | 'contract' | 'income' | 'balance' | 'map' | 'users' | 'arrow' | 'chevron' | 'check'
 
 const props = withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 20 })
 
@@ -20,6 +21,8 @@ const PATHS: Record<IconName, string> = {
   users:
     'M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20M9.5 10.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM21 20v-1.5a4 4 0 0 0-3-3.87M16.5 3.63a4 4 0 0 1 0 7.75',
   arrow: 'M5 12h14M13 6l6 6-6 6',
+  chevron: 'm6 9 6 6 6-6',
+  check: 'm5 13 4 4 10-10',
 }
 
 const path = PATHS[props.name]

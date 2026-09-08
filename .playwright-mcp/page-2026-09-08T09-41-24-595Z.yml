@@ -1,0 +1,27 @@
+- generic [ref=f42e3]:
+  - complementary [ref=f42e4]:
+    - link [ref=f42e6] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f42e7]
+      - text: KeyRing
+    - navigation [ref=f42e8]:
+      - link "Dashboard" [ref=f42e9] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Propiedades" [ref=f42e10] [cursor=pointer]:
+        - /url: /properties
+      - link "Contratos" [ref=f42e11] [cursor=pointer]:
+        - /url: /contracts
+      - link "Transacciones" [ref=f42e12] [cursor=pointer]:
+        - /url: /transactions
+      - link "Mapa" [ref=f42e13] [cursor=pointer]:
+        - /url: /map
+      - link "Reportes" [ref=f42e14] [cursor=pointer]:
+        - /url: /reports
+      - link "Usuarios" [ref=f42e15] [cursor=pointer]:
+        - /url: /admin/users
+    - generic [ref=f42e16]:
+      - generic [ref=f42e17]:
+        - generic [ref=f42e18]: A
+        - generic [ref=f42e19]: Admin KeyRing
+      - button "Salir" [ref=f42e20]
+  - main [ref=f42e21]

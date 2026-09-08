@@ -4,6 +4,7 @@
 import { computed, reactive, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
+import SelectField from '../components/SelectField.vue'
 import FilterBar from '../components/FilterBar.vue'
 import PageHeader from '../components/PageHeader.vue'
 import StatusBadge from '../components/StatusBadge.vue'
@@ -46,14 +47,14 @@ const selectedType = ref('')
 const selectedSource = ref('')
 const selectedMonth = ref('')
 
-const typeFilterOptions: SelectOption[] = Object.values(TransactionType).map((type) => ({
-  value: type,
-  label: TransactionTypeLabel[type],
-}))
-const sourceFilterOptions: SelectOption[] = Object.values(TransactionSource).map((source) => ({
-  value: source,
-  label: TransactionSourceLabel[source],
-}))
+// Se tipan con el enum del dominio y no con SelectOption a secas: así lo que
+// devuelve el selector sigue siendo un TransactionType y no una cadena suelta.
+const typeFilterOptions: SelectOption<TransactionType>[] = Object.values(TransactionType).map(
+  (type) => ({ value: type, label: TransactionTypeLabel[type] }),
+)
+const sourceFilterOptions: SelectOption<TransactionSource>[] = Object.values(TransactionSource).map(
+  (source) => ({ value: source, label: TransactionSourceLabel[source] }),
+)
 const monthFilterOptions = computed(() =>
   listMonthsPresent(visibleTransactions.value).slice().reverse(),
 )
@@ -135,7 +136,7 @@ const isFormVisible = ref(false)
 const editingTransactionId = ref<string | null>(null)
 const formError = ref('')
 
-const propertySelectOptions = computed<SelectOption[]>(() =>
+const propertySelectOptions = computed<SelectOption<string>[]>(() =>
   visibleProperties.value.map((property) => ({ value: property.id, label: property.name })),
 )
 
@@ -246,48 +247,35 @@ function deleteTransaction(transactionId: string): void {
       <h2 class="font-brand col-span-full m-0 text-lg font-semibold text-ink">
         {{ editingTransactionId ? 'Editar transacción' : 'Nueva transacción' }}
       </h2>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Propiedad</span>
-        <select v-model="transactionForm.propertyId" class="field-input">
-          <option v-for="option in propertySelectOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Tipo</span>
-        <select v-model="transactionForm.type" class="field-input">
-          <option v-for="option in typeFilterOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Fuente</span>
-        <select v-model="transactionForm.source" class="field-input">
-          <option v-for="option in sourceFilterOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Monto (COP)</span>
+      <SelectField
+        v-model="transactionForm.propertyId"
+        label="Propiedad"
+        :options="propertySelectOptions"
+      />
+      <SelectField v-model="transactionForm.type" label="Tipo" :options="typeFilterOptions" />
+      <SelectField v-model="transactionForm.source" label="Fuente" :options="sourceFilterOptions" />
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Monto (COP)</span>
         <input v-model.number="transactionForm.amount" type="number" min="0" class="field-input" />
       </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Fecha</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Fecha</span>
         <input v-model="transactionForm.date" type="date" class="field-input" />
       </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Descripción</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Descripción</span>
         <input v-model="transactionForm.description" class="field-input" />
       </label>
 
-      <p v-if="formError" aria-live="polite" class="col-span-full text-sm text-red-600">
+      <p
+        v-if="formError"
+        aria-live="polite"
+        class="col-span-full m-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+      >
         {{ formError }}
       </p>
 
-      <div class="col-span-full flex gap-3">
+      <div class="col-span-full mt-2 flex gap-3 border-t border-slate-200 pt-5">
         <button
           class="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-dark"
           type="submit"

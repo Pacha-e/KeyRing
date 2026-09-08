@@ -2,6 +2,7 @@
 // Formulario de propiedad: sirve para crear (/properties/new) y editar (/properties/:id/edit).
 import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import SelectField, { type SelectOption } from '../components/SelectField.vue'
 import * as propertyService from '../services/property.service'
 import {
   PropertyType,
@@ -62,9 +63,19 @@ function loadFormFromRoute(): void {
 // Recargar también al navegar entre /properties/:id/edit sin desmontar la vista
 watch(propertyId, loadFormFromRoute, { immediate: true })
 
-const typeOptions = Object.values(PropertyType)
-const modeOptions = Object.values(RentalMode)
-const statusOptions = Object.values(PropertyStatus)
+// Las opciones llevan ya su etiqueta en español: el selector solo dibuja lo que
+// se le pasa y no tiene que conocer las tablas de traducción del dominio.
+const typeOptions: SelectOption<PropertyType>[] = Object.values(PropertyType).map((type) => ({
+  value: type,
+  label: PropertyTypeLabel[type],
+}))
+const modeOptions: SelectOption<RentalMode>[] = Object.values(RentalMode).map((mode) => ({
+  value: mode,
+  label: RentalModeLabel[mode],
+}))
+const statusOptions: SelectOption<PropertyStatus>[] = Object.values(PropertyStatus).map(
+  (status) => ({ value: status, label: PropertyStatusLabel[status] }),
+)
 
 /**
  * Valida las reglas de negocio de la propiedad.
@@ -101,48 +112,40 @@ function saveProperty(): void {
 </script>
 
 <template>
-  <section class="max-w-xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+  <section
+    class="mx-auto max-w-3xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+  >
     <h1 class="font-brand mt-0 mb-1 text-2xl font-semibold text-ink">
       {{ isEditing ? 'Editar propiedad' : 'Nueva propiedad' }}
     </h1>
     <p class="mt-0 mb-6 text-sm text-slate-500">
       Datos del inmueble, su modalidad de arriendo y sus costos fijos.
     </p>
-    <form @submit.prevent="saveProperty">
-      <label class="mb-4 flex flex-col gap-1">
-        <span class="text-sm font-medium">Nombre</span>
+
+    <form class="grid gap-4 sm:grid-cols-2" @submit.prevent="saveProperty">
+      <label class="col-span-full flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Nombre</span>
         <input v-model="propertyForm.name" required class="field-input" />
       </label>
-      <label class="mb-4 flex flex-col gap-1">
-        <span class="text-sm font-medium">Dirección</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Dirección</span>
         <input v-model="propertyForm.address" required class="field-input" />
       </label>
-      <label class="mb-4 flex flex-col gap-1">
-        <span class="text-sm font-medium">Ciudad</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Ciudad</span>
         <input v-model="propertyForm.city" required class="field-input" />
       </label>
-      <label class="mb-4 flex flex-col gap-1">
-        <span class="text-sm font-medium">Tipo</span>
-        <select v-model="propertyForm.type" class="field-input">
-          <option v-for="t in typeOptions" :key="t" :value="t">{{ PropertyTypeLabel[t] }}</option>
-        </select>
-      </label>
-      <label class="mb-4 flex flex-col gap-1">
-        <span class="text-sm font-medium">Modalidad de arriendo</span>
-        <select v-model="propertyForm.rentalMode" class="field-input">
-          <option v-for="m in modeOptions" :key="m" :value="m">{{ RentalModeLabel[m] }}</option>
-        </select>
-      </label>
-      <label class="mb-4 flex flex-col gap-1">
-        <span class="text-sm font-medium">Estado</span>
-        <select v-model="propertyForm.status" class="field-input">
-          <option v-for="s in statusOptions" :key="s" :value="s">
-            {{ PropertyStatusLabel[s] }}
-          </option>
-        </select>
-      </label>
-      <label class="mb-4 flex flex-col gap-1">
-        <span class="text-sm font-medium">Arriendo mensual estimado (COP)</span>
+
+      <SelectField v-model="propertyForm.type" label="Tipo" :options="typeOptions" />
+      <SelectField
+        v-model="propertyForm.rentalMode"
+        label="Modalidad de arriendo"
+        :options="modeOptions"
+      />
+      <SelectField v-model="propertyForm.status" label="Estado" :options="statusOptions" />
+
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Arriendo mensual estimado (COP)</span>
         <input
           v-model.number="propertyForm.estimatedMonthlyRent"
           type="number"
@@ -150,12 +153,12 @@ function saveProperty(): void {
           class="field-input"
         />
       </label>
-      <label class="mb-4 flex flex-col gap-1">
-        <span class="text-sm font-medium">Cuota de administración (COP)</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Cuota de administración (COP)</span>
         <input v-model.number="propertyForm.adminFee" type="number" min="0" class="field-input" />
       </label>
-      <label class="mb-4 flex flex-col gap-1">
-        <span class="text-sm font-medium">Otros costos fijos (COP)</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Otros costos fijos (COP)</span>
         <input
           v-model.number="propertyForm.otherFixedCosts"
           type="number"
@@ -163,17 +166,24 @@ function saveProperty(): void {
           class="field-input"
         />
       </label>
-      <p v-if="formError" aria-live="polite" class="mb-4 text-sm text-red-600">{{ formError }}</p>
 
-      <div class="flex gap-3">
+      <p
+        v-if="formError"
+        aria-live="polite"
+        class="col-span-full m-0 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+      >
+        {{ formError }}
+      </p>
+
+      <div class="col-span-full mt-2 flex gap-3 border-t border-slate-200 pt-5">
         <button
-          class="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-dark"
+          class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-dark"
           type="submit"
         >
           Guardar
         </button>
         <router-link
-          class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 no-underline hover:bg-slate-50"
+          class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 no-underline transition hover:bg-slate-50"
           :to="{ name: 'properties' }"
         >
           Cancelar

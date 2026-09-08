@@ -1,0 +1,65 @@
+- generic [ref=f42e3]:
+  - complementary [ref=f42e4]:
+    - link [ref=f42e6] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f42e7]
+      - text: KeyRing
+    - navigation [ref=f42e8]:
+      - link "Dashboard" [ref=f42e9] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Propiedades" [ref=f42e10] [cursor=pointer]:
+        - /url: /properties
+      - link "Contratos" [ref=f42e11] [cursor=pointer]:
+        - /url: /contracts
+      - link "Transacciones" [ref=f42e12] [cursor=pointer]:
+        - /url: /transactions
+      - link "Mapa" [ref=f42e13] [cursor=pointer]:
+        - /url: /map
+      - link "Reportes" [ref=f42e14] [cursor=pointer]:
+        - /url: /reports
+      - link "Usuarios" [ref=f42e15] [cursor=pointer]:
+        - /url: /admin/users
+    - generic [ref=f42e16]:
+      - generic [ref=f42e17]:
+        - generic [ref=f42e18]: A
+        - generic [ref=f42e19]: Admin KeyRing
+      - button "Salir" [ref=f42e20]
+  - main [ref=f42e21]:
+    - generic [ref=f42e22]:
+      - heading "Editar propiedad" [level=1] [ref=f42e23]
+      - paragraph [ref=f42e24]: Datos del inmueble, su modalidad de arriendo y sus costos fijos.
+      - generic [ref=f42e25]:
+        - generic [ref=f42e26]:
+          - generic [ref=f42e27]: Nombre
+          - textbox "Nombre" [ref=f42e28]: Apartamento El Poblado
+        - generic [ref=f42e29]:
+          - generic [ref=f42e30]: Dirección
+          - textbox "Dirección" [ref=f42e31]: "Cra 43A #10-25"
+        - generic [ref=f42e32]:
+          - generic [ref=f42e33]: Ciudad
+          - textbox "Ciudad" [ref=f42e34]: Medellín
+        - generic [ref=f42e35]:
+          - generic [ref=f42e36]: Tipo
+          - combobox "Tipo" [ref=f42e37]:
+            - generic [ref=f42e38]: Apartamento
+        - generic [ref=f42e41]:
+          - generic [ref=f42e42]: Modalidad de arriendo
+          - combobox "Tipo" [ref=f42e43]:
+            - generic [ref=f42e44]: Airbnb
+        - generic [ref=f42e47]:
+          - generic [ref=f42e48]: Estado
+          - combobox "Tipo" [ref=f42e49]:
+            - generic [ref=f42e50]: Activa
+        - generic [ref=f42e53]:
+          - generic [ref=f42e54]: Arriendo mensual estimado (COP)
+          - spinbutton "Arriendo mensual estimado (COP)" [ref=f42e55]: "3200000"
+        - generic [ref=f42e56]:
+          - generic [ref=f42e57]: Cuota de administración (COP)
+          - spinbutton "Cuota de administración (COP)" [ref=f42e58]: "320000"
+        - generic [ref=f42e59]:
+          - generic [ref=f42e60]: Otros costos fijos (COP)
+          - spinbutton "Otros costos fijos (COP)" [ref=f42e61]: "250000"
+        - generic [ref=f42e62]:
+          - button "Guardar" [ref=f42e63]
+          - link "Cancelar" [ref=f42e64] [cursor=pointer]:
+            - /url: /properties

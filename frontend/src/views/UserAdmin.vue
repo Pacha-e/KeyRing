@@ -5,6 +5,7 @@
 import { computed, reactive, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
+import SelectField from '../components/SelectField.vue'
 import FilterBar from '../components/FilterBar.vue'
 import PageHeader from '../components/PageHeader.vue'
 import StatusBadge from '../components/StatusBadge.vue'
@@ -30,7 +31,9 @@ function reloadFromStorage(): void {
 // asi la primera pintada ya trae los datos en vez de una tabla vacia.
 reloadFromStorage()
 
-const roleFilterOptions: SelectOption[] = Object.values(UserRole).map((role) => ({
+// Se tipan con el enum del dominio y no con SelectOption a secas: así lo que
+// devuelve el selector sigue siendo un UserRole y no una cadena suelta.
+const roleFilterOptions: SelectOption<UserRole>[] = Object.values(UserRole).map((role) => ({
   value: role,
   label: UserRoleLabel[role],
 }))
@@ -206,16 +209,16 @@ function deleteUser(userId: string, fullName: string): void {
       <h2 class="font-brand col-span-full m-0 text-lg font-semibold text-ink">
         {{ editingUserId ? 'Editar usuario' : 'Nuevo usuario' }}
       </h2>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Nombre completo</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Nombre completo</span>
         <input v-model="userForm.fullName" class="field-input" />
       </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Correo</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Correo</span>
         <input v-model="userForm.email" type="email" class="field-input" />
       </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Contraseña</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Contraseña</span>
         <input
           v-model="userForm.password"
           type="password"
@@ -223,24 +226,17 @@ function deleteUser(userId: string, fullName: string): void {
           class="field-input"
         />
       </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Teléfono</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Teléfono</span>
         <input v-model="userForm.phone" class="field-input" />
       </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Ciudad</span>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium text-ink">Ciudad</span>
         <input v-model="userForm.city" class="field-input" />
       </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-sm font-medium">Rol</span>
-        <select v-model="userForm.role" class="field-input">
-          <option v-for="option in roleFilterOptions" :key="option.value" :value="option.value">
-            {{ option.label }}
-          </option>
-        </select>
-      </label>
+      <SelectField v-model="userForm.role" label="Rol" :options="roleFilterOptions" />
 
-      <div class="col-span-full flex gap-3">
+      <div class="col-span-full mt-2 flex gap-3 border-t border-slate-200 pt-5">
         <button
           class="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-dark"
           type="submit"
