@@ -1,0 +1,9 @@
+- generic [ref=f12e3]:
+  - complementary [ref=f12e4]:
+    - link [ref=f12e6] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f12e7]
+      - text: KeyRing
+    - link "Ingresar" [ref=f12e10] [cursor=pointer]:
+      - /url: /login
+  - main [ref=f12e11]

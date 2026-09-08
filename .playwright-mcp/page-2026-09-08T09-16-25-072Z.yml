@@ -1,0 +1,15 @@
+- generic [ref=f11e3]:
+  - complementary [ref=f11e4]:
+    - link [ref=f11e6] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f11e7]
+      - text: KeyRing
+    - link "Ingresar" [ref=f11e10] [cursor=pointer]:
+      - /url: /login
+  - main [ref=f11e11]:
+    - generic [ref=f11e12]:
+      - paragraph [ref=f11e13]: "404"
+      - heading "Página no encontrada" [level=1] [ref=f11e14]
+      - paragraph [ref=f11e15]: La ruta que buscas no existe o cambió de sitio.
+      - link "Volver al inicio" [ref=f11e16] [cursor=pointer]:
+        - /url: /

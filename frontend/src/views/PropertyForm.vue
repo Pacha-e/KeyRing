@@ -66,9 +66,6 @@ const typeOptions = Object.values(PropertyType)
 const modeOptions = Object.values(RentalMode)
 const statusOptions = Object.values(PropertyStatus)
 
-const inputClasses =
-  'rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary'
-
 /**
  * Valida las reglas de negocio de la propiedad.
  * @returns mensaje de error en español, o null si el formulario es válido
@@ -104,38 +101,41 @@ function saveProperty(): void {
 </script>
 
 <template>
-  <section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-    <h1 class="mb-4 text-2xl font-bold">
+  <section class="max-w-xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h1 class="font-brand mt-0 mb-1 text-2xl font-semibold text-ink">
       {{ isEditing ? 'Editar propiedad' : 'Nueva propiedad' }}
     </h1>
+    <p class="mt-0 mb-6 text-sm text-slate-500">
+      Datos del inmueble, su modalidad de arriendo y sus costos fijos.
+    </p>
     <form @submit.prevent="saveProperty">
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Nombre</span>
-        <input v-model="propertyForm.name" required :class="inputClasses" />
+        <input v-model="propertyForm.name" required class="field-input" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Dirección</span>
-        <input v-model="propertyForm.address" required :class="inputClasses" />
+        <input v-model="propertyForm.address" required class="field-input" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Ciudad</span>
-        <input v-model="propertyForm.city" required :class="inputClasses" />
+        <input v-model="propertyForm.city" required class="field-input" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Tipo</span>
-        <select v-model="propertyForm.type" :class="inputClasses">
+        <select v-model="propertyForm.type" class="field-input">
           <option v-for="t in typeOptions" :key="t" :value="t">{{ PropertyTypeLabel[t] }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Modalidad de arriendo</span>
-        <select v-model="propertyForm.rentalMode" :class="inputClasses">
+        <select v-model="propertyForm.rentalMode" class="field-input">
           <option v-for="m in modeOptions" :key="m" :value="m">{{ RentalModeLabel[m] }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Estado</span>
-        <select v-model="propertyForm.status" :class="inputClasses">
+        <select v-model="propertyForm.status" class="field-input">
           <option v-for="s in statusOptions" :key="s" :value="s">
             {{ PropertyStatusLabel[s] }}
           </option>
@@ -147,12 +147,12 @@ function saveProperty(): void {
           v-model.number="propertyForm.estimatedMonthlyRent"
           type="number"
           min="0"
-          :class="inputClasses"
+          class="field-input"
         />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Cuota de administración (COP)</span>
-        <input v-model.number="propertyForm.adminFee" type="number" min="0" :class="inputClasses" />
+        <input v-model.number="propertyForm.adminFee" type="number" min="0" class="field-input" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Otros costos fijos (COP)</span>
@@ -160,7 +160,7 @@ function saveProperty(): void {
           v-model.number="propertyForm.otherFixedCosts"
           type="number"
           min="0"
-          :class="inputClasses"
+          class="field-input"
         />
       </label>
       <p v-if="formError" aria-live="polite" class="mb-4 text-sm text-red-600">{{ formError }}</p>

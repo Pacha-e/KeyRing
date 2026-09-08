@@ -17,6 +17,14 @@ import {
   sumIncomeForCurrentMonth,
   summarizeTransactions,
 } from '../utils/finance'
+import { formatCOP } from '../utils/format'
+import {
+  CHART_EXPENSE,
+  CHART_EXPENSE_FILL,
+  CHART_INCOME,
+  CHART_INCOME_FILL,
+} from '../config/chart.config'
+import { CONTRACT_STATUS_TONE } from '../utils/badges'
 import {
   ContractStatus,
   ContractStatusLabel,
@@ -53,19 +61,6 @@ const vacantCount = computed(
   () => properties.value.filter((property) => property.status === PropertyStatus.VACANT).length,
 )
 
-/**
- * Formatea un monto en pesos colombianos.
- * @param amount monto a formatear
- * @returns el monto como texto en formato COP, sin decimales
- */
-function formatCOP(amount: number): string {
-  return amount.toLocaleString('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  })
-}
-
 // Evolución mensual: la misma lectura de los reportes, resumida
 const monthlyChart = computed<ChartData<'line'>>(() => {
   const months = listMonthsPresent(transactions.value)
@@ -74,8 +69,8 @@ const monthlyChart = computed<ChartData<'line'>>(() => {
     datasets: [
       {
         label: 'Ingresos',
-        borderColor: '#16a34a',
-        backgroundColor: '#16a34a22',
+        borderColor: CHART_INCOME,
+        backgroundColor: CHART_INCOME_FILL,
         fill: true,
         tension: 0.3,
         data: months.map((month) =>
@@ -84,8 +79,8 @@ const monthlyChart = computed<ChartData<'line'>>(() => {
       },
       {
         label: 'Gastos',
-        borderColor: '#dc2626',
-        backgroundColor: '#dc262622',
+        borderColor: CHART_EXPENSE,
+        backgroundColor: CHART_EXPENSE_FILL,
         fill: true,
         tension: 0.3,
         data: months.map((month) =>
@@ -99,7 +94,7 @@ const monthlyChart = computed<ChartData<'line'>>(() => {
 // Contratos que vencen antes: es lo primero que un propietario necesita ver
 const contractColumns: TableColumn[] = [
   { key: 'propertyName', label: 'Propiedad' },
-  { key: 'endDate', label: 'Vence' },
+  { key: 'endDate', label: 'Vence', align: 'right' },
   { key: 'statusLabel', label: 'Estado' },
 ]
 
@@ -114,6 +109,7 @@ const upcomingContracts = computed(() =>
       propertyName:
         properties.value.find((property) => property.id === contract.propertyId)?.name ?? '—',
       endDate: contract.endDate,
+      status: contract.status,
       statusLabel: ContractStatusLabel[contract.status],
     })),
 )
@@ -170,9 +166,17 @@ const upcomingContracts = computed(() =>
         <p class="mt-0 mb-4 text-xs text-slate-500">
           Contratos activos, del más cercano al más lejano
         </p>
-        <DataTable :columns="contractColumns" :rows="upcomingContracts">
-          <template #cell-statusLabel="{ value }">
-            <StatusBadge :label="String(value)" tone="green" />
+        <DataTable
+          :columns="contractColumns"
+          :rows="upcomingContracts"
+          empty-message="No hay contratos activos"
+          empty-hint="Cuando registres uno, aparecerá aquí su fecha de vencimiento."
+        >
+          <template #cell-statusLabel="{ value, row }">
+            <StatusBadge
+              :label="String(value)"
+              :tone="CONTRACT_STATUS_TONE[row.status as ContractStatus]"
+            />
           </template>
         </DataTable>
       </div>

@@ -34,6 +34,25 @@ h3 {
   font-family: var(--font-serif);
 }
 
+/* Campo de formulario. Se define aquí porque el mismo conjunto de clases se
+   repetía en los cuatro formularios del proyecto: así el día que cambie el
+   estilo de un input, cambia en todos a la vez. Los colores van literales
+   —slate-300 y el terracota de la marca— para no depender de que Tailwind
+   exponga esas variables. */
+.field-input {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  background-color: #fff;
+  color: var(--color-ink);
+}
+
+.field-input:focus {
+  outline: 2px solid var(--color-primary);
+}
+
 /* Leaflet necesita altura explícita en el contenedor del mapa */
 .map-container {
   height: 480px;

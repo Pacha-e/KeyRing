@@ -1,0 +1,33 @@
+- generic [ref=f14e3]:
+  - complementary [ref=f14e4]:
+    - link [ref=f14e6] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f14e7]
+      - text: KeyRing
+    - navigation [ref=f14e8]:
+      - link "Dashboard" [ref=f14e9] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Propiedades" [ref=f14e10] [cursor=pointer]:
+        - /url: /properties
+      - link "Contratos" [ref=f14e11] [cursor=pointer]:
+        - /url: /contracts
+      - link "Transacciones" [ref=f14e12] [cursor=pointer]:
+        - /url: /transactions
+      - link "Mapa" [ref=f14e13] [cursor=pointer]:
+        - /url: /map
+      - link "Reportes" [ref=f14e14] [cursor=pointer]:
+        - /url: /reports
+      - link "Usuarios" [ref=f14e15] [cursor=pointer]:
+        - /url: /admin/users
+    - generic [ref=f14e16]:
+      - generic [ref=f14e17]:
+        - generic [ref=f14e18]: A
+        - generic [ref=f14e19]: Admin KeyRing
+      - button "Salir" [ref=f14e20]
+  - main [ref=f14e21]:
+    - generic [ref=f14e22]:
+      - paragraph [ref=f14e23]: "404"
+      - heading "Página no encontrada" [level=1] [ref=f14e24]
+      - paragraph [ref=f14e25]: La ruta que buscas no existe o cambió de sitio.
+      - link "Volver al inicio" [ref=f14e26] [cursor=pointer]:
+        - /url: /

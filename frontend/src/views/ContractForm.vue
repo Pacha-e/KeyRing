@@ -85,14 +85,16 @@ function saveContract(): void {
   }
   router.push({ name: 'contracts' })
 }
-
-const inputClasses =
-  'rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary'
 </script>
 
 <template>
-  <section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-    <h1 class="mb-4 text-2xl font-bold">{{ isEditing ? 'Editar contrato' : 'Nuevo contrato' }}</h1>
+  <section class="max-w-xl rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+    <h1 class="font-brand mt-0 mb-1 text-2xl font-semibold text-ink">
+      {{ isEditing ? 'Editar contrato' : 'Nuevo contrato' }}
+    </h1>
+    <p class="mt-0 mb-6 text-sm text-slate-500">
+      Arrendatario, canon y vigencia del acuerdo sobre una propiedad.
+    </p>
 
     <p v-if="properties.length === 0" class="text-slate-500">
       Primero registra una propiedad para poder crear contratos.
@@ -101,38 +103,33 @@ const inputClasses =
     <form v-else @submit.prevent="saveContract">
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Propiedad</span>
-        <select v-model="contractForm.propertyId" :class="inputClasses">
+        <select v-model="contractForm.propertyId" class="field-input">
           <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Arrendatario</span>
-        <input v-model="contractForm.tenantName" required :class="inputClasses" />
+        <input v-model="contractForm.tenantName" required class="field-input" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Contacto del arrendatario</span>
-        <input v-model="contractForm.tenantContact" required :class="inputClasses" />
+        <input v-model="contractForm.tenantContact" required class="field-input" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Canon mensual (COP)</span>
-        <input
-          v-model.number="contractForm.fixedRent"
-          type="number"
-          min="0"
-          :class="inputClasses"
-        />
+        <input v-model.number="contractForm.fixedRent" type="number" min="0" class="field-input" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Fecha de inicio</span>
-        <input v-model="contractForm.startDate" type="date" required :class="inputClasses" />
+        <input v-model="contractForm.startDate" type="date" required class="field-input" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Fecha de fin</span>
-        <input v-model="contractForm.endDate" type="date" required :class="inputClasses" />
+        <input v-model="contractForm.endDate" type="date" required class="field-input" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Estado</span>
-        <select v-model="contractForm.status" :class="inputClasses">
+        <select v-model="contractForm.status" class="field-input">
           <option v-for="s in statusOptions" :key="s" :value="s">
             {{ ContractStatusLabel[s] }}
           </option>

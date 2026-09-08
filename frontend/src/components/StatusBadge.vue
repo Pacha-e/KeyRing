@@ -2,7 +2,7 @@
 // Badge de color reutilizable para valores de estado en tablas (Activa, Vacante, Airbnb, etc.)
 import { computed, type PropType } from 'vue'
 
-export type BadgeTone = 'green' | 'gray' | 'dark' | 'blue' | 'red' | 'purple'
+export type BadgeTone = 'green' | 'gray' | 'dark' | 'blue' | 'red' | 'purple' | 'primary'
 
 const props = defineProps({
   label: { type: String, required: true },
@@ -18,6 +18,7 @@ const toneClass = computed(
       blue: 'bg-blue-100 text-blue-800',
       red: 'bg-red-100 text-red-800',
       purple: 'bg-purple-100 text-purple-800',
+      primary: 'bg-primary/10 text-primary-dark',
     })[props.tone],
 )
 </script>

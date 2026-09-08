@@ -1,0 +1,78 @@
+- generic [ref=f14e3]:
+  - complementary [ref=f14e4]:
+    - link [ref=f14e6] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f14e7]
+      - text: KeyRing
+    - navigation [ref=f14e8]:
+      - link "Dashboard" [ref=f14e9] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Propiedades" [ref=f14e10] [cursor=pointer]:
+        - /url: /properties
+      - link "Contratos" [ref=f14e11] [cursor=pointer]:
+        - /url: /contracts
+      - link "Transacciones" [ref=f14e12] [cursor=pointer]:
+        - /url: /transactions
+      - link "Mapa" [ref=f14e13] [cursor=pointer]:
+        - /url: /map
+      - link "Reportes" [ref=f14e14] [cursor=pointer]:
+        - /url: /reports
+      - link "Usuarios" [active] [ref=f14e15] [cursor=pointer]:
+        - /url: /admin/users
+    - generic [ref=f14e16]:
+      - generic [ref=f14e17]:
+        - generic [ref=f14e18]: A
+        - generic [ref=f14e19]: Admin KeyRing
+      - button "Salir" [ref=f14e20]
+  - main [ref=f14e21]:
+    - generic [ref=f14e27]:
+      - generic [ref=f14e28]:
+        - generic [ref=f14e29]:
+          - heading "Administración de usuarios" [level=1] [ref=f14e30]
+          - paragraph [ref=f14e31]: 2 cuenta(s) registradas · página exclusiva para administradores
+        - button "+ Nuevo usuario" [ref=f14e33]
+      - generic [ref=f14e34]:
+        - paragraph [ref=f14e35]: Filtros
+        - generic [ref=f14e37]:
+          - generic [ref=f14e38]: Rol
+          - combobox "Rol" [ref=f14e39]:
+            - option "Todos" [selected]
+            - option "Administrador"
+            - option "Propietario"
+      - table [ref=f14e41]:
+        - rowgroup [ref=f14e42]:
+          - row [ref=f14e43]:
+            - columnheader "Nombre" [ref=f14e44]
+            - columnheader "Correo" [ref=f14e45]
+            - columnheader "Teléfono" [ref=f14e46]
+            - columnheader "Ciudad" [ref=f14e47]
+            - columnheader "Rol" [ref=f14e48]
+            - columnheader "Miembro desde" [ref=f14e49]
+            - columnheader "Propiedades" [ref=f14e50]
+            - columnheader "Acciones" [ref=f14e51]
+        - rowgroup [ref=f14e52]:
+          - row [ref=f14e53]:
+            - cell "Admin KeyRing" [ref=f14e54]
+            - cell "admin@keyring.co" [ref=f14e55]
+            - cell "3001112233" [ref=f14e56]
+            - cell "Medellín" [ref=f14e57]
+            - cell "Administrador" [ref=f14e58]
+            - cell "2025-08-04" [ref=f14e59]
+            - cell "4" [ref=f14e60]
+            - cell [ref=f14e61]:
+              - generic [ref=f14e62]:
+                - button "Editar" [ref=f14e63]
+                - button "Cambiar rol" [ref=f14e64]
+          - row [ref=f14e65]:
+            - cell "Usuario Demo" [ref=f14e66]
+            - cell "user@keyring.co" [ref=f14e67]
+            - cell "3004445566" [ref=f14e68]
+            - cell "Bogotá" [ref=f14e69]
+            - cell "Propietario" [ref=f14e70]
+            - cell "2026-02-20" [ref=f14e71]
+            - cell "2" [ref=f14e72]
+            - cell [ref=f14e73]:
+              - generic [ref=f14e74]:
+                - button "Editar" [ref=f14e75]
+                - button "Cambiar rol" [ref=f14e76]
+                - button "Eliminar" [ref=f14e77]

@@ -1,0 +1,58 @@
+- generic [ref=f8e22]:
+  - banner [ref=f8e23]:
+    - generic [ref=f8e24]:
+      - link [ref=f8e25] [cursor=pointer]:
+        - /url: /
+        - img "Isotipo de KeyRing" [ref=f8e26]
+        - text: KeyRing
+      - navigation [ref=f8e27]:
+        - link "Funciones" [ref=f8e28] [cursor=pointer]:
+          - /url: "#funciones"
+        - link "Equipo" [ref=f8e29] [cursor=pointer]:
+          - /url: "#equipo"
+      - link "Iniciar sesión" [ref=f8e30] [cursor=pointer]:
+        - /url: /login
+  - main [ref=f8e31]:
+    - generic [ref=f8e32]:
+      - generic [ref=f8e33]:
+        - generic [ref=f8e34]:
+          - paragraph [ref=f8e35]: Propiedades en equilibrio
+          - heading "Todo tu portafolio de arriendos, en una sola pantalla" [level=1] [ref=f8e36]
+          - paragraph [ref=f8e37]: KeyRing reúne propiedades, contratos e ingresos en un mismo lugar y te dice cuánto rinde de verdad cada inmueble, una vez descontados administración y gastos.
+          - generic [ref=f8e38]:
+            - link "Ingresar" [ref=f8e39] [cursor=pointer]:
+              - /url: /login
+            - link "Ver qué hace" [ref=f8e42] [cursor=pointer]:
+              - /url: "#funciones"
+        - img "KeyRing — propiedades en equilibrio" [ref=f8e43]
+      - generic [ref=f8e44]:
+        - heading "Qué hace" [level=2] [ref=f8e45]
+        - paragraph [ref=f8e46]: Seis frentes de la operación, en un mismo tablero.
+        - generic [ref=f8e47]:
+          - article [ref=f8e48]:
+            - heading "Propiedades" [level=3] [ref=f8e52]
+            - paragraph [ref=f8e53]: Registra cada inmueble con su modalidad de arriendo, su canon estimado y sus costos fijos. Filtra por ciudad y por tipo.
+          - article [ref=f8e54]:
+            - heading "Contratos" [level=3] [ref=f8e58]
+            - paragraph [ref=f8e59]: Lleva el control de arrendatarios, cánones y fechas. El dashboard avisa cuáles vencen primero.
+          - article [ref=f8e60]:
+            - heading "Ingresos y gastos" [level=3] [ref=f8e64]
+            - paragraph [ref=f8e65]: Registra cada movimiento indicando si viene de Airbnb o de un contrato fijo, y compáralos mes a mes.
+          - article [ref=f8e66]:
+            - heading "Reportes" [level=3] [ref=f8e70]
+            - paragraph [ref=f8e71]: Utilidad por ciudad, distribución del ingreso por fuente y resumen por propiedad, con filtros por tipo y por rango de meses.
+          - article [ref=f8e72]:
+            - heading "Mapa" [level=3] [ref=f8e76]
+            - paragraph [ref=f8e77]: Ubica el portafolio completo sobre el mapa y consulta el estado de cada inmueble desde el marcador.
+          - article [ref=f8e78]:
+            - heading "Roles" [level=3] [ref=f8e82]
+            - paragraph [ref=f8e83]: El propietario ve solo sus inmuebles. El administrador accede a los reportes globales y a la gestión de usuarios.
+      - generic [ref=f8e84]:
+        - heading "Equipo" [level=2] [ref=f8e85]
+        - paragraph [ref=f8e86]: Proyecto del curso de Ingeniería de Desarrollo Web.
+        - list [ref=f8e87]:
+          - listitem [ref=f8e88]: Emmanuel Hernández
+          - listitem [ref=f8e89]: Paula Arroyave
+          - listitem [ref=f8e90]: Juan Andrés Salcedo
+  - contentinfo [ref=f8e91]:
+    - paragraph [ref=f8e92]: KeyRing — Proyecto de Ingeniería de Desarrollo Web · Equipo 3 · Paula Andrea Arroyave · Juan Andres Salcedo · Emmanuel Hernández · 2026

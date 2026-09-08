@@ -1,0 +1,51 @@
+- generic [ref=f16e3]:
+  - complementary [ref=f16e4]:
+    - link [ref=f16e6] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f16e7]
+      - text: KeyRing
+    - navigation [ref=f16e8]:
+      - link "Dashboard" [ref=f16e9] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Propiedades" [ref=f16e10] [cursor=pointer]:
+        - /url: /properties
+      - link "Contratos" [ref=f16e11] [cursor=pointer]:
+        - /url: /contracts
+      - link "Transacciones" [ref=f16e12] [cursor=pointer]:
+        - /url: /transactions
+      - link "Mapa" [ref=f16e13] [cursor=pointer]:
+        - /url: /map
+      - link "Reportes" [ref=f16e14] [cursor=pointer]:
+        - /url: /reports
+      - link "Usuarios" [ref=f16e15] [cursor=pointer]:
+        - /url: /admin/users
+    - generic [ref=f16e16]:
+      - generic [ref=f16e17]:
+        - generic [ref=f16e18]: A
+        - generic [ref=f16e19]: Admin KeyRing
+      - button "Salir" [ref=f16e20]
+  - main [ref=f16e21]:
+    - generic [ref=f16e22]:
+      - generic [ref=f16e24]:
+        - heading "Mapa de propiedades" [level=1] [ref=f16e25]
+        - paragraph [ref=f16e26]: 6 inmueble(s) ubicados de forma aproximada por ciudad
+      - generic [ref=f16e28]:
+        - generic:
+          - generic:
+            - button "Marker" [ref=f16e29] [cursor=pointer]
+            - button "Marker" [ref=f16e30] [cursor=pointer]
+            - button "Marker" [ref=f16e31] [cursor=pointer]
+            - button "Marker" [ref=f16e32] [cursor=pointer]
+            - button "Marker" [ref=f16e33] [cursor=pointer]
+            - button "Marker" [ref=f16e34] [cursor=pointer]
+        - generic:
+          - generic [ref=f16e35]:
+            - button "Zoom in" [ref=f16e36] [cursor=pointer]: +
+            - button "Zoom out" [ref=f16e37] [cursor=pointer]: −
+          - generic [ref=f16e38]:
+            - link "Leaflet" [ref=f16e39] [cursor=pointer]:
+              - /url: https://leafletjs.com
+            - text: "| ©"
+            - link "OpenStreetMap" [ref=f16e44] [cursor=pointer]:
+              - /url: https://www.openstreetmap.org/copyright
+      - paragraph [ref=f16e45]: Las coordenadas son el centro de cada ciudad con un pequeño desplazamiento, para que dos inmuebles de la misma ciudad no queden uno encima del otro. Toca un marcador para ver la dirección y el estado.

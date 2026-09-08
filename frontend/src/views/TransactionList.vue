@@ -4,10 +4,16 @@
 import { computed, reactive, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
+import FilterBar from '../components/FilterBar.vue'
+import PageHeader from '../components/PageHeader.vue'
+import StatusBadge from '../components/StatusBadge.vue'
 import ChartCard from '../components/ChartCard.vue'
 import * as transactionService from '../services/transaction.service'
 import * as propertyService from '../services/property.service'
-import { listMonthsPresent, sumAmountsByMonth } from '../utils/finance'
+import { listMonthsPresent, sumAmountsByMonth, summarizeTransactions } from '../utils/finance'
+import { formatCOP, formatNumber } from '../utils/format'
+import { CHART_EXPENSE, CHART_INCOME } from '../config/chart.config'
+import { TRANSACTION_SOURCE_TONE, TRANSACTION_TYPE_TONE } from '../utils/badges'
 import {
   TransactionType,
   TransactionTypeLabel,
@@ -52,6 +58,18 @@ const monthFilterOptions = computed(() =>
   listMonthsPresent(visibleTransactions.value).slice().reverse(),
 )
 
+/** Hay algún filtro puesto, y por tanto algo que limpiar. */
+const hasActiveFilters = computed(() =>
+  Boolean(selectedType.value || selectedSource.value || selectedMonth.value),
+)
+
+/** Devuelve los tres filtros a su estado inicial. */
+function clearFilters(): void {
+  selectedType.value = ''
+  selectedSource.value = ''
+  selectedMonth.value = ''
+}
+
 const matchingTransactions = computed(() =>
   visibleTransactions.value.filter((transaction) => {
     if (selectedType.value && transaction.type !== selectedType.value) return false
@@ -67,9 +85,12 @@ const tableColumns: TableColumn[] = [
   { key: 'propertyName', label: 'Propiedad' },
   { key: 'typeLabel', label: 'Tipo' },
   { key: 'sourceLabel', label: 'Fuente' },
-  { key: 'formattedAmount', label: 'Monto (COP)' },
+  { key: 'formattedAmount', label: 'Monto (COP)', align: 'right' },
   { key: 'description', label: 'Descripción' },
 ]
+
+/** Balance de lo que se está viendo, para que el subtítulo hable de lo filtrado. */
+const filteredBalance = computed(() => summarizeTransactions(matchingTransactions.value))
 
 const tableRows = computed(() =>
   matchingTransactions.value
@@ -81,7 +102,7 @@ const tableRows = computed(() =>
         visibleProperties.value.find((p) => p.id === transaction.propertyId)?.name ?? '—',
       typeLabel: TransactionTypeLabel[transaction.type] ?? transaction.type,
       sourceLabel: TransactionSourceLabel[transaction.source] ?? transaction.source,
-      formattedAmount: transaction.amount.toLocaleString('es-CO'),
+      formattedAmount: formatNumber(transaction.amount),
     })),
 )
 
@@ -93,14 +114,14 @@ const incomeVsExpenseChart = computed<ChartData<'bar'>>(() => {
     datasets: [
       {
         label: 'Ingresos',
-        backgroundColor: '#16a34a',
+        backgroundColor: CHART_INCOME,
         data: months.map((month) =>
           sumAmountsByMonth(matchingTransactions.value, TransactionType.INCOME, month),
         ),
       },
       {
         label: 'Gastos',
-        backgroundColor: '#dc2626',
+        backgroundColor: CHART_EXPENSE,
         data: months.map((month) =>
           sumAmountsByMonth(matchingTransactions.value, TransactionType.EXPENSE, month),
         ),
@@ -198,35 +219,36 @@ function deleteTransaction(transactionId: string): void {
   transactionService.remove(transactionId)
   reloadFromStorage()
 }
-
-const inputClasses =
-  'rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary'
 </script>
 
 <template>
   <section>
-    <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl font-bold">Transacciones</h1>
-      <button
-        class="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-dark"
-        type="button"
-        @click="startCreating"
-      >
-        + Nueva transacción
-      </button>
-    </div>
+    <PageHeader
+      title="Transacciones"
+      :subtitle="`${matchingTransactions.length} movimiento(s) · balance ${formatCOP(filteredBalance.net)}`"
+    >
+      <template #actions>
+        <button
+          class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-dark"
+          type="button"
+          @click="startCreating"
+        >
+          + Nueva transacción
+        </button>
+      </template>
+    </PageHeader>
 
     <form
       v-if="isFormVisible"
-      class="mb-6 grid gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2"
+      class="mb-6 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2"
       @submit.prevent="saveTransaction"
     >
-      <h2 class="col-span-full text-lg font-semibold">
+      <h2 class="font-brand col-span-full m-0 text-lg font-semibold text-ink">
         {{ editingTransactionId ? 'Editar transacción' : 'Nueva transacción' }}
       </h2>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Propiedad</span>
-        <select v-model="transactionForm.propertyId" :class="inputClasses">
+        <select v-model="transactionForm.propertyId" class="field-input">
           <option v-for="option in propertySelectOptions" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
@@ -234,7 +256,7 @@ const inputClasses =
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Tipo</span>
-        <select v-model="transactionForm.type" :class="inputClasses">
+        <select v-model="transactionForm.type" class="field-input">
           <option v-for="option in typeFilterOptions" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
@@ -242,7 +264,7 @@ const inputClasses =
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Fuente</span>
-        <select v-model="transactionForm.source" :class="inputClasses">
+        <select v-model="transactionForm.source" class="field-input">
           <option v-for="option in sourceFilterOptions" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
@@ -250,20 +272,15 @@ const inputClasses =
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Monto (COP)</span>
-        <input
-          v-model.number="transactionForm.amount"
-          type="number"
-          min="0"
-          :class="inputClasses"
-        />
+        <input v-model.number="transactionForm.amount" type="number" min="0" class="field-input" />
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Fecha</span>
-        <input v-model="transactionForm.date" type="date" :class="inputClasses" />
+        <input v-model="transactionForm.date" type="date" class="field-input" />
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Descripción</span>
-        <input v-model="transactionForm.description" :class="inputClasses" />
+        <input v-model="transactionForm.description" class="field-input" />
       </label>
 
       <p v-if="formError" aria-live="polite" class="col-span-full text-sm text-red-600">
@@ -287,16 +304,49 @@ const inputClasses =
       </div>
     </form>
 
-    <div class="mb-4 flex flex-wrap items-end gap-4">
+    <FilterBar>
       <FilterSelect v-model="selectedType" label="Tipo" :options="typeFilterOptions" />
       <FilterSelect v-model="selectedSource" label="Fuente" :options="sourceFilterOptions" />
       <FilterSelect v-model="selectedMonth" label="Mes" :options="monthFilterOptions" />
-    </div>
+      <button
+        v-if="hasActiveFilters"
+        class="py-2 text-sm text-primary underline-offset-4 hover:underline"
+        type="button"
+        @click="clearFilters"
+      >
+        Limpiar filtros
+      </button>
+    </FilterBar>
 
     <ChartCard title="Ingresos vs gastos por mes" type="bar" :chart-data="incomeVsExpenseChart" />
 
     <div class="mt-6">
-      <DataTable :columns="tableColumns" :rows="tableRows">
+      <DataTable
+        :columns="tableColumns"
+        :rows="tableRows"
+        :empty-message="
+          hasActiveFilters
+            ? 'Ningún movimiento coincide con el filtro'
+            : 'Todavía no hay movimientos'
+        "
+        :empty-hint="
+          hasActiveFilters
+            ? 'Prueba a quitar alguno de los filtros.'
+            : 'Registra el primero con el botón “Nueva transacción”.'
+        "
+      >
+        <template #cell-typeLabel="{ value, row }">
+          <StatusBadge
+            :label="String(value)"
+            :tone="TRANSACTION_TYPE_TONE[row.type as TransactionType]"
+          />
+        </template>
+        <template #cell-sourceLabel="{ value, row }">
+          <StatusBadge
+            :label="String(value)"
+            :tone="TRANSACTION_SOURCE_TONE[row.source as TransactionSource]"
+          />
+        </template>
         <template #actions="{ row }">
           <div class="flex gap-3">
             <button

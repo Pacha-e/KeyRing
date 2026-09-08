@@ -1,0 +1,1 @@
+function t(r){return r.toLocaleString("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0})}function i(r){return r.toLocaleString("es-CO",{maximumFractionDigits:0})}export{i as a,t as f};

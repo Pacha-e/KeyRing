@@ -4,6 +4,8 @@
 import { computed, ref } from 'vue'
 import ChartCard from '../components/ChartCard.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
+import FilterBar from '../components/FilterBar.vue'
+import PageHeader from '../components/PageHeader.vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import * as propertyService from '../services/property.service'
 import * as transactionService from '../services/transaction.service'
@@ -13,7 +15,10 @@ import {
   sumIncomeBySource,
   sumNetProfitByCity,
   summarizePropertyBalance,
+  summarizeTransactions,
 } from '../utils/finance'
+import { formatCOP, formatNumber } from '../utils/format'
+import { CHART_CATEGORICAL, CHART_EXPENSE, CHART_INCOME, CHART_NAVY } from '../config/chart.config'
 import {
   TransactionType,
   TransactionSourceLabel,
@@ -50,6 +55,19 @@ const propertyTypeOptions: SelectOption[] = Object.values(PropertyType).map((typ
 }))
 const availableMonths = computed(() => listMonthsPresent(transactions.value))
 
+/** Hay algún filtro puesto, y por tanto algo que limpiar. */
+const hasActiveFilters = computed(() =>
+  Boolean(selectedCity.value || selectedPropertyType.value || monthFrom.value || monthTo.value),
+)
+
+/** Devuelve los cuatro filtros a su estado inicial. */
+function clearFilters(): void {
+  selectedCity.value = ''
+  selectedPropertyType.value = ''
+  monthFrom.value = ''
+  monthTo.value = ''
+}
+
 /** Propiedades que pasan los filtros de ciudad y tipo. */
 const filteredProperties = computed(() =>
   properties.value.filter(
@@ -82,14 +100,14 @@ const incomeVsExpenseChart = computed<ChartData<'bar'>>(() => {
     datasets: [
       {
         label: 'Ingresos',
-        backgroundColor: '#16a34a',
+        backgroundColor: CHART_INCOME,
         data: months.map((month) =>
           sumAmountsByMonth(filteredTransactions.value, TransactionType.INCOME, month),
         ),
       },
       {
         label: 'Gastos',
-        backgroundColor: '#dc2626',
+        backgroundColor: CHART_EXPENSE,
         data: months.map((month) =>
           sumAmountsByMonth(filteredTransactions.value, TransactionType.EXPENSE, month),
         ),
@@ -105,9 +123,7 @@ const incomeBySourceChart = computed<ChartData<'doughnut'>>(() => {
     labels: Object.keys(totalsBySource).map(
       (source) => TransactionSourceLabel[source as keyof typeof TransactionSourceLabel] ?? source,
     ),
-    datasets: [
-      { backgroundColor: ['#2563eb', '#f59e0b', '#6b7280'], data: Object.values(totalsBySource) },
-    ],
+    datasets: [{ backgroundColor: CHART_CATEGORICAL, data: Object.values(totalsBySource) }],
   }
 })
 
@@ -119,7 +135,7 @@ const netProfitByCityChart = computed<ChartData<'bar'>>(() => {
     datasets: [
       {
         label: 'Utilidad neta (COP)',
-        backgroundColor: '#1b2438',
+        backgroundColor: CHART_NAVY,
         data: profitByCity.map((row) => row.profit),
       },
     ],
@@ -130,10 +146,13 @@ const netProfitByCityChart = computed<ChartData<'bar'>>(() => {
 const tableColumns: TableColumn[] = [
   { key: 'name', label: 'Propiedad' },
   { key: 'city', label: 'Ciudad' },
-  { key: 'income', label: 'Ingresos (COP)' },
-  { key: 'expense', label: 'Gastos (COP)' },
-  { key: 'net', label: 'Neto (COP)' },
+  { key: 'income', label: 'Ingresos (COP)', align: 'right' },
+  { key: 'expense', label: 'Gastos (COP)', align: 'right' },
+  { key: 'net', label: 'Neto (COP)', align: 'right' },
 ]
+
+/** Balance de lo filtrado, para que el subtítulo hable de lo que se está viendo. */
+const filteredBalance = computed(() => summarizeTransactions(filteredTransactions.value))
 
 const tableRows = computed(() =>
   filteredProperties.value.map((p) => {
@@ -142,9 +161,9 @@ const tableRows = computed(() =>
       id: p.id,
       name: p.name,
       city: p.city,
-      income: income.toLocaleString('es-CO'),
-      expense: expense.toLocaleString('es-CO'),
-      net: net.toLocaleString('es-CO'),
+      income: formatNumber(income),
+      expense: formatNumber(expense),
+      net: formatNumber(net),
     }
   }),
 )
@@ -152,10 +171,12 @@ const tableRows = computed(() =>
 
 <template>
   <section>
-    <h1 class="mb-4 text-2xl font-bold">Reportes</h1>
-    <p class="mb-4 text-slate-500">Página exclusiva para administradores.</p>
+    <PageHeader
+      title="Reportes"
+      :subtitle="`${filteredProperties.length} propiedad(es) · utilidad ${formatCOP(filteredBalance.net)} · página exclusiva para administradores`"
+    />
 
-    <div class="mb-4 flex flex-wrap items-end gap-4">
+    <FilterBar>
       <FilterSelect v-model="selectedCity" label="Ciudad" :options="cities" />
       <FilterSelect
         v-model="selectedPropertyType"
@@ -174,7 +195,15 @@ const tableRows = computed(() =>
         :options="availableMonths"
         all-label="Sin límite"
       />
-    </div>
+      <button
+        v-if="hasActiveFilters"
+        class="py-2 text-sm text-primary underline-offset-4 hover:underline"
+        type="button"
+        @click="clearFilters"
+      >
+        Limpiar filtros
+      </button>
+    </FilterBar>
 
     <div class="grid gap-4 md:grid-cols-2">
       <ChartCard title="Ingresos vs gastos por mes" type="bar" :chart-data="incomeVsExpenseChart" />
@@ -188,7 +217,12 @@ const tableRows = computed(() =>
     </div>
 
     <div class="mt-6">
-      <DataTable :columns="tableColumns" :rows="tableRows" />
+      <DataTable
+        :columns="tableColumns"
+        :rows="tableRows"
+        empty-message="Ninguna propiedad coincide con el filtro"
+        empty-hint="Abre el rango de meses o quita el filtro de ciudad."
+      />
     </div>
   </section>
 </template>

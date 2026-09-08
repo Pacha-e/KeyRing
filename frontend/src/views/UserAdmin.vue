@@ -5,7 +5,11 @@
 import { computed, reactive, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
+import FilterBar from '../components/FilterBar.vue'
+import PageHeader from '../components/PageHeader.vue'
+import StatusBadge from '../components/StatusBadge.vue'
 import * as userService from '../services/user.service'
+import { USER_ROLE_TONE } from '../utils/badges'
 import { UserRole, UserRoleLabel } from '../interfaces/enums'
 import { useAuthStore } from '../stores/auth'
 import type { UserInterface } from '../interfaces/UserInterface'
@@ -37,8 +41,8 @@ const tableColumns: TableColumn[] = [
   { key: 'phone', label: 'Teléfono' },
   { key: 'city', label: 'Ciudad' },
   { key: 'roleLabel', label: 'Rol' },
-  { key: 'memberSince', label: 'Miembro desde' },
-  { key: 'propertyCount', label: 'Propiedades' },
+  { key: 'memberSince', label: 'Miembro desde', align: 'right' },
+  { key: 'propertyCount', label: 'Propiedades', align: 'right' },
 ]
 
 // La fila se arma campo por campo: las credenciales nunca salen del servicio.
@@ -175,40 +179,40 @@ function deleteUser(userId: string, fullName: string): void {
   userService.remove(userId)
   reloadFromStorage()
 }
-
-const inputClasses =
-  'rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary'
 </script>
 
 <template>
   <section>
-    <div class="mb-4 flex items-center justify-between">
-      <h1 class="text-2xl font-bold">Administración de usuarios</h1>
-      <button
-        class="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-dark"
-        type="button"
-        @click="startCreating"
-      >
-        + Nuevo usuario
-      </button>
-    </div>
-    <p class="mb-4 text-slate-500">Página exclusiva para administradores.</p>
+    <PageHeader
+      title="Administración de usuarios"
+      :subtitle="`${allUsers.length} cuenta(s) registradas · página exclusiva para administradores`"
+    >
+      <template #actions>
+        <button
+          class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-dark"
+          type="button"
+          @click="startCreating"
+        >
+          + Nuevo usuario
+        </button>
+      </template>
+    </PageHeader>
 
     <form
       v-if="isFormVisible"
-      class="mb-6 grid gap-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2"
+      class="mb-6 grid gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2"
       @submit.prevent="saveUser"
     >
-      <h2 class="col-span-full text-lg font-semibold">
+      <h2 class="font-brand col-span-full m-0 text-lg font-semibold text-ink">
         {{ editingUserId ? 'Editar usuario' : 'Nuevo usuario' }}
       </h2>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Nombre completo</span>
-        <input v-model="userForm.fullName" :class="inputClasses" />
+        <input v-model="userForm.fullName" class="field-input" />
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Correo</span>
-        <input v-model="userForm.email" type="email" :class="inputClasses" />
+        <input v-model="userForm.email" type="email" class="field-input" />
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Contraseña</span>
@@ -216,20 +220,20 @@ const inputClasses =
           v-model="userForm.password"
           type="password"
           autocomplete="new-password"
-          :class="inputClasses"
+          class="field-input"
         />
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Teléfono</span>
-        <input v-model="userForm.phone" :class="inputClasses" />
+        <input v-model="userForm.phone" class="field-input" />
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Ciudad</span>
-        <input v-model="userForm.city" :class="inputClasses" />
+        <input v-model="userForm.city" class="field-input" />
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-sm font-medium">Rol</span>
-        <select v-model="userForm.role" :class="inputClasses">
+        <select v-model="userForm.role" class="field-input">
           <option v-for="option in roleFilterOptions" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
@@ -253,15 +257,27 @@ const inputClasses =
       </div>
     </form>
 
-    <div class="mb-4 flex flex-wrap items-end gap-4">
+    <FilterBar>
       <FilterSelect v-model="selectedRole" label="Rol" :options="roleFilterOptions" />
-    </div>
+    </FilterBar>
 
-    <p v-if="feedbackMessage" aria-live="polite" class="mb-4 text-sm text-red-600">
+    <p
+      v-if="feedbackMessage"
+      aria-live="polite"
+      class="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+    >
       {{ feedbackMessage }}
     </p>
 
-    <DataTable :columns="tableColumns" :rows="tableRows">
+    <DataTable
+      :columns="tableColumns"
+      :rows="tableRows"
+      :empty-message="selectedRole ? 'Ningún usuario con ese rol' : 'Todavía no hay usuarios'"
+      empty-hint="Crea una cuenta con el botón “Nuevo usuario”."
+    >
+      <template #cell-roleLabel="{ value, row }">
+        <StatusBadge :label="String(value)" :tone="USER_ROLE_TONE[row.role as UserRole]" />
+      </template>
       <template #actions="{ row }">
         <div class="flex gap-3">
           <button

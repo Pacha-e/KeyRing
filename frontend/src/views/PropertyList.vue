@@ -3,13 +3,21 @@
 import { computed, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
+import FilterBar from '../components/FilterBar.vue'
+import PageHeader from '../components/PageHeader.vue'
+import StatusBadge from '../components/StatusBadge.vue'
 import ChartCard from '../components/ChartCard.vue'
 import * as propertyService from '../services/property.service'
 import { sumEstimatedRentByCity } from '../utils/finance'
+import { formatNumber } from '../utils/format'
+import { CHART_NAVY, CHART_PRIMARY } from '../config/chart.config'
+import { PROPERTY_STATUS_TONE, RENTAL_MODE_TONE } from '../utils/badges'
 import {
   PropertyType,
   PropertyTypeLabel,
+  RentalMode,
   RentalModeLabel,
+  PropertyStatus,
   PropertyStatusLabel,
 } from '../interfaces/enums'
 import { useAuthStore } from '../stores/auth'
@@ -43,8 +51,17 @@ const tableColumns: TableColumn[] = [
   { key: 'typeLabel', label: 'Tipo' },
   { key: 'rentalLabel', label: 'Modalidad' },
   { key: 'statusLabel', label: 'Estado' },
-  { key: 'rent', label: 'Arriendo estimado (COP)' },
+  { key: 'rent', label: 'Arriendo estimado (COP)', align: 'right' },
 ]
+
+/** Hay algún filtro puesto, y por tanto algo que limpiar. */
+const hasActiveFilters = computed(() => Boolean(selectedCity.value || selectedType.value))
+
+/** Devuelve los filtros a su estado inicial. */
+function clearFilters(): void {
+  selectedCity.value = ''
+  selectedType.value = ''
+}
 
 const matchingProperties = computed(() =>
   visibleProperties.value.filter(
@@ -60,7 +77,7 @@ const tableRows = computed(() =>
     typeLabel: PropertyTypeLabel[p.type] ?? p.type,
     rentalLabel: RentalModeLabel[p.rentalMode] ?? p.rentalMode,
     statusLabel: PropertyStatusLabel[p.status] ?? p.status,
-    rent: p.estimatedMonthlyRent.toLocaleString('es-CO'),
+    rent: formatNumber(p.estimatedMonthlyRent),
   })),
 )
 
@@ -73,7 +90,7 @@ const propertiesByTypeChart = computed<ChartData<'bar'>>(() => {
     datasets: [
       {
         label: 'Propiedades',
-        backgroundColor: '#2563eb',
+        backgroundColor: CHART_NAVY,
         data: types.map((type) => countByType[type]),
       },
     ],
@@ -89,7 +106,7 @@ const estimatedRentByCityChart = computed<ChartData<'bar'>>(() => {
     datasets: [
       {
         label: 'Arriendo estimado (COP)',
-        backgroundColor: '#b3543a',
+        backgroundColor: CHART_PRIMARY,
         data: rentByCity.map((row) => row.amount),
       },
     ],
@@ -112,20 +129,32 @@ function onDelete(id: string, nombre: string): void {
 
 <template>
   <section>
-    <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-2xl font-bold">Propiedades</h1>
-      <router-link
-        class="rounded-lg bg-primary px-4 py-2 text-sm text-white no-underline hover:bg-primary-dark"
-        :to="{ name: 'property-new' }"
-      >
-        + Nueva propiedad
-      </router-link>
-    </div>
+    <PageHeader
+      title="Propiedades"
+      :subtitle="`${matchingProperties.length} de ${visibleProperties.length} inmuebles en tu portafolio`"
+    >
+      <template #actions>
+        <router-link
+          class="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white no-underline transition hover:bg-primary-dark"
+          :to="{ name: 'property-new' }"
+        >
+          + Nueva propiedad
+        </router-link>
+      </template>
+    </PageHeader>
 
-    <div class="mb-4 flex flex-wrap items-end gap-4">
+    <FilterBar>
       <FilterSelect v-model="selectedCity" label="Ciudad" :options="cities" />
       <FilterSelect v-model="selectedType" label="Tipo" :options="typeOptions" />
-    </div>
+      <button
+        v-if="hasActiveFilters"
+        class="py-2 text-sm text-primary underline-offset-4 hover:underline"
+        type="button"
+        @click="clearFilters"
+      >
+        Limpiar filtros
+      </button>
+    </FilterBar>
 
     <div class="grid gap-4 md:grid-cols-2">
       <ChartCard title="Propiedades por tipo" type="bar" :chart-data="propertiesByTypeChart" />
@@ -137,7 +166,32 @@ function onDelete(id: string, nombre: string): void {
     </div>
 
     <div class="mt-6">
-      <DataTable :columns="tableColumns" :rows="tableRows">
+      <DataTable
+        :columns="tableColumns"
+        :rows="tableRows"
+        :empty-message="
+          hasActiveFilters
+            ? 'Ninguna propiedad coincide con el filtro'
+            : 'Todavía no hay propiedades'
+        "
+        :empty-hint="
+          hasActiveFilters
+            ? 'Prueba a quitar alguno de los filtros.'
+            : 'Registra la primera con el botón “Nueva propiedad”.'
+        "
+      >
+        <template #cell-rentalLabel="{ value, row }">
+          <StatusBadge
+            :label="String(value)"
+            :tone="RENTAL_MODE_TONE[row.rentalMode as RentalMode]"
+          />
+        </template>
+        <template #cell-statusLabel="{ value, row }">
+          <StatusBadge
+            :label="String(value)"
+            :tone="PROPERTY_STATUS_TONE[row.status as PropertyStatus]"
+          />
+        </template>
         <template #actions="{ row }">
           <div class="flex gap-3">
             <router-link

@@ -1,0 +1,76 @@
+- generic [ref=f12e49]:
+  - complementary [ref=f12e50]:
+    - link [ref=f12e52] [cursor=pointer]:
+      - /url: /
+      - img "Isotipo de KeyRing" [ref=f12e53]
+      - text: KeyRing
+    - navigation [ref=f12e54]:
+      - link "Dashboard" [ref=f12e55] [cursor=pointer]:
+        - /url: /dashboard
+      - link "Propiedades" [ref=f12e56] [cursor=pointer]:
+        - /url: /properties
+      - link "Contratos" [ref=f12e57] [cursor=pointer]:
+        - /url: /contracts
+      - link "Transacciones" [ref=f12e58] [cursor=pointer]:
+        - /url: /transactions
+      - link "Mapa" [ref=f12e59] [cursor=pointer]:
+        - /url: /map
+      - link "Reportes" [ref=f12e60] [cursor=pointer]:
+        - /url: /reports
+      - link "Usuarios" [ref=f12e61] [cursor=pointer]:
+        - /url: /admin/users
+    - generic [ref=f12e62]:
+      - generic [ref=f12e63]:
+        - generic [ref=f12e64]: A
+        - generic [ref=f12e65]: Admin KeyRing
+      - button "Salir" [ref=f12e66]
+  - main [ref=f12e67]:
+    - generic [ref=f12e68]:
+      - generic [ref=f12e70]:
+        - heading "Dashboard" [level=1] [ref=f12e71]
+        - paragraph [ref=f12e72]: Resumen del negocio de Admin KeyRing
+      - generic [ref=f12e73]:
+        - link [ref=f12e74] [cursor=pointer]:
+          - /url: /properties
+          - paragraph [ref=f12e81]: Propiedades
+          - paragraph [ref=f12e82]: "6"
+          - paragraph [ref=f12e83]: 1 vacante(s)
+        - link [ref=f12e84] [cursor=pointer]:
+          - /url: /contracts
+          - paragraph [ref=f12e91]: Contratos activos
+          - paragraph [ref=f12e92]: "3"
+          - paragraph [ref=f12e93]: de 4 registrados
+        - link [ref=f12e94] [cursor=pointer]:
+          - /url: /transactions
+          - paragraph [ref=f12e101]: Ingresos del mes
+          - paragraph [ref=f12e102]: $ 13.550.000
+          - paragraph [ref=f12e103]: mes en curso
+        - link [ref=f12e104] [cursor=pointer]:
+          - /url: /transactions
+          - paragraph [ref=f12e111]: Balance neto
+          - paragraph [ref=f12e112]: $ 18.430.000
+          - paragraph [ref=f12e113]: $ 19.980.000 en ingresos
+      - generic [ref=f12e114]:
+        - heading "Ingresos y gastos por mes" [level=3] [ref=f12e116]
+        - generic [ref=f12e119]:
+          - heading "Próximos vencimientos" [level=2] [ref=f12e120]
+          - paragraph [ref=f12e121]: Contratos activos, del más cercano al más lejano
+          - table [ref=f12e123]:
+            - rowgroup [ref=f12e124]:
+              - row [ref=f12e125]:
+                - columnheader "Propiedad" [ref=f12e126]
+                - columnheader "Vence" [ref=f12e127]
+                - columnheader "Estado" [ref=f12e128]
+            - rowgroup [ref=f12e129]:
+              - row [ref=f12e130]:
+                - cell "Finca La Loma" [ref=f12e131]
+                - cell "2026-11-12" [ref=f12e132]
+                - cell "Activo" [ref=f12e133]
+              - row [ref=f12e134]:
+                - cell "Casa Laureles" [ref=f12e135]
+                - cell "2027-04-11" [ref=f12e136]
+                - cell "Activo" [ref=f12e137]
+              - row [ref=f12e138]:
+                - cell "Apartamento Chapinero" [ref=f12e139]
+                - cell "2027-06-10" [ref=f12e140]
+                - cell "Activo" [ref=f12e141]

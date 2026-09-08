@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css'
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+import PageHeader from '../components/PageHeader.vue'
 import * as propertyService from '../services/property.service'
 import { MAP_TILE_URL } from '../config/app.config'
 import { PropertyStatusLabel } from '../interfaces/enums'
@@ -30,8 +31,16 @@ const CITY_COORDS: Record<string, [number, number]> = {
 }
 const FALLBACK: [number, number] = [4.711, -74.072] // Centro de Colombia aprox.
 
+// Cuánto se separa del centro de la ciudad cada marcador. Con menos de esto los
+// inmuebles de una misma ciudad se apilan y parece haber menos de los que hay.
+const SPREAD_DEGREES = 0.09
+
 const mapEl = ref<HTMLElement | null>(null)
 let map: L.Map | null = null
+
+// Se lee fuera de onMounted para poder anunciar cuántos marcadores hay en la
+// cabecera, sin esperar a que Leaflet termine de montarse.
+const markedProperties = propertyService.listForUser(authStore.user)
 
 /**
  * Construye el contenido del popup con nodos del DOM.
@@ -62,7 +71,6 @@ function buildPopup(property: PropertyInterface): HTMLElement {
 
 onMounted(() => {
   if (!mapEl.value) return
-  const properties = propertyService.listForUser(authStore.user)
 
   map = L.map(mapEl.value).setView([5.5, -74.5], 6)
   L.tileLayer(MAP_TILE_URL, {
@@ -70,14 +78,28 @@ onMounted(() => {
     maxZoom: 19,
   }).addTo(map)
 
-  // Conteo por ciudad para desplazar marcadores de la misma ciudad
+  // Los inmuebles de una misma ciudad se reparten en círculo alrededor de su
+  // centro, en vez de en diagonal: así ninguno tapa a otro por muchos que haya.
   const seen: Record<string, number> = {}
-  properties.forEach((p) => {
+  const placed: [number, number][] = []
+  markedProperties.forEach((p) => {
     const base = CITY_COORDS[p.city] ?? FALLBACK
     const n = (seen[p.city] = (seen[p.city] ?? 0) + 1)
-    const coords: [number, number] = [base[0] + n * 0.03, base[1] + n * 0.03]
+    const angle = (n - 1) * (Math.PI / 3)
+    const coords: [number, number] = [
+      base[0] + Math.sin(angle) * SPREAD_DEGREES,
+      base[1] + Math.cos(angle) * SPREAD_DEGREES,
+    ]
+    placed.push(coords)
     L.marker(coords).addTo(map!).bindPopup(buildPopup(p))
   })
+
+  // Se encuadra sobre los marcadores en vez de dejar la vista fija: con la
+  // vista general de Colombia los inmuebles de una misma ciudad quedaban
+  // superpuestos y parecía haber menos de los que dice la cabecera.
+  if (placed.length > 0) {
+    map.fitBounds(L.latLngBounds(placed), { padding: [48, 48], maxZoom: 12 })
+  }
 })
 
 onBeforeUnmount(() => {
@@ -88,8 +110,19 @@ onBeforeUnmount(() => {
 
 <template>
   <section>
-    <h1 class="mb-4 text-2xl font-bold">Mapa de propiedades</h1>
-    <p class="mb-4 text-slate-500">Ubicación aproximada por ciudad de cada propiedad registrada.</p>
-    <div ref="mapEl" class="map-container rounded-lg border border-slate-200"></div>
+    <PageHeader
+      title="Mapa de propiedades"
+      :subtitle="`${markedProperties.length} inmueble(s) ubicados de forma aproximada por ciudad`"
+    />
+
+    <div class="overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+      <div ref="mapEl" class="map-container overflow-hidden rounded-lg"></div>
+    </div>
+
+    <p class="mt-3 mb-0 text-sm text-slate-500">
+      Las coordenadas son el centro de cada ciudad con un pequeño desplazamiento, para que dos
+      inmuebles de la misma ciudad no queden uno encima del otro. Toca un marcador para ver la
+      dirección y el estado.
+    </p>
   </section>
 </template>
