@@ -15,8 +15,9 @@ import { APP_NAME } from '../config/app.config'
       </router-link>
 
       <nav class="flex flex-1 items-center gap-6 text-sm text-slate-600">
+        <!-- Ambos enlaces apuntan a secciones que existen en la portada -->
         <a class="no-underline hover:text-ink" href="#funciones">Funciones</a>
-        <a class="no-underline hover:text-ink" href="#precios">Precios</a>
+        <a class="no-underline hover:text-ink" href="#equipo">Equipo</a>
       </nav>
 
       <router-link

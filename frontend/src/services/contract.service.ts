@@ -26,13 +26,6 @@ export function listForUser(user: SessionUser | null): ContractInterface[] {
 }
 
 /**
- * Contratos asociados a una propiedad.
- * @param propertyId identificador de la propiedad
- * @returns contratos de esa propiedad
- */
-export function listByProperty(propertyId: string): ContractInterface[] {
-  return list().filter((c) => c.propertyId === propertyId)
-}
 
 /**
  * Busca un contrato por su id.
