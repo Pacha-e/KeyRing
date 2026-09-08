@@ -9,7 +9,11 @@
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint .",
-    "format": "prettier --write \"src/**/*.{ts,vue,css}\" \"*.{js,ts,json,md}\""
+    "format": "prettier --write \"src/**/*.{ts,vue,css}\" \"*.{js,ts,json,md}\"",
+    "verify:servicios": "esbuild .verify/servicios.ts --bundle --format=esm --platform=node --outfile=.verify/out-servicios.mjs && node .verify/run-servicios.mjs",
+    "verify:guards": "node .verify/build-guards.mjs && node .verify/run-guards.mjs",
+    "verify:vistas": "node .verify/build-vistas.mjs && node .verify/run-vistas.mjs",
+    "verify": "npm run verify:servicios && npm run verify:guards && npm run verify:vistas"
   },
   "dependencies": {
     "chart.js": "^4.4.0",

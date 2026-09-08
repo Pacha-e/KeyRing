@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Contratos: filtro por estado + tabla, con CRUD completo vía ContractForm.
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import * as contractService from '../services/contract.service'
@@ -22,7 +22,9 @@ function reloadFromStorage(): void {
   properties.value = propertyService.listForUser(authStore.user)
 }
 
-onMounted(reloadFromStorage)
+// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
+// asi la primera pintada ya trae los datos en vez de una tabla vacia.
+reloadFromStorage()
 
 const statusFilterOptions: SelectOption[] = Object.values(ContractStatus).map((v) => ({
   value: v,

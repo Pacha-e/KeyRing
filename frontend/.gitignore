@@ -13,3 +13,8 @@ dist-ssr/
 # Cache de herramientas
 .cache/
 *.local
+
+# Bundles que generan las pruebas de .verify para correr en Node
+.verify/guards-dist/
+.verify/ssr/
+.verify/out-*.mjs

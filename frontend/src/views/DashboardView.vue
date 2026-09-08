@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Dashboard: resumen del negocio del usuario en sesión.
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import StatCard from '../components/StatCard.vue'
 import * as propertyService from '../services/property.service'
 import * as contractService from '../services/contract.service'
@@ -24,7 +24,9 @@ function reloadFromStorage(): void {
   transactions.value = transactionService.listForUser(authStore.user)
 }
 
-onMounted(reloadFromStorage)
+// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
+// asi la primera pintada ya trae los datos en vez de una tabla vacia.
+reloadFromStorage()
 
 const activeContracts = computed(() => contractService.countActive(contracts.value))
 const monthlyIncome = computed(() => sumIncomeForCurrentMonth(transactions.value))

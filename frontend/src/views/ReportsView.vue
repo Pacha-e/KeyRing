@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Reportes (solo admin): filtros + gráficos Chart.js + tabla resumen por propiedad.
 // Es la vista global del negocio, por eso no se filtra por propietario.
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import ChartCard from '../components/ChartCard.vue'
 import FilterSelect from '../components/FilterSelect.vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
@@ -27,7 +27,9 @@ function reloadFromStorage(): void {
   transactions.value = transactionService.list()
 }
 
-onMounted(reloadFromStorage)
+// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
+// asi la primera pintada ya trae los datos en vez de una tabla vacia.
+reloadFromStorage()
 
 const selectedCity = ref('')
 const cities = computed(() => propertyService.cities(properties.value))

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Transacciones: filtros + tabla + gráfico + alta, edición y eliminación.
 // Junto con Propiedades, es una de las páginas que combinan selector, tabla y Chart.js.
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import ChartCard from '../components/ChartCard.vue'
@@ -31,7 +31,9 @@ function reloadFromStorage(): void {
   visibleProperties.value = propertyService.listForUser(authStore.user)
 }
 
-onMounted(reloadFromStorage)
+// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
+// asi la primera pintada ya trae los datos en vez de una tabla vacia.
+reloadFromStorage()
 
 // --- Filtros ---
 const selectedType = ref('')

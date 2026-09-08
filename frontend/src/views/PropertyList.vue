@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Propiedades: selector + tabla + gráfico Chart.js, con CRUD completo.
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import ChartCard from '../components/ChartCard.vue'
@@ -26,7 +26,9 @@ function reloadFromStorage(): void {
   visibleProperties.value = propertyService.listForUser(authStore.user)
 }
 
-onMounted(reloadFromStorage)
+// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
+// asi la primera pintada ya trae los datos en vez de una tabla vacia.
+reloadFromStorage()
 
 const cities = computed(() => propertyService.cities(visibleProperties.value))
 const typeOptions: SelectOption[] = Object.values(PropertyType).map((v) => ({

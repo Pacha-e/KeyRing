@@ -2,7 +2,7 @@
 // Administración de usuarios (solo admin): listar, filtrar por rol, crear,
 // editar, cambiar de rol y eliminar, con las guardas que impiden dejar el
 // sistema en un estado inconsistente.
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import * as userService from '../services/user.service'
@@ -22,7 +22,9 @@ function reloadFromStorage(): void {
   allUsers.value = userService.list()
 }
 
-onMounted(reloadFromStorage)
+// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
+// asi la primera pintada ya trae los datos en vez de una tabla vacia.
+reloadFromStorage()
 
 const roleFilterOptions: SelectOption[] = Object.values(UserRole).map((role) => ({
   value: role,

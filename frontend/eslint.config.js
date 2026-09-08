@@ -5,7 +5,17 @@ import tseslint from 'typescript-eslint'
 import globals from 'globals'
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**'] },
+  // Salidas compiladas: el build de producción y los bundles que generan las
+  // pruebas de .verify para poder ejecutarse en Node.
+  {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      '.verify/guards-dist/**',
+      '.verify/ssr/**',
+      '.verify/out-*.mjs',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...pluginVue.configs['flat/recommended'],
