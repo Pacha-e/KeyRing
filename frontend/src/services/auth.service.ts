@@ -1,4 +1,4 @@
-import { getAll, KEYS } from './storage'
+import * as storage from './storage'
 import type { UserInterface } from '../interfaces/UserInterface'
 
 const SESSION_KEY = 'keyring_session'
@@ -9,14 +9,14 @@ export type SessionUser = Omit<UserInterface, 'password'>
 // Autenticación ficticia contra la colección de usuarios en LocalStorage.
 // Retorna el usuario sin password, o null si las credenciales no coinciden.
 export function login(email: string, password: string): SessionUser | null {
-  const user = getAll<UserInterface>(KEYS.users).find(
+  const user = storage.findAll<UserInterface>(storage.STORAGE_KEYS.users).find(
     (u) => u.email === email && u.password === password,
   )
   if (!user) return null
-  const sesion: Partial<UserInterface> = { ...user }
-  delete sesion.password
-  localStorage.setItem(SESSION_KEY, JSON.stringify(sesion))
-  return sesion as SessionUser
+  const sessionUser: Partial<UserInterface> = { ...user }
+  delete sessionUser.password
+  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser))
+  return sessionUser as SessionUser
 }
 
 export function logout(): void {

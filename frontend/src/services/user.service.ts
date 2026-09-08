@@ -1,6 +1,6 @@
 // Servicio de usuarios (gestión exclusiva de administradores).
 // Incluye las guardas de integridad: el sistema nunca puede quedarse sin admin.
-import { getAll, getById, create as insert, update as patch, remove as del, KEYS } from './storage'
+import * as storage from './storage'
 import { UserRole } from '../interfaces/enums'
 import type { UserInterface } from '../interfaces/UserInterface'
 
@@ -12,7 +12,7 @@ export type CreateUserDTO = Omit<UserInterface, 'id'>
  * @returns lista completa de usuarios
  */
 export function list(): UserInterface[] {
-  return getAll<UserInterface>(KEYS.users)
+  return storage.findAll<UserInterface>(storage.STORAGE_KEYS.users)
 }
 
 /**
@@ -21,7 +21,7 @@ export function list(): UserInterface[] {
  * @returns el usuario, o null si no existe
  */
 export function findById(id: string): UserInterface | null {
-  return getById<UserInterface>(KEYS.users, id)
+  return storage.findById<UserInterface>(storage.STORAGE_KEYS.users, id)
 }
 
 /**
@@ -41,17 +41,17 @@ export function emailTaken(email: string, exceptId?: string): boolean {
  * @returns el usuario creado, ya con su id
  */
 export function create(dto: CreateUserDTO): UserInterface {
-  return insert<UserInterface>(KEYS.users, dto)
+  return storage.insert<UserInterface>(storage.STORAGE_KEYS.users, dto)
 }
 
 /**
  * Modifica un usuario existente.
  * @param id identificador del usuario
- * @param cambios campos a actualizar
+ * @param changes campos a actualizar
  * @returns el usuario actualizado, o null si el id no existe
  */
-export function update(id: string, cambios: Partial<CreateUserDTO>): UserInterface | null {
-  return patch<UserInterface>(KEYS.users, id, cambios)
+export function update(id: string, changes: Partial<CreateUserDTO>): UserInterface | null {
+  return storage.applyChanges<UserInterface>(storage.STORAGE_KEYS.users, id, changes)
 }
 
 /**
@@ -83,5 +83,5 @@ export function blockedFromRemoval(id: string, currentUserId: string): string | 
  * @param id identificador del usuario
  */
 export function remove(id: string): void {
-  del(KEYS.users, id)
+  storage.deleteById(storage.STORAGE_KEYS.users, id)
 }

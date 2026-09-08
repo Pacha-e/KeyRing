@@ -1,20 +1,34 @@
-// Repositorio genérico sobre LocalStorage: una colección = una clave JSON.
-// Todas las entidades usan estas mismas funciones (DRY).
+// Repositorio genérico sobre LocalStorage. Es la única parte del proyecto que
+// habla con el navegador: cada colección se guarda como un arreglo JSON bajo su
+// propia clave, y las cuatro entidades comparten estas mismas operaciones.
+//
+// Nadie fuera de services/ importa este archivo. Cuando en el Entregable 2 la
+// persistencia pase a una API, solo cambia este módulo.
 
-export const KEYS = {
+/** Clave de LocalStorage donde se guarda cada colección del dominio. */
+export const STORAGE_KEYS = {
   users: 'keyring_users',
   properties: 'keyring_properties',
   contracts: 'keyring_contracts',
   transactions: 'keyring_transactions',
 } as const
 
-export type CollectionKey = (typeof KEYS)[keyof typeof KEYS]
+/** Cualquiera de las claves anteriores. */
+export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
 
-interface Entity {
+/** Requisito mínimo de toda entidad almacenada: tener identificador propio. */
+interface StoredEntity {
   id: string
 }
 
-function read<T>(key: CollectionKey): T[] {
+/**
+ * Lee una colección completa desde LocalStorage.
+ * Si la clave no existe o el contenido está corrupto devuelve un arreglo vacío,
+ * de modo que la aplicación arranque igual en vez de romperse.
+ * @param key clave de la colección
+ * @returns los registros almacenados
+ */
+function readCollection<T>(key: StorageKey): T[] {
   try {
     return (JSON.parse(localStorage.getItem(key) ?? 'null') as T[] | null) ?? []
   } catch {
@@ -22,42 +36,77 @@ function read<T>(key: CollectionKey): T[] {
   }
 }
 
-function write<T>(key: CollectionKey, items: T[]): void {
-  localStorage.setItem(key, JSON.stringify(items))
+/**
+ * Sobrescribe una colección completa en LocalStorage.
+ * @param key clave de la colección
+ * @param records registros que quedarán almacenados
+ */
+function writeCollection<T>(key: StorageKey, records: T[]): void {
+  localStorage.setItem(key, JSON.stringify(records))
 }
 
-export function getAll<T>(key: CollectionKey): T[] {
-  return read<T>(key)
+/**
+ * Devuelve todos los registros de una colección.
+ * @param key clave de la colección
+ * @returns los registros almacenados
+ */
+export function findAll<T>(key: StorageKey): T[] {
+  return readCollection<T>(key)
 }
 
-export function getById<T extends Entity>(key: CollectionKey, id: string): T | null {
-  return read<T>(key).find((item) => item.id === id) ?? null
+/**
+ * Busca un registro por su identificador.
+ * @param key clave de la colección
+ * @param id identificador del registro
+ * @returns el registro, o null si no existe
+ */
+export function findById<T extends StoredEntity>(key: StorageKey, id: string): T | null {
+  return readCollection<T>(key).find((record) => record.id === id) ?? null
 }
 
-export function create<T extends Entity>(key: CollectionKey, item: Omit<T, 'id'>): T {
-  const items = read<T>(key)
-  const nuevo = { id: crypto.randomUUID(), ...item } as T
-  items.push(nuevo)
-  write(key, items)
-  return nuevo
+/**
+ * Inserta un registro nuevo generándole un identificador único.
+ * @param key clave de la colección
+ * @param newRecord datos del registro sin identificador
+ * @returns el registro insertado, ya con su id
+ */
+export function insert<T extends StoredEntity>(key: StorageKey, newRecord: Omit<T, 'id'>): T {
+  const records = readCollection<T>(key)
+  const inserted = { id: crypto.randomUUID(), ...newRecord } as T
+  records.push(inserted)
+  writeCollection(key, records)
+  return inserted
 }
 
-export function update<T extends Entity>(
-  key: CollectionKey,
+/**
+ * Aplica cambios parciales a un registro existente.
+ * El identificador se preserva siempre, aunque venga en los cambios.
+ * @param key clave de la colección
+ * @param id identificador del registro
+ * @param changes campos a modificar
+ * @returns el registro actualizado, o null si el id no existe
+ */
+export function applyChanges<T extends StoredEntity>(
+  key: StorageKey,
   id: string,
-  cambios: Partial<Omit<T, 'id'>>,
+  changes: Partial<Omit<T, 'id'>>,
 ): T | null {
-  const items = read<T>(key)
-  const idx = items.findIndex((item) => item.id === id)
-  if (idx === -1) return null
-  items[idx] = { ...items[idx], ...cambios, id }
-  write(key, items)
-  return items[idx]
+  const records = readCollection<T>(key)
+  const position = records.findIndex((record) => record.id === id)
+  if (position === -1) return null
+  records[position] = { ...records[position], ...changes, id }
+  writeCollection(key, records)
+  return records[position]
 }
 
-export function remove(key: CollectionKey, id: string): void {
-  write<Entity>(
+/**
+ * Elimina un registro de la colección. Si el id no existe no ocurre nada.
+ * @param key clave de la colección
+ * @param id identificador del registro
+ */
+export function deleteById(key: StorageKey, id: string): void {
+  writeCollection<StoredEntity>(
     key,
-    read<Entity>(key).filter((item) => item.id !== id),
+    readCollection<StoredEntity>(key).filter((record) => record.id !== id),
   )
 }

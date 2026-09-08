@@ -1,6 +1,6 @@
 // Servicio de propiedades. Única puerta de entrada a los datos de Property:
 // las vistas y componentes nunca hablan con storage.ts directamente.
-import { getAll, getById, create as insert, update as patch, remove as del, KEYS } from './storage'
+import * as storage from './storage'
 import { UserRole } from '../interfaces/enums'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 import type { CreatePropertyDTO } from '../dtos/CreatePropertyDTO'
@@ -11,7 +11,7 @@ import type { SessionUser } from './auth.service'
  * @returns lista completa, sin filtrar por dueño
  */
 export function list(): PropertyInterface[] {
-  return getAll<PropertyInterface>(KEYS.properties)
+  return storage.findAll<PropertyInterface>(storage.STORAGE_KEYS.properties)
 }
 
 /**
@@ -22,8 +22,10 @@ export function list(): PropertyInterface[] {
  */
 export function listForUser(user: SessionUser | null): PropertyInterface[] {
   if (!user) return []
-  const todas = list()
-  return user.role === UserRole.ADMIN ? todas : todas.filter((p) => p.ownerId === user.id)
+  const allProperties = list()
+  return user.role === UserRole.ADMIN
+    ? allProperties
+    : allProperties.filter((property) => property.ownerId === user.id)
 }
 
 /**
@@ -32,7 +34,7 @@ export function listForUser(user: SessionUser | null): PropertyInterface[] {
  * @returns la propiedad, o null si no existe
  */
 export function findById(id: string): PropertyInterface | null {
-  return getById<PropertyInterface>(KEYS.properties, id)
+  return storage.findById<PropertyInterface>(storage.STORAGE_KEYS.properties, id)
 }
 
 /**
@@ -40,18 +42,18 @@ export function findById(id: string): PropertyInterface | null {
  * @param dto datos de la propiedad sin id
  * @returns la propiedad creada, ya con su id
  */
-export function create(dto: CreatePropertyDTO): PropertyInterface {
-  return insert<PropertyInterface>(KEYS.properties, dto)
+export function create(newProperty: CreatePropertyDTO): PropertyInterface {
+  return storage.insert<PropertyInterface>(storage.STORAGE_KEYS.properties, newProperty)
 }
 
 /**
  * Modifica una propiedad existente.
  * @param id identificador de la propiedad
- * @param cambios campos a actualizar
+ * @param changes campos a actualizar
  * @returns la propiedad actualizada, o null si el id no existe
  */
-export function update(id: string, cambios: Partial<CreatePropertyDTO>): PropertyInterface | null {
-  return patch<PropertyInterface>(KEYS.properties, id, cambios)
+export function update(id: string, changes: Partial<CreatePropertyDTO>): PropertyInterface | null {
+  return storage.applyChanges<PropertyInterface>(storage.STORAGE_KEYS.properties, id, changes)
 }
 
 /**
@@ -59,7 +61,7 @@ export function update(id: string, cambios: Partial<CreatePropertyDTO>): Propert
  * @param id identificador de la propiedad
  */
 export function remove(id: string): void {
-  del(KEYS.properties, id)
+  storage.deleteById(storage.STORAGE_KEYS.properties, id)
 }
 
 /**

@@ -1,6 +1,6 @@
 // Servicio de transacciones (ingresos y gastos). Solo acceso a datos: la
 // aritmética de totales y agrupaciones vive en utils/finance.ts.
-import { getAll, getById, create as insert, update as patch, remove as del, KEYS } from './storage'
+import * as storage from './storage'
 import * as propertyService from './property.service'
 import type { TransactionInterface } from '../interfaces/TransactionInterface'
 import type { CreateTransactionDTO } from '../dtos/CreateTransactionDTO'
@@ -11,7 +11,7 @@ import type { SessionUser } from './auth.service'
  * @returns lista completa, sin filtrar por dueño
  */
 export function list(): TransactionInterface[] {
-  return getAll<TransactionInterface>(KEYS.transactions)
+  return storage.findAll<TransactionInterface>(storage.STORAGE_KEYS.transactions)
 }
 
 /**
@@ -30,7 +30,7 @@ export function listForUser(user: SessionUser | null): TransactionInterface[] {
  * @returns la transacción, o null si no existe
  */
 export function findById(id: string): TransactionInterface | null {
-  return getById<TransactionInterface>(KEYS.transactions, id)
+  return storage.findById<TransactionInterface>(storage.STORAGE_KEYS.transactions, id)
 }
 
 /**
@@ -39,20 +39,20 @@ export function findById(id: string): TransactionInterface | null {
  * @returns la transacción creada, ya con su id
  */
 export function create(dto: CreateTransactionDTO): TransactionInterface {
-  return insert<TransactionInterface>(KEYS.transactions, dto)
+  return storage.insert<TransactionInterface>(storage.STORAGE_KEYS.transactions, dto)
 }
 
 /**
  * Modifica una transacción existente.
  * @param id identificador de la transacción
- * @param cambios campos a actualizar
+ * @param changes campos a actualizar
  * @returns la transacción actualizada, o null si el id no existe
  */
 export function update(
   id: string,
-  cambios: Partial<CreateTransactionDTO>,
+  changes: Partial<CreateTransactionDTO>,
 ): TransactionInterface | null {
-  return patch<TransactionInterface>(KEYS.transactions, id, cambios)
+  return storage.applyChanges<TransactionInterface>(storage.STORAGE_KEYS.transactions, id, changes)
 }
 
 /**
@@ -60,7 +60,7 @@ export function update(
  * @param id identificador de la transacción
  */
 export function remove(id: string): void {
-  del(KEYS.transactions, id)
+  storage.deleteById(storage.STORAGE_KEYS.transactions, id)
 }
 
 // Los totales, agrupaciones por mes y por fuente viven en utils/finance.ts.
