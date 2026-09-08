@@ -2,6 +2,7 @@
 // Sidebar de navegación: enlaces según autenticación y rol (estilo mockup: barra oscura lateral)
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { APP_NAME } from '../config/app.config'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -33,7 +34,7 @@ function onLogout() {
             d="M14.7 2.7a5.5 5.5 0 0 0-7.2 7.2L2 15.4V19a1 1 0 0 0 1 1h3.6a1 1 0 0 0 .7-.3l1-1a1 1 0 0 0 .3-.7v-1h1a1 1 0 0 0 .7-.3l.7-.7a1 1 0 0 0 .3-.7v-1h1a1 1 0 0 0 .7-.3l1.5-1.5a5.5 5.5 0 0 0 .2-8.8zM16 8.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"
           />
         </svg>
-        KeyRing
+        {{ APP_NAME }}
       </router-link>
     </div>
 

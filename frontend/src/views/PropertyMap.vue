@@ -8,6 +8,7 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
 import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import * as propertyService from '../services/property.service'
+import { MAP_TILE_URL } from '../config/app.config'
 import { PropertyStatusLabel } from '../interfaces/enums'
 import { useAuthStore } from '../stores/auth'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
@@ -64,7 +65,7 @@ onMounted(() => {
   const properties = propertyService.listForUser(authStore.user)
 
   map = L.map(mapEl.value).setView([5.5, -74.5], 6)
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  L.tileLayer(MAP_TILE_URL, {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19,
   }).addTo(map)
