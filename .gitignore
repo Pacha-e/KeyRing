@@ -17,6 +17,9 @@
 # Artefactos de las sesiones de Playwright durante el QA
 .playwright-mcp/
 
+# Config local del guardián de comandos (allowlist de esta máquina)
+.security/
+
 # Editores y sistema operativo
 .vscode/
 .idea/

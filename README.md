@@ -150,9 +150,10 @@ sudo docker image build -t vue-image .
 sudo docker container run -d --name vue-container -p 80:80 vue-image
 ```
 
-La aplicación queda disponible en la IP externa de la instancia usando **HTTP** (no HTTPS: la
-instancia no tiene certificado). Para publicar cambios: `npm run build`, commit del nuevo `dist/`,
-`git pull` en la máquina virtual y reconstruir la imagen y el contenedor.
+La aplicación está desplegada en **http://34.58.221.78** (instancia `keyring-vm`, Compute Engine,
+`us-central1-a`) usando **HTTP** (no HTTPS: la instancia no tiene certificado). Para publicar
+cambios: `npm run build`, commit del nuevo `dist/`, `git pull` en la máquina virtual y reconstruir
+la imagen y el contenedor.
 
 El procedimiento completo —crear la instancia, abrir el firewall, instalar Docker y comprobar que
 responde— está en la wiki:
