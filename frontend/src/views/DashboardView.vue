@@ -5,7 +5,7 @@ import StatCard from '../components/StatCard.vue'
 import * as propertyService from '../services/property.service'
 import * as contractService from '../services/contract.service'
 import * as transactionService from '../services/transaction.service'
-import { TransactionType } from '../interfaces/enums'
+import { sumIncomeForCurrentMonth, summarizeTransactions } from '../utils/finance'
 import { useAuthStore } from '../stores/auth'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 import type { ContractInterface } from '../interfaces/ContractInterface'
@@ -27,14 +27,8 @@ function load(): void {
 onMounted(load)
 
 const activeContracts = computed(() => contractService.countActive(contracts.value))
-
-// Ingresos del mes en curso
-const monthlyIncome = computed(() => {
-  const mesActual = new Date().toISOString().slice(0, 7) // 'YYYY-MM'
-  return transactionService.sumByMonth(transactions.value, TransactionType.INCOME, mesActual)
-})
-
-const net = computed(() => transactionService.totals(transactions.value).net)
+const monthlyIncome = computed(() => sumIncomeForCurrentMonth(transactions.value))
+const net = computed(() => summarizeTransactions(transactions.value).net)
 
 /**
  * Formatea un monto en pesos colombianos.

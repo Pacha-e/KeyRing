@@ -7,6 +7,7 @@ import FilterSelect from '../components/FilterSelect.vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import * as propertyService from '../services/property.service'
 import * as transactionService from '../services/transaction.service'
+import { summarizePropertyBalance } from '../utils/finance'
 import { TransactionType, TransactionSourceLabel } from '../interfaces/enums'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 import type { TransactionInterface } from '../interfaces/TransactionInterface'
@@ -87,9 +88,7 @@ const columns: TableColumn[] = [
 
 const rows = computed(() =>
   cityProperties.value.map((p) => {
-    const { income, expense, net } = transactionService.totals(
-      transactions.value.filter((t) => t.propertyId === p.id),
-    )
+    const { income, expense, net } = summarizePropertyBalance(p.id, transactions.value)
     return {
       id: p.id,
       name: p.name,
