@@ -40,6 +40,11 @@ export enum TransactionSource {
 }
 
 // Etiquetas en español para mostrar en la UI
+export const UserRoleLabel: Record<UserRole, string> = Object.freeze({
+  [UserRole.ADMIN]: 'Administrador',
+  [UserRole.USER]: 'Propietario',
+})
+
 export const PropertyTypeLabel: Record<PropertyType, string> = Object.freeze({
   [PropertyType.HOUSE]: 'Casa',
   [PropertyType.APARTMENT]: 'Apartamento',
