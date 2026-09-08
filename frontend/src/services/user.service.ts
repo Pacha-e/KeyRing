@@ -3,9 +3,7 @@
 import * as storage from './storage'
 import { UserRole } from '../interfaces/enums'
 import type { UserInterface } from '../interfaces/UserInterface'
-
-/** Datos para crear un usuario (el id lo genera el repositorio). */
-export type CreateUserDTO = Omit<UserInterface, 'id'>
+import type { CreateUserDTO } from '../dtos/CreateUserDTO'
 
 /**
  * Todos los usuarios registrados.
@@ -31,17 +29,17 @@ export function findById(id: string): UserInterface | null {
  * @returns true si el correo ya está en uso
  */
 export function emailTaken(email: string, exceptId?: string): boolean {
-  const normalizado = email.trim().toLowerCase()
-  return list().some((u) => u.id !== exceptId && u.email.toLowerCase() === normalizado)
+  const normalizedEmail = email.trim().toLowerCase()
+  return list().some((user) => user.id !== exceptId && user.email.toLowerCase() === normalizedEmail)
 }
 
 /**
  * Registra un usuario nuevo.
- * @param dto datos del usuario sin id
+ * @param newUser datos del usuario sin id
  * @returns el usuario creado, ya con su id
  */
-export function create(dto: CreateUserDTO): UserInterface {
-  return storage.insert<UserInterface>(storage.STORAGE_KEYS.users, dto)
+export function create(newUser: CreateUserDTO): UserInterface {
+  return storage.insert<UserInterface>(storage.STORAGE_KEYS.users, newUser)
 }
 
 /**
@@ -59,7 +57,7 @@ export function update(id: string, changes: Partial<CreateUserDTO>): UserInterfa
  * @returns cantidad de usuarios con rol de administrador
  */
 export function countAdmins(): number {
-  return list().filter((u) => u.role === UserRole.ADMIN).length
+  return list().filter((user) => user.role === UserRole.ADMIN).length
 }
 
 /**
@@ -70,9 +68,9 @@ export function countAdmins(): number {
  */
 export function blockedFromRemoval(id: string, currentUserId: string): string | null {
   if (id === currentUserId) return 'No puedes eliminar tu propio usuario.'
-  const usuario = findById(id)
-  if (!usuario) return 'El usuario ya no existe.'
-  if (usuario.role === UserRole.ADMIN && countAdmins() <= 1) {
+  const user = findById(id)
+  if (!user) return 'El usuario ya no existe.'
+  if (user.role === UserRole.ADMIN && countAdmins() <= 1) {
     return 'No puedes eliminar al último administrador del sistema.'
   }
   return null

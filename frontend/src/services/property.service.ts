@@ -39,7 +39,7 @@ export function findById(id: string): PropertyInterface | null {
 
 /**
  * Registra una propiedad nueva.
- * @param dto datos de la propiedad sin id
+ * @param newProperty datos de la propiedad sin id
  * @returns la propiedad creada, ya con su id
  */
 export function create(newProperty: CreatePropertyDTO): PropertyInterface {

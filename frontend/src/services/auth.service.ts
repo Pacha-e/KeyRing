@@ -9,9 +9,9 @@ export type SessionUser = Omit<UserInterface, 'password'>
 // Autenticación ficticia contra la colección de usuarios en LocalStorage.
 // Retorna el usuario sin password, o null si las credenciales no coinciden.
 export function login(email: string, password: string): SessionUser | null {
-  const user = storage.findAll<UserInterface>(storage.STORAGE_KEYS.users).find(
-    (u) => u.email === email && u.password === password,
-  )
+  const user = storage
+    .findAll<UserInterface>(storage.STORAGE_KEYS.users)
+    .find((u) => u.email === email && u.password === password)
   if (!user) return null
   const sessionUser: Partial<UserInterface> = { ...user }
   delete sessionUser.password

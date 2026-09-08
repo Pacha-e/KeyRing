@@ -45,11 +45,11 @@ export function findById(id: string): ContractInterface | null {
 
 /**
  * Registra un contrato nuevo.
- * @param dto datos del contrato sin id
+ * @param newContract datos del contrato sin id
  * @returns el contrato creado, ya con su id
  */
-export function create(dto: CreateContractDTO): ContractInterface {
-  return storage.insert<ContractInterface>(storage.STORAGE_KEYS.contracts, dto)
+export function create(newContract: CreateContractDTO): ContractInterface {
+  return storage.insert<ContractInterface>(storage.STORAGE_KEYS.contracts, newContract)
 }
 
 /**

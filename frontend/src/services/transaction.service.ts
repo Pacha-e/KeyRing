@@ -35,11 +35,11 @@ export function findById(id: string): TransactionInterface | null {
 
 /**
  * Registra una transacción nueva.
- * @param dto datos de la transacción sin id
+ * @param newTransaction datos de la transacción sin id
  * @returns la transacción creada, ya con su id
  */
-export function create(dto: CreateTransactionDTO): TransactionInterface {
-  return storage.insert<TransactionInterface>(storage.STORAGE_KEYS.transactions, dto)
+export function create(newTransaction: CreateTransactionDTO): TransactionInterface {
+  return storage.insert<TransactionInterface>(storage.STORAGE_KEYS.transactions, newTransaction)
 }
 
 /**

@@ -180,7 +180,9 @@ export function seedDatabase(): void {
       status: ContractStatus.EXPIRED,
     },
   ]
-  contractsToSeed.forEach((c) => storage.insert<ContractInterface>(storage.STORAGE_KEYS.contracts, c))
+  contractsToSeed.forEach((c) =>
+    storage.insert<ContractInterface>(storage.STORAGE_KEYS.contracts, c),
+  )
 
   // --- Transacciones (últimos ~3 meses) ---
   const Type = TransactionType
@@ -291,7 +293,9 @@ export function seedDatabase(): void {
       description: 'Reserva Airbnb 3 noches',
     },
   ]
-  transactionsToSeed.forEach((t) => storage.insert<TransactionInterface>(storage.STORAGE_KEYS.transactions, t))
+  transactionsToSeed.forEach((t) =>
+    storage.insert<TransactionInterface>(storage.STORAGE_KEYS.transactions, t),
+  )
 
   localStorage.setItem(SEED_FLAG, '1')
 }

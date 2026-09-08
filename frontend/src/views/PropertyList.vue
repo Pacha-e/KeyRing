@@ -15,7 +15,7 @@ import { useAuthStore } from '../stores/auth'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 import type { ChartData } from 'chart.js'
 
-const auth = useAuthStore()
+const authStore = useAuthStore()
 
 const visibleProperties = ref<PropertyInterface[]>([])
 const selectedCity = ref('')
@@ -23,7 +23,7 @@ const selectedType = ref('')
 
 /** Recarga las propiedades visibles para la sesión actual. */
 function reloadFromStorage(): void {
-  visibleProperties.value = propertyService.listForUser(auth.user)
+  visibleProperties.value = propertyService.listForUser(authStore.user)
 }
 
 onMounted(reloadFromStorage)
@@ -45,7 +45,9 @@ const tableColumns: TableColumn[] = [
 
 const matchingProperties = computed(() =>
   visibleProperties.value.filter(
-    (p) => (!selectedCity.value || p.city === selectedCity.value) && (!selectedType.value || p.type === selectedType.value),
+    (p) =>
+      (!selectedCity.value || p.city === selectedCity.value) &&
+      (!selectedType.value || p.type === selectedType.value),
   ),
 )
 

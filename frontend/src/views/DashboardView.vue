@@ -11,7 +11,7 @@ import type { PropertyInterface } from '../interfaces/PropertyInterface'
 import type { ContractInterface } from '../interfaces/ContractInterface'
 import type { TransactionInterface } from '../interfaces/TransactionInterface'
 
-const auth = useAuthStore()
+const authStore = useAuthStore()
 
 const properties = ref<PropertyInterface[]>([])
 const contracts = ref<ContractInterface[]>([])
@@ -19,9 +19,9 @@ const transactions = ref<TransactionInterface[]>([])
 
 /** Recarga los datos visibles para la sesión actual. */
 function reloadFromStorage(): void {
-  properties.value = propertyService.listForUser(auth.user)
-  contracts.value = contractService.listForUser(auth.user)
-  transactions.value = transactionService.listForUser(auth.user)
+  properties.value = propertyService.listForUser(authStore.user)
+  contracts.value = contractService.listForUser(authStore.user)
+  transactions.value = transactionService.listForUser(authStore.user)
 }
 
 onMounted(reloadFromStorage)

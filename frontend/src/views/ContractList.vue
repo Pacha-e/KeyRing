@@ -10,7 +10,7 @@ import { useAuthStore } from '../stores/auth'
 import type { ContractInterface } from '../interfaces/ContractInterface'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 
-const auth = useAuthStore()
+const authStore = useAuthStore()
 
 const contracts = ref<ContractInterface[]>([])
 const properties = ref<PropertyInterface[]>([])
@@ -18,8 +18,8 @@ const selectedStatus = ref('')
 
 /** Recarga los contratos y propiedades visibles para la sesión actual. */
 function reloadFromStorage(): void {
-  contracts.value = contractService.listForUser(auth.user)
-  properties.value = propertyService.listForUser(auth.user)
+  contracts.value = contractService.listForUser(authStore.user)
+  properties.value = propertyService.listForUser(authStore.user)
 }
 
 onMounted(reloadFromStorage)

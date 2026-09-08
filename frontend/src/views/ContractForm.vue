@@ -10,17 +10,17 @@ import type { CreateContractDTO } from '../dtos/CreateContractDTO'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const authStore = useAuthStore()
 
-const properties = computed(() => propertyService.listForUser(auth.user))
+const properties = computed(() => propertyService.listForUser(authStore.user))
 const statusOptions = Object.values(ContractStatus)
 
 const contractId = computed(() => String(route.params.id ?? ''))
-const editing = computed(() => Boolean(contractId.value))
-const error = ref('')
+const isEditing = computed(() => Boolean(contractId.value))
+const formError = ref('')
 
 /** Contrato vacío, con la primera propiedad disponible preseleccionada. */
-function emptyForm(): CreateContractDTO {
+function buildEmptyContract(): CreateContractDTO {
   return {
     propertyId: properties.value[0]?.id ?? '',
     fixedRent: 0,
@@ -32,16 +32,16 @@ function emptyForm(): CreateContractDTO {
   }
 }
 
-const form = ref<CreateContractDTO>(emptyForm())
+const contractForm = ref<CreateContractDTO>(buildEmptyContract())
 
 /**
  * Carga en el formulario el contrato indicado por la ruta.
  * Si el id no existe, redirige a la lista en lugar de guardar sobre la nada.
  */
 function loadFormFromRoute(): void {
-  error.value = ''
-  if (!editing.value) {
-    form.value = emptyForm()
+  formError.value = ''
+  if (!isEditing.value) {
+    contractForm.value = buildEmptyContract()
     return
   }
   const existing = contractService.findById(contractId.value)
@@ -50,7 +50,7 @@ function loadFormFromRoute(): void {
     return
   }
   const { id: _id, ...editableFields } = existing
-  form.value = editableFields
+  contractForm.value = editableFields
 }
 
 // Recargar también al navegar entre /contracts/:id/edit sin desmontar la vista
@@ -60,27 +60,28 @@ watch(contractId, loadFormFromRoute, { immediate: true })
  * Valida las reglas de negocio del contrato.
  * @returns mensaje de error en español, o null si el formulario es válido
  */
-function validate(): string | null {
-  if (!form.value.propertyId) return 'Selecciona la propiedad del contrato.'
-  if (form.value.fixedRent <= 0) return 'El canon debe ser mayor que cero.'
-  if (!form.value.startDate || !form.value.endDate) return 'Indica las fechas de inicio y fin.'
-  if (form.value.startDate >= form.value.endDate) {
+function findValidationError(): string | null {
+  if (!contractForm.value.propertyId) return 'Selecciona la propiedad del contrato.'
+  if (contractForm.value.fixedRent <= 0) return 'El canon debe ser mayor que cero.'
+  if (!contractForm.value.startDate || !contractForm.value.endDate)
+    return 'Indica las fechas de inicio y fin.'
+  if (contractForm.value.startDate >= contractForm.value.endDate) {
     return 'La fecha de inicio debe ser anterior a la de fin.'
   }
   return null
 }
 
 /** Valida y persiste el contrato, luego vuelve al listado. */
-function onSubmit(): void {
-  const validationError = validate()
+function saveContract(): void {
+  const validationError = findValidationError()
   if (validationError) {
-    error.value = validationError
+    formError.value = validationError
     return
   }
-  if (editing.value) {
-    contractService.update(contractId.value, form.value)
+  if (isEditing.value) {
+    contractService.update(contractId.value, contractForm.value)
   } else {
-    contractService.create(form.value)
+    contractService.create(contractForm.value)
   }
   router.push({ name: 'contracts' })
 }
@@ -91,49 +92,54 @@ const inputClasses =
 
 <template>
   <section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-    <h1 class="mb-4 text-2xl font-bold">{{ editing ? 'Editar contrato' : 'Nuevo contrato' }}</h1>
+    <h1 class="mb-4 text-2xl font-bold">{{ isEditing ? 'Editar contrato' : 'Nuevo contrato' }}</h1>
 
     <p v-if="properties.length === 0" class="text-slate-500">
       Primero registra una propiedad para poder crear contratos.
     </p>
 
-    <form v-else @submit.prevent="onSubmit">
+    <form v-else @submit.prevent="saveContract">
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Propiedad</span>
-        <select v-model="form.propertyId" :class="inputClasses">
+        <select v-model="contractForm.propertyId" :class="inputClasses">
           <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Arrendatario</span>
-        <input v-model="form.tenantName" required :class="inputClasses" />
+        <input v-model="contractForm.tenantName" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Contacto del arrendatario</span>
-        <input v-model="form.tenantContact" required :class="inputClasses" />
+        <input v-model="contractForm.tenantContact" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Canon mensual (COP)</span>
-        <input v-model.number="form.fixedRent" type="number" min="0" :class="inputClasses" />
+        <input
+          v-model.number="contractForm.fixedRent"
+          type="number"
+          min="0"
+          :class="inputClasses"
+        />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Fecha de inicio</span>
-        <input v-model="form.startDate" type="date" required :class="inputClasses" />
+        <input v-model="contractForm.startDate" type="date" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Fecha de fin</span>
-        <input v-model="form.endDate" type="date" required :class="inputClasses" />
+        <input v-model="contractForm.endDate" type="date" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Estado</span>
-        <select v-model="form.status" :class="inputClasses">
+        <select v-model="contractForm.status" :class="inputClasses">
           <option v-for="s in statusOptions" :key="s" :value="s">
             {{ ContractStatusLabel[s] }}
           </option>
         </select>
       </label>
 
-      <p v-if="error" aria-live="polite" class="mb-4 text-sm text-red-600">{{ error }}</p>
+      <p v-if="formError" aria-live="polite" class="mb-4 text-sm text-red-600">{{ formError }}</p>
 
       <div class="flex gap-3">
         <button

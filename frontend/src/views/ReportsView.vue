@@ -7,7 +7,12 @@ import FilterSelect from '../components/FilterSelect.vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import * as propertyService from '../services/property.service'
 import * as transactionService from '../services/transaction.service'
-import { summarizePropertyBalance } from '../utils/finance'
+import {
+  listMonthsPresent,
+  sumAmountsByMonth,
+  sumIncomeBySource,
+  summarizePropertyBalance,
+} from '../utils/finance'
 import { TransactionType, TransactionSourceLabel } from '../interfaces/enums'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 import type { TransactionInterface } from '../interfaces/TransactionInterface'
@@ -35,44 +40,39 @@ const transactionsInSelectedCity = computed(() => {
   return transactions.value.filter((t) => ids.has(t.propertyId))
 })
 
-// Gráfico 1: ingresos vs gastos por mes (filtrado por ciudad)
+// Gráfico 1: ingresos vs gastos por mes, dentro de la ciudad seleccionada
 const incomeVsExpenseChart = computed<ChartData<'bar'>>(() => {
-  const months = [...new Set(transactionsInSelectedCity.value.map((t) => t.date.slice(0, 7)))].sort()
-  const sumBy = (tt: TransactionType, month: string) =>
-    transactionsInSelectedCity.value
-      .filter((t) => t.type === tt && t.date.startsWith(month))
-      .reduce((s, t) => s + t.amount, 0)
+  const months = listMonthsPresent(transactionsInSelectedCity.value)
   return {
     labels: months,
     datasets: [
       {
         label: 'Ingresos',
         backgroundColor: '#16a34a',
-        data: months.map((m) => sumBy(TransactionType.INCOME, m)),
+        data: months.map((month) =>
+          sumAmountsByMonth(transactionsInSelectedCity.value, TransactionType.INCOME, month),
+        ),
       },
       {
         label: 'Gastos',
         backgroundColor: '#dc2626',
-        data: months.map((m) => sumBy(TransactionType.EXPENSE, m)),
+        data: months.map((month) =>
+          sumAmountsByMonth(transactionsInSelectedCity.value, TransactionType.EXPENSE, month),
+        ),
       },
     ],
   }
 })
 
-// Gráfico 2: distribución de ingresos por fuente
+// Gráfico 2: de dónde vienen los ingresos
 const incomeBySourceChart = computed<ChartData<'doughnut'>>(() => {
-  const bySource: Record<string, number> = {}
-  transactionsInSelectedCity.value
-    .filter((t) => t.type === TransactionType.INCOME)
-    .forEach((t) => {
-      bySource[t.source] = (bySource[t.source] ?? 0) + t.amount
-    })
+  const totalsBySource = sumIncomeBySource(transactionsInSelectedCity.value)
   return {
-    labels: Object.keys(bySource).map(
-      (s) => TransactionSourceLabel[s as keyof typeof TransactionSourceLabel] ?? s,
+    labels: Object.keys(totalsBySource).map(
+      (source) => TransactionSourceLabel[source as keyof typeof TransactionSourceLabel] ?? source,
     ),
     datasets: [
-      { backgroundColor: ['#2563eb', '#f59e0b', '#6b7280'], data: Object.values(bySource) },
+      { backgroundColor: ['#2563eb', '#f59e0b', '#6b7280'], data: Object.values(totalsBySource) },
     ],
   }
 })

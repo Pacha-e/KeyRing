@@ -82,15 +82,15 @@ const router = createRouter({
 
 // Guardas de navegación basadas en el store de autenticación
 router.beforeEach((to) => {
-  const auth = useAuthStore()
+  const authStore = useAuthStore()
 
-  if (to.name === 'login' && auth.isAuthenticated) {
+  if (to.name === 'login' && authStore.isAuthenticated) {
     return { name: 'dashboard' }
   }
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }
-  if (to.meta.requiresAdmin && !auth.isAdmin) {
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
     return { name: 'dashboard' }
   }
 })

@@ -92,15 +92,15 @@ const incomeVsExpenseChart = computed<ChartData<'bar'>>(() => {
       {
         label: 'Ingresos',
         backgroundColor: '#16a34a',
-        data: months.map((m) =>
-          sumAmountsByMonth(matchingTransactions.value, TransactionType.INCOME, m),
+        data: months.map((month) =>
+          sumAmountsByMonth(matchingTransactions.value, TransactionType.INCOME, month),
         ),
       },
       {
         label: 'Gastos',
         backgroundColor: '#dc2626',
-        data: months.map((m) =>
-          sumAmountsByMonth(matchingTransactions.value, TransactionType.EXPENSE, m),
+        data: months.map((month) =>
+          sumAmountsByMonth(matchingTransactions.value, TransactionType.EXPENSE, month),
         ),
       },
     ],

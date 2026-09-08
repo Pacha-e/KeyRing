@@ -12,7 +12,7 @@ import { PropertyStatusLabel } from '../interfaces/enums'
 import { useAuthStore } from '../stores/auth'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 
-const auth = useAuthStore()
+const authStore = useAuthStore()
 
 // Fix de íconos por defecto de Leaflet con Vite
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl
@@ -61,7 +61,7 @@ function buildPopup(property: PropertyInterface): HTMLElement {
 
 onMounted(() => {
   if (!mapEl.value) return
-  const properties = propertyService.listForUser(auth.user)
+  const properties = propertyService.listForUser(authStore.user)
 
   map = L.map(mapEl.value).setView([5.5, -74.5], 6)
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {

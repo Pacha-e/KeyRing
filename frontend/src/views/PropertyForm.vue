@@ -16,14 +16,14 @@ import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const authStore = useAuthStore()
 
 const propertyId = computed(() => String(route.params.id ?? ''))
-const editing = computed(() => Boolean(propertyId.value))
-const error = ref('')
+const isEditing = computed(() => Boolean(propertyId.value))
+const formError = ref('')
 
 /** Propiedad vacía con los valores por defecto del dominio. */
-function emptyForm(): CreatePropertyDTO {
+function buildEmptyProperty(): CreatePropertyDTO {
   return {
     name: '',
     address: '',
@@ -38,16 +38,16 @@ function emptyForm(): CreatePropertyDTO {
   }
 }
 
-const form = ref<CreatePropertyDTO>(emptyForm())
+const propertyForm = ref<CreatePropertyDTO>(buildEmptyProperty())
 
 /**
  * Carga en el formulario la propiedad indicada por la ruta.
  * Si el id no existe, redirige al listado en lugar de guardar sobre la nada.
  */
 function loadFormFromRoute(): void {
-  error.value = ''
-  if (!editing.value) {
-    form.value = emptyForm()
+  formError.value = ''
+  if (!isEditing.value) {
+    propertyForm.value = buildEmptyProperty()
     return
   }
   const existing = propertyService.findById(propertyId.value)
@@ -56,7 +56,7 @@ function loadFormFromRoute(): void {
     return
   }
   const { id: _id, ...editableFields } = existing
-  form.value = editableFields
+  propertyForm.value = editableFields
 }
 
 // Recargar también al navegar entre /properties/:id/edit sin desmontar la vista
@@ -73,28 +73,28 @@ const inputClasses =
  * Valida las reglas de negocio de la propiedad.
  * @returns mensaje de error en español, o null si el formulario es válido
  */
-function validate(): string | null {
-  if (!form.value.name.trim()) return 'El nombre de la propiedad es obligatorio.'
-  if (!form.value.city.trim()) return 'La ciudad es obligatoria.'
-  if (form.value.estimatedMonthlyRent < 0 || form.value.adminFee < 0) {
+function findValidationError(): string | null {
+  if (!propertyForm.value.name.trim()) return 'El nombre de la propiedad es obligatorio.'
+  if (!propertyForm.value.city.trim()) return 'La ciudad es obligatoria.'
+  if (propertyForm.value.estimatedMonthlyRent < 0 || propertyForm.value.adminFee < 0) {
     return 'Los montos no pueden ser negativos.'
   }
-  if (form.value.otherFixedCosts < 0) return 'Los montos no pueden ser negativos.'
+  if (propertyForm.value.otherFixedCosts < 0) return 'Los montos no pueden ser negativos.'
   return null
 }
 
 /** Valida y persiste la propiedad, luego vuelve al listado. */
-function onSubmit(): void {
-  const validationError = validate()
+function saveProperty(): void {
+  const validationError = findValidationError()
   if (validationError) {
-    error.value = validationError
+    formError.value = validationError
     return
   }
   const values: CreatePropertyDTO = {
-    ...form.value,
-    ownerId: form.value.ownerId ?? auth.user?.id ?? null,
+    ...propertyForm.value,
+    ownerId: propertyForm.value.ownerId ?? authStore.user?.id ?? null,
   }
-  if (editing.value) {
+  if (isEditing.value) {
     propertyService.update(propertyId.value, values)
   } else {
     propertyService.create(values)
@@ -105,35 +105,37 @@ function onSubmit(): void {
 
 <template>
   <section class="max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-    <h1 class="mb-4 text-2xl font-bold">{{ editing ? 'Editar propiedad' : 'Nueva propiedad' }}</h1>
-    <form @submit.prevent="onSubmit">
+    <h1 class="mb-4 text-2xl font-bold">
+      {{ isEditing ? 'Editar propiedad' : 'Nueva propiedad' }}
+    </h1>
+    <form @submit.prevent="saveProperty">
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Nombre</span>
-        <input v-model="form.name" required :class="inputClasses" />
+        <input v-model="propertyForm.name" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Dirección</span>
-        <input v-model="form.address" required :class="inputClasses" />
+        <input v-model="propertyForm.address" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Ciudad</span>
-        <input v-model="form.city" required :class="inputClasses" />
+        <input v-model="propertyForm.city" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Tipo</span>
-        <select v-model="form.type" :class="inputClasses">
+        <select v-model="propertyForm.type" :class="inputClasses">
           <option v-for="t in typeOptions" :key="t" :value="t">{{ PropertyTypeLabel[t] }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Modalidad de arriendo</span>
-        <select v-model="form.rentalMode" :class="inputClasses">
+        <select v-model="propertyForm.rentalMode" :class="inputClasses">
           <option v-for="m in modeOptions" :key="m" :value="m">{{ RentalModeLabel[m] }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Estado</span>
-        <select v-model="form.status" :class="inputClasses">
+        <select v-model="propertyForm.status" :class="inputClasses">
           <option v-for="s in statusOptions" :key="s" :value="s">
             {{ PropertyStatusLabel[s] }}
           </option>
@@ -142,7 +144,7 @@ function onSubmit(): void {
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Arriendo mensual estimado (COP)</span>
         <input
-          v-model.number="form.estimatedMonthlyRent"
+          v-model.number="propertyForm.estimatedMonthlyRent"
           type="number"
           min="0"
           :class="inputClasses"
@@ -150,13 +152,18 @@ function onSubmit(): void {
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Cuota de administración (COP)</span>
-        <input v-model.number="form.adminFee" type="number" min="0" :class="inputClasses" />
+        <input v-model.number="propertyForm.adminFee" type="number" min="0" :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Otros costos fijos (COP)</span>
-        <input v-model.number="form.otherFixedCosts" type="number" min="0" :class="inputClasses" />
+        <input
+          v-model.number="propertyForm.otherFixedCosts"
+          type="number"
+          min="0"
+          :class="inputClasses"
+        />
       </label>
-      <p v-if="error" aria-live="polite" class="mb-4 text-sm text-red-600">{{ error }}</p>
+      <p v-if="formError" aria-live="polite" class="mb-4 text-sm text-red-600">{{ formError }}</p>
 
       <div class="flex gap-3">
         <button

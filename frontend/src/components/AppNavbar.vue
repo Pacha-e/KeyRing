@@ -3,7 +3,7 @@
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-const auth = useAuthStore()
+const authStore = useAuthStore()
 const router = useRouter()
 
 const linkClass =
@@ -11,7 +11,7 @@ const linkClass =
 const linkActiveClass = 'bg-sidebar-hover text-white font-medium'
 
 function onLogout() {
-  auth.logout()
+  authStore.logout()
   router.push({ name: 'home' })
 }
 </script>
@@ -23,7 +23,12 @@ function onLogout() {
         class="font-brand flex items-center gap-2 text-xl font-semibold text-white no-underline"
         :to="{ name: 'home' }"
       >
-        <svg class="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <svg
+          class="h-5 w-5 text-primary"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+        >
           <path
             d="M14.7 2.7a5.5 5.5 0 0 0-7.2 7.2L2 15.4V19a1 1 0 0 0 1 1h3.6a1 1 0 0 0 .7-.3l1-1a1 1 0 0 0 .3-.7v-1h1a1 1 0 0 0 .7-.3l.7-.7a1 1 0 0 0 .3-.7v-1h1a1 1 0 0 0 .7-.3l1.5-1.5a5.5 5.5 0 0 0 .2-8.8zM16 8.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"
           />
@@ -32,7 +37,7 @@ function onLogout() {
       </router-link>
     </div>
 
-    <nav v-if="auth.isAuthenticated" class="flex flex-1 flex-col gap-1 px-3">
+    <nav v-if="authStore.isAuthenticated" class="flex flex-1 flex-col gap-1 px-3">
       <router-link :class="linkClass" :active-class="linkActiveClass" :to="{ name: 'dashboard' }">
         Dashboard
       </router-link>
@@ -42,14 +47,18 @@ function onLogout() {
       <router-link :class="linkClass" :active-class="linkActiveClass" :to="{ name: 'contracts' }">
         Contratos
       </router-link>
-      <router-link :class="linkClass" :active-class="linkActiveClass" :to="{ name: 'transactions' }">
+      <router-link
+        :class="linkClass"
+        :active-class="linkActiveClass"
+        :to="{ name: 'transactions' }"
+      >
         Transacciones
       </router-link>
       <router-link :class="linkClass" :active-class="linkActiveClass" :to="{ name: 'map' }">
         Mapa
       </router-link>
       <router-link
-        v-if="auth.isAdmin"
+        v-if="authStore.isAdmin"
         :class="linkClass"
         :active-class="linkActiveClass"
         :to="{ name: 'reports' }"
@@ -57,7 +66,7 @@ function onLogout() {
         Reportes
       </router-link>
       <router-link
-        v-if="auth.isAdmin"
+        v-if="authStore.isAdmin"
         :class="linkClass"
         :active-class="linkActiveClass"
         :to="{ name: 'admin-users' }"
@@ -68,14 +77,14 @@ function onLogout() {
     <div v-else class="flex-1"></div>
 
     <div class="border-t border-white/10 p-4">
-      <template v-if="auth.isAuthenticated">
+      <template v-if="authStore.isAuthenticated">
         <div class="mb-3 flex items-center gap-2 text-sm">
           <span
             class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold"
           >
-            {{ auth.user?.fullName?.charAt(0) ?? '?' }}
+            {{ authStore.user?.fullName?.charAt(0) ?? '?' }}
           </span>
-          <span class="truncate text-slate-200">{{ auth.user?.fullName }}</span>
+          <span class="truncate text-slate-200">{{ authStore.user?.fullName }}</span>
         </div>
         <button
           class="w-full rounded-lg border border-white/20 bg-transparent px-3 py-1.5 text-sm text-slate-200 hover:bg-sidebar-hover"
