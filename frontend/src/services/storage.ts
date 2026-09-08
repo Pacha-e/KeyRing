@@ -65,6 +65,29 @@ export function findById<T extends StoredEntity>(key: StorageKey, id: string): T
 }
 
 /**
+ * Genera un identificador único para un registro.
+ * crypto.randomUUID() solo existe en contextos seguros (HTTPS o localhost);
+ * al desplegar por HTTP plano se cae a un UUID v4 construido con
+ * crypto.getRandomValues(), que sí está disponible en todo contexto.
+ * @returns UUID v4 como cadena
+ */
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  const bytes = new Uint8Array(16)
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    crypto.getRandomValues(bytes)
+  } else {
+    for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256)
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40
+  bytes[8] = (bytes[8] & 0x3f) | 0x80
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0'))
+  return `${hex.slice(0, 4).join('')}-${hex.slice(4, 6).join('')}-${hex.slice(6, 8).join('')}-${hex.slice(8, 10).join('')}-${hex.slice(10).join('')}`
+}
+
+/**
  * Inserta un registro nuevo generándole un identificador único.
  * @param key clave de la colección
  * @param newRecord datos del registro sin identificador
@@ -72,7 +95,7 @@ export function findById<T extends StoredEntity>(key: StorageKey, id: string): T
  */
 export function insert<T extends StoredEntity>(key: StorageKey, newRecord: Omit<T, 'id'>): T {
   const records = readCollection<T>(key)
-  const inserted = { id: crypto.randomUUID(), ...newRecord } as T
+  const inserted = { id: generateId(), ...newRecord } as T
   records.push(inserted)
   writeCollection(key, records)
   return inserted
