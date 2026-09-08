@@ -5,6 +5,7 @@ import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import ChartCard from '../components/ChartCard.vue'
 import * as propertyService from '../services/property.service'
+import { sumEstimatedRentByCity } from '../utils/finance'
 import {
   PropertyType,
   PropertyTypeLabel,
@@ -63,17 +64,33 @@ const tableRows = computed(() =>
   })),
 )
 
-// Gráfico: cuántas propiedades hay de cada tipo, según el filtro aplicado
-const chartData = computed<ChartData<'bar'>>(() => {
-  const porTipo = propertyService.countByType(matchingProperties.value)
-  const tipos = Object.keys(porTipo) as PropertyType[]
+// Gráfico 1: cuántas propiedades hay de cada tipo, según el filtro aplicado
+const propertiesByTypeChart = computed<ChartData<'bar'>>(() => {
+  const countByType = propertyService.countByType(matchingProperties.value)
+  const types = Object.keys(countByType) as PropertyType[]
   return {
-    labels: tipos.map((t) => PropertyTypeLabel[t] ?? t),
+    labels: types.map((type) => PropertyTypeLabel[type] ?? type),
     datasets: [
       {
         label: 'Propiedades',
         backgroundColor: '#2563eb',
-        data: tipos.map((t) => porTipo[t]),
+        data: types.map((type) => countByType[type]),
+      },
+    ],
+  }
+})
+
+// Gráfico 2: cuánto arriendo estimado concentra cada ciudad. Responde a una
+// pregunta distinta del anterior: no cuántos inmuebles hay, sino cuánto rinden.
+const estimatedRentByCityChart = computed<ChartData<'bar'>>(() => {
+  const rentByCity = sumEstimatedRentByCity(matchingProperties.value)
+  return {
+    labels: rentByCity.map((row) => row.city),
+    datasets: [
+      {
+        label: 'Arriendo estimado (COP)',
+        backgroundColor: '#b3543a',
+        data: rentByCity.map((row) => row.amount),
       },
     ],
   }
@@ -110,7 +127,14 @@ function onDelete(id: string, nombre: string): void {
       <FilterSelect v-model="selectedType" label="Tipo" :options="typeOptions" />
     </div>
 
-    <ChartCard title="Propiedades por tipo" type="bar" :chart-data="chartData" />
+    <div class="grid gap-4 md:grid-cols-2">
+      <ChartCard title="Propiedades por tipo" type="bar" :chart-data="propertiesByTypeChart" />
+      <ChartCard
+        title="Ingreso estimado por ciudad"
+        type="bar"
+        :chart-data="estimatedRentByCityChart"
+      />
+    </div>
 
     <div class="mt-6">
       <DataTable :columns="tableColumns" :rows="tableRows">

@@ -34,6 +34,7 @@ const statusFilterOptions: SelectOption[] = Object.values(ContractStatus).map((v
 const tableColumns: TableColumn[] = [
   { key: 'propertyName', label: 'Propiedad' },
   { key: 'tenantName', label: 'Arrendatario' },
+  { key: 'tenantContact', label: 'Contacto' },
   { key: 'rent', label: 'Canon (COP)' },
   { key: 'startDate', label: 'Inicio' },
   { key: 'endDate', label: 'Fin' },

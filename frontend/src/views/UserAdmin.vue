@@ -278,7 +278,10 @@ const inputClasses =
           >
             Cambiar rol
           </button>
+          <!-- El botón no se ofrece cuando la acción nunca podría completarse:
+               sobre el propio usuario en sesión o sobre el último administrador -->
           <button
+            v-if="!userService.blockedFromRemoval(String(row.id), authStore.user?.id ?? '')"
             class="text-red-600 hover:underline"
             type="button"
             @click="deleteUser(String(row.id), String(row.fullName))"
