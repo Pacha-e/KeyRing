@@ -18,13 +18,13 @@ const contracts = ref<ContractInterface[]>([])
 const transactions = ref<TransactionInterface[]>([])
 
 /** Recarga los datos visibles para la sesión actual. */
-function load(): void {
+function reloadFromStorage(): void {
   properties.value = propertyService.listForUser(auth.user)
   contracts.value = contractService.listForUser(auth.user)
   transactions.value = transactionService.listForUser(auth.user)
 }
 
-onMounted(load)
+onMounted(reloadFromStorage)
 
 const activeContracts = computed(() => contractService.countActive(contracts.value))
 const monthlyIncome = computed(() => sumIncomeForCurrentMonth(transactions.value))

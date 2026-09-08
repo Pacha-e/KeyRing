@@ -38,23 +38,23 @@ const form = ref<CreateContractDTO>(emptyForm())
  * Carga en el formulario el contrato indicado por la ruta.
  * Si el id no existe, redirige a la lista en lugar de guardar sobre la nada.
  */
-function load(): void {
+function loadFormFromRoute(): void {
   error.value = ''
   if (!editing.value) {
     form.value = emptyForm()
     return
   }
-  const existente = contractService.findById(contractId.value)
-  if (!existente) {
+  const existing = contractService.findById(contractId.value)
+  if (!existing) {
     router.replace({ name: 'contracts' })
     return
   }
-  const { id: _id, ...datos } = existente
-  form.value = datos
+  const { id: _id, ...editableFields } = existing
+  form.value = editableFields
 }
 
 // Recargar también al navegar entre /contracts/:id/edit sin desmontar la vista
-watch(contractId, load, { immediate: true })
+watch(contractId, loadFormFromRoute, { immediate: true })
 
 /**
  * Valida las reglas de negocio del contrato.
@@ -72,9 +72,9 @@ function validate(): string | null {
 
 /** Valida y persiste el contrato, luego vuelve al listado. */
 function onSubmit(): void {
-  const problema = validate()
-  if (problema) {
-    error.value = problema
+  const validationError = validate()
+  if (validationError) {
+    error.value = validationError
     return
   }
   if (editing.value) {
@@ -85,7 +85,7 @@ function onSubmit(): void {
   router.push({ name: 'contracts' })
 }
 
-const inputClass =
+const inputClasses =
   'rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary'
 </script>
 
@@ -100,33 +100,33 @@ const inputClass =
     <form v-else @submit.prevent="onSubmit">
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Propiedad</span>
-        <select v-model="form.propertyId" :class="inputClass">
+        <select v-model="form.propertyId" :class="inputClasses">
           <option v-for="p in properties" :key="p.id" :value="p.id">{{ p.name }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Arrendatario</span>
-        <input v-model="form.tenantName" required :class="inputClass" />
+        <input v-model="form.tenantName" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Contacto del arrendatario</span>
-        <input v-model="form.tenantContact" required :class="inputClass" />
+        <input v-model="form.tenantContact" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Canon mensual (COP)</span>
-        <input v-model.number="form.fixedRent" type="number" min="0" :class="inputClass" />
+        <input v-model.number="form.fixedRent" type="number" min="0" :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Fecha de inicio</span>
-        <input v-model="form.startDate" type="date" required :class="inputClass" />
+        <input v-model="form.startDate" type="date" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Fecha de fin</span>
-        <input v-model="form.endDate" type="date" required :class="inputClass" />
+        <input v-model="form.endDate" type="date" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Estado</span>
-        <select v-model="form.status" :class="inputClass">
+        <select v-model="form.status" :class="inputClasses">
           <option v-for="s in statusOptions" :key="s" :value="s">
             {{ ContractStatusLabel[s] }}
           </option>

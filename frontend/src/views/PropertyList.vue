@@ -17,24 +17,24 @@ import type { ChartData } from 'chart.js'
 
 const auth = useAuthStore()
 
-const properties = ref<PropertyInterface[]>([])
-const city = ref('')
-const type = ref('')
+const visibleProperties = ref<PropertyInterface[]>([])
+const selectedCity = ref('')
+const selectedType = ref('')
 
 /** Recarga las propiedades visibles para la sesión actual. */
-function load(): void {
-  properties.value = propertyService.listForUser(auth.user)
+function reloadFromStorage(): void {
+  visibleProperties.value = propertyService.listForUser(auth.user)
 }
 
-onMounted(load)
+onMounted(reloadFromStorage)
 
-const cities = computed(() => propertyService.cities(properties.value))
+const cities = computed(() => propertyService.cities(visibleProperties.value))
 const typeOptions: SelectOption[] = Object.values(PropertyType).map((v) => ({
   value: v,
   label: PropertyTypeLabel[v],
 }))
 
-const columns: TableColumn[] = [
+const tableColumns: TableColumn[] = [
   { key: 'name', label: 'Nombre' },
   { key: 'city', label: 'Ciudad' },
   { key: 'typeLabel', label: 'Tipo' },
@@ -43,14 +43,14 @@ const columns: TableColumn[] = [
   { key: 'rent', label: 'Arriendo estimado (COP)' },
 ]
 
-const filtered = computed(() =>
-  properties.value.filter(
-    (p) => (!city.value || p.city === city.value) && (!type.value || p.type === type.value),
+const matchingProperties = computed(() =>
+  visibleProperties.value.filter(
+    (p) => (!selectedCity.value || p.city === selectedCity.value) && (!selectedType.value || p.type === selectedType.value),
   ),
 )
 
-const rows = computed(() =>
-  filtered.value.map((p) => ({
+const tableRows = computed(() =>
+  matchingProperties.value.map((p) => ({
     ...p,
     typeLabel: PropertyTypeLabel[p.type] ?? p.type,
     rentalLabel: RentalModeLabel[p.rentalMode] ?? p.rentalMode,
@@ -61,7 +61,7 @@ const rows = computed(() =>
 
 // Gráfico: cuántas propiedades hay de cada tipo, según el filtro aplicado
 const chartData = computed<ChartData<'bar'>>(() => {
-  const porTipo = propertyService.countByType(filtered.value)
+  const porTipo = propertyService.countByType(matchingProperties.value)
   const tipos = Object.keys(porTipo) as PropertyType[]
   return {
     labels: tipos.map((t) => PropertyTypeLabel[t] ?? t),
@@ -85,7 +85,7 @@ function onDelete(id: string, nombre: string): void {
     return
   }
   propertyService.remove(id)
-  load()
+  reloadFromStorage()
 }
 </script>
 
@@ -102,14 +102,14 @@ function onDelete(id: string, nombre: string): void {
     </div>
 
     <div class="mb-4 flex flex-wrap items-end gap-4">
-      <FilterSelect v-model="city" label="Ciudad" :options="cities" />
-      <FilterSelect v-model="type" label="Tipo" :options="typeOptions" />
+      <FilterSelect v-model="selectedCity" label="Ciudad" :options="cities" />
+      <FilterSelect v-model="selectedType" label="Tipo" :options="typeOptions" />
     </div>
 
     <ChartCard title="Propiedades por tipo" type="bar" :chart-data="chartData" />
 
     <div class="mt-6">
-      <DataTable :columns="columns" :rows="rows">
+      <DataTable :columns="tableColumns" :rows="tableRows">
         <template #actions="{ row }">
           <div class="flex gap-3">
             <router-link

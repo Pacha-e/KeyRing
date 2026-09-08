@@ -17,29 +17,29 @@ const properties = ref<PropertyInterface[]>([])
 const transactions = ref<TransactionInterface[]>([])
 
 /** Recarga los datos globales del reporte. */
-function load(): void {
+function reloadFromStorage(): void {
   properties.value = propertyService.list()
   transactions.value = transactionService.list()
 }
 
-onMounted(load)
+onMounted(reloadFromStorage)
 
-const city = ref('')
+const selectedCity = ref('')
 const cities = computed(() => propertyService.cities(properties.value))
 
-const cityProperties = computed(() =>
-  properties.value.filter((p) => !city.value || p.city === city.value),
+const propertiesInSelectedCity = computed(() =>
+  properties.value.filter((p) => !selectedCity.value || p.city === selectedCity.value),
 )
-const cityTransactions = computed(() => {
-  const ids = new Set(cityProperties.value.map((p) => p.id))
+const transactionsInSelectedCity = computed(() => {
+  const ids = new Set(propertiesInSelectedCity.value.map((p) => p.id))
   return transactions.value.filter((t) => ids.has(t.propertyId))
 })
 
 // Gráfico 1: ingresos vs gastos por mes (filtrado por ciudad)
-const monthlyChart = computed<ChartData<'bar'>>(() => {
-  const months = [...new Set(cityTransactions.value.map((t) => t.date.slice(0, 7)))].sort()
+const incomeVsExpenseChart = computed<ChartData<'bar'>>(() => {
+  const months = [...new Set(transactionsInSelectedCity.value.map((t) => t.date.slice(0, 7)))].sort()
   const sumBy = (tt: TransactionType, month: string) =>
-    cityTransactions.value
+    transactionsInSelectedCity.value
       .filter((t) => t.type === tt && t.date.startsWith(month))
       .reduce((s, t) => s + t.amount, 0)
   return {
@@ -60,9 +60,9 @@ const monthlyChart = computed<ChartData<'bar'>>(() => {
 })
 
 // Gráfico 2: distribución de ingresos por fuente
-const sourceChart = computed<ChartData<'doughnut'>>(() => {
+const incomeBySourceChart = computed<ChartData<'doughnut'>>(() => {
   const bySource: Record<string, number> = {}
-  cityTransactions.value
+  transactionsInSelectedCity.value
     .filter((t) => t.type === TransactionType.INCOME)
     .forEach((t) => {
       bySource[t.source] = (bySource[t.source] ?? 0) + t.amount
@@ -78,7 +78,7 @@ const sourceChart = computed<ChartData<'doughnut'>>(() => {
 })
 
 // Tabla resumen por propiedad
-const columns: TableColumn[] = [
+const tableColumns: TableColumn[] = [
   { key: 'name', label: 'Propiedad' },
   { key: 'city', label: 'Ciudad' },
   { key: 'income', label: 'Ingresos (COP)' },
@@ -86,8 +86,8 @@ const columns: TableColumn[] = [
   { key: 'net', label: 'Neto (COP)' },
 ]
 
-const rows = computed(() =>
-  cityProperties.value.map((p) => {
+const tableRows = computed(() =>
+  propertiesInSelectedCity.value.map((p) => {
     const { income, expense, net } = summarizePropertyBalance(p.id, transactions.value)
     return {
       id: p.id,
@@ -107,16 +107,16 @@ const rows = computed(() =>
     <p class="mb-4 text-slate-500">Página exclusiva para administradores.</p>
 
     <div class="mb-4 flex flex-wrap items-end gap-4">
-      <FilterSelect v-model="city" label="Ciudad" :options="cities" />
+      <FilterSelect v-model="selectedCity" label="Ciudad" :options="cities" />
     </div>
 
     <div class="grid gap-4 md:grid-cols-2">
-      <ChartCard title="Ingresos vs gastos por mes" type="bar" :chart-data="monthlyChart" />
-      <ChartCard title="Ingresos por fuente" type="doughnut" :chart-data="sourceChart" />
+      <ChartCard title="Ingresos vs gastos por mes" type="bar" :chart-data="incomeVsExpenseChart" />
+      <ChartCard title="Ingresos por fuente" type="doughnut" :chart-data="incomeBySourceChart" />
     </div>
 
     <div class="mt-6">
-      <DataTable :columns="columns" :rows="rows" />
+      <DataTable :columns="tableColumns" :rows="tableRows" />
     </div>
   </section>
 </template>

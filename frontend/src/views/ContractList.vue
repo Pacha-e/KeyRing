@@ -14,22 +14,22 @@ const auth = useAuthStore()
 
 const contracts = ref<ContractInterface[]>([])
 const properties = ref<PropertyInterface[]>([])
-const status = ref('')
+const selectedStatus = ref('')
 
 /** Recarga los contratos y propiedades visibles para la sesión actual. */
-function load(): void {
+function reloadFromStorage(): void {
   contracts.value = contractService.listForUser(auth.user)
   properties.value = propertyService.listForUser(auth.user)
 }
 
-onMounted(load)
+onMounted(reloadFromStorage)
 
-const statusOptions: SelectOption[] = Object.values(ContractStatus).map((v) => ({
+const statusFilterOptions: SelectOption[] = Object.values(ContractStatus).map((v) => ({
   value: v,
   label: ContractStatusLabel[v],
 }))
 
-const columns: TableColumn[] = [
+const tableColumns: TableColumn[] = [
   { key: 'propertyName', label: 'Propiedad' },
   { key: 'tenantName', label: 'Arrendatario' },
   { key: 'rent', label: 'Canon (COP)' },
@@ -38,9 +38,9 @@ const columns: TableColumn[] = [
   { key: 'statusLabel', label: 'Estado' },
 ]
 
-const rows = computed(() =>
+const tableRows = computed(() =>
   contracts.value
-    .filter((c) => !status.value || c.status === status.value)
+    .filter((c) => !selectedStatus.value || c.status === selectedStatus.value)
     .map((c) => ({
       ...c,
       propertyName: properties.value.find((p) => p.id === c.propertyId)?.name ?? '—',
@@ -57,7 +57,7 @@ const rows = computed(() =>
 function onDelete(id: string, arrendatario: string): void {
   if (!window.confirm(`¿Eliminar el contrato de "${arrendatario}"? No se puede deshacer.`)) return
   contractService.remove(id)
-  load()
+  reloadFromStorage()
 }
 </script>
 
@@ -74,10 +74,10 @@ function onDelete(id: string, arrendatario: string): void {
     </div>
 
     <div class="mb-4 flex flex-wrap items-end gap-4">
-      <FilterSelect v-model="status" label="Estado" :options="statusOptions" />
+      <FilterSelect v-model="selectedStatus" label="Estado" :options="statusFilterOptions" />
     </div>
 
-    <DataTable :columns="columns" :rows="rows">
+    <DataTable :columns="tableColumns" :rows="tableRows">
       <template #actions="{ row }">
         <div class="flex gap-3">
           <router-link

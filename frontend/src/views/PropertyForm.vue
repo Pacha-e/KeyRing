@@ -44,29 +44,29 @@ const form = ref<CreatePropertyDTO>(emptyForm())
  * Carga en el formulario la propiedad indicada por la ruta.
  * Si el id no existe, redirige al listado en lugar de guardar sobre la nada.
  */
-function load(): void {
+function loadFormFromRoute(): void {
   error.value = ''
   if (!editing.value) {
     form.value = emptyForm()
     return
   }
-  const existente = propertyService.findById(propertyId.value)
-  if (!existente) {
+  const existing = propertyService.findById(propertyId.value)
+  if (!existing) {
     router.replace({ name: 'properties' })
     return
   }
-  const { id: _id, ...datos } = existente
-  form.value = datos
+  const { id: _id, ...editableFields } = existing
+  form.value = editableFields
 }
 
 // Recargar también al navegar entre /properties/:id/edit sin desmontar la vista
-watch(propertyId, load, { immediate: true })
+watch(propertyId, loadFormFromRoute, { immediate: true })
 
 const typeOptions = Object.values(PropertyType)
 const modeOptions = Object.values(RentalMode)
 const statusOptions = Object.values(PropertyStatus)
 
-const inputClass =
+const inputClasses =
   'rounded-lg border border-slate-300 px-2 py-1.5 text-sm focus:outline-2 focus:outline-primary'
 
 /**
@@ -85,19 +85,19 @@ function validate(): string | null {
 
 /** Valida y persiste la propiedad, luego vuelve al listado. */
 function onSubmit(): void {
-  const problema = validate()
-  if (problema) {
-    error.value = problema
+  const validationError = validate()
+  if (validationError) {
+    error.value = validationError
     return
   }
-  const datos: CreatePropertyDTO = {
+  const values: CreatePropertyDTO = {
     ...form.value,
     ownerId: form.value.ownerId ?? auth.user?.id ?? null,
   }
   if (editing.value) {
-    propertyService.update(propertyId.value, datos)
+    propertyService.update(propertyId.value, values)
   } else {
-    propertyService.create(datos)
+    propertyService.create(values)
   }
   router.push({ name: 'properties' })
 }
@@ -109,31 +109,31 @@ function onSubmit(): void {
     <form @submit.prevent="onSubmit">
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Nombre</span>
-        <input v-model="form.name" required :class="inputClass" />
+        <input v-model="form.name" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Dirección</span>
-        <input v-model="form.address" required :class="inputClass" />
+        <input v-model="form.address" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Ciudad</span>
-        <input v-model="form.city" required :class="inputClass" />
+        <input v-model="form.city" required :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Tipo</span>
-        <select v-model="form.type" :class="inputClass">
+        <select v-model="form.type" :class="inputClasses">
           <option v-for="t in typeOptions" :key="t" :value="t">{{ PropertyTypeLabel[t] }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Modalidad de arriendo</span>
-        <select v-model="form.rentalMode" :class="inputClass">
+        <select v-model="form.rentalMode" :class="inputClasses">
           <option v-for="m in modeOptions" :key="m" :value="m">{{ RentalModeLabel[m] }}</option>
         </select>
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Estado</span>
-        <select v-model="form.status" :class="inputClass">
+        <select v-model="form.status" :class="inputClasses">
           <option v-for="s in statusOptions" :key="s" :value="s">
             {{ PropertyStatusLabel[s] }}
           </option>
@@ -145,16 +145,16 @@ function onSubmit(): void {
           v-model.number="form.estimatedMonthlyRent"
           type="number"
           min="0"
-          :class="inputClass"
+          :class="inputClasses"
         />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Cuota de administración (COP)</span>
-        <input v-model.number="form.adminFee" type="number" min="0" :class="inputClass" />
+        <input v-model.number="form.adminFee" type="number" min="0" :class="inputClasses" />
       </label>
       <label class="mb-4 flex flex-col gap-1">
         <span class="text-sm font-medium">Otros costos fijos (COP)</span>
-        <input v-model.number="form.otherFixedCosts" type="number" min="0" :class="inputClass" />
+        <input v-model.number="form.otherFixedCosts" type="number" min="0" :class="inputClasses" />
       </label>
       <p v-if="error" aria-live="polite" class="mb-4 text-sm text-red-600">{{ error }}</p>
 
