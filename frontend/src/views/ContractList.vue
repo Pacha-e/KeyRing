@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Contratos: filtro por estado + tabla, con CRUD completo vía ContractForm.
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import FilterBar from '../components/FilterBar.vue'
@@ -22,14 +22,13 @@ const properties = ref<PropertyInterface[]>([])
 const selectedStatus = ref('')
 
 /** Recarga los contratos y propiedades visibles para la sesión actual. */
-function reloadFromStorage(): void {
-  contracts.value = contractService.listForUser(authStore.user)
-  properties.value = propertyService.listForUser(authStore.user)
+async function reloadFromApi(): Promise<void> {
+  contracts.value = await contractService.listForUser(authStore.user)
+  properties.value = await propertyService.listForUser(authStore.user)
 }
 
-// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
-// asi la primera pintada ya trae los datos en vez de una tabla vacia.
-reloadFromStorage()
+// La API responde de forma asíncrona: se carga al montar la vista.
+onMounted(() => void reloadFromApi())
 
 const statusFilterOptions: SelectOption[] = Object.values(ContractStatus).map((v) => ({
   value: v,
@@ -66,8 +65,7 @@ const tableRows = computed(() =>
  */
 function onDelete(id: string, arrendatario: string): void {
   if (!window.confirm(`¿Eliminar el contrato de "${arrendatario}"? No se puede deshacer.`)) return
-  contractService.remove(id)
-  reloadFromStorage()
+  void contractService.remove(id).then(reloadFromApi)
 }
 </script>
 

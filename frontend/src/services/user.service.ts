@@ -1,45 +1,51 @@
 // Servicio de usuarios (gestión exclusiva de administradores).
-// Incluye las guardas de integridad: el sistema nunca puede quedarse sin admin.
-import * as storage from './storage'
-import { UserRole } from '../interfaces/enums'
-import type { UserInterface } from '../interfaces/UserInterface'
-import type { CreateUserDTO } from '../dtos/CreateUserDTO'
+// Habla con la API por HTTP; las guardas de integridad (nunca quedarse sin
+// admin, no auto-eliminarse) viven en el backend y también aquí para la UI.
+import { http } from './http'
+import type { SessionUser } from './auth.service'
 
 /**
- * Todos los usuarios registrados.
- * @returns lista completa de usuarios
+ * Todos los usuarios registrados. La API nunca incluye contraseñas.
  */
-export function list(): UserInterface[] {
-  return storage.findAll<UserInterface>(storage.STORAGE_KEYS.users)
+export async function list(): Promise<SessionUser[]> {
+  const { data } = await http.get<SessionUser[]>('/api/users')
+  return data
 }
 
 /**
  * Busca un usuario por su id.
  * @param id identificador del usuario
- * @returns el usuario, o null si no existe
+ * @returns el usuario sin contraseña, o null si no existe
  */
-export function findById(id: string): UserInterface | null {
-  return storage.findById<UserInterface>(storage.STORAGE_KEYS.users, id)
+export async function findById(id: string): Promise<SessionUser | null> {
+  try {
+    const { data } = await http.get<SessionUser>(`/api/users/${id}`)
+    return data
+  } catch {
+    return null
+  }
 }
 
 /**
  * Indica si un correo ya está registrado por otro usuario.
  * @param email correo a verificar
  * @param exceptId id a excluir de la comparación (al editar el propio usuario)
- * @returns true si el correo ya está en uso
  */
-export function emailTaken(email: string, exceptId?: string): boolean {
-  const normalizedEmail = email.trim().toLowerCase()
-  return list().some((user) => user.id !== exceptId && user.email.toLowerCase() === normalizedEmail)
+export async function emailTaken(email: string, exceptId?: string): Promise<boolean> {
+  const { data } = await http.get<{ taken: boolean }>('/api/users/email-taken', {
+    params: { email, exceptId },
+  })
+  return data.taken
 }
 
 /**
  * Registra un usuario nuevo.
  * @param newUser datos del usuario sin id
- * @returns el usuario creado, ya con su id
+ * @returns el usuario creado, ya con su id y sin contraseña
  */
-export function create(newUser: CreateUserDTO): UserInterface {
-  return storage.insert<UserInterface>(storage.STORAGE_KEYS.users, newUser)
+export async function create(newUser: Omit<SessionUser, 'id'> & { password: string }): Promise<SessionUser> {
+  const { data } = await http.post<SessionUser>('/api/users', newUser)
+  return data
 }
 
 /**
@@ -48,16 +54,16 @@ export function create(newUser: CreateUserDTO): UserInterface {
  * @param changes campos a actualizar
  * @returns el usuario actualizado, o null si el id no existe
  */
-export function update(id: string, changes: Partial<CreateUserDTO>): UserInterface | null {
-  return storage.applyChanges<UserInterface>(storage.STORAGE_KEYS.users, id, changes)
-}
-
-/**
- * Cuenta los administradores registrados.
- * @returns cantidad de usuarios con rol de administrador
- */
-export function countAdmins(): number {
-  return list().filter((user) => user.role === UserRole.ADMIN).length
+export async function update(
+  id: string,
+  changes: Partial<Omit<SessionUser, 'id'>> & { password?: string },
+): Promise<SessionUser | null> {
+  try {
+    const { data } = await http.patch<SessionUser>(`/api/users/${id}`, changes)
+    return data
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -66,11 +72,16 @@ export function countAdmins(): number {
  * @param currentUserId id del usuario en sesión
  * @returns null si se puede eliminar, o el motivo del bloqueo en español
  */
-export function blockedFromRemoval(id: string, currentUserId: string): string | null {
+export async function blockedFromRemoval(
+  id: string,
+  currentUserId: string,
+): Promise<string | null> {
   if (id === currentUserId) return 'No puedes eliminar tu propio usuario.'
-  const user = findById(id)
+  const user = await findById(id)
   if (!user) return 'El usuario ya no existe.'
-  if (user.role === UserRole.ADMIN && countAdmins() <= 1) {
+  const users = await list()
+  const admins = users.filter((candidate) => candidate.role === 'admin').length
+  if (user.role === 'admin' && admins <= 1) {
     return 'No puedes eliminar al último administrador del sistema.'
   }
   return null
@@ -80,6 +91,6 @@ export function blockedFromRemoval(id: string, currentUserId: string): string | 
  * Elimina un usuario.
  * @param id identificador del usuario
  */
-export function remove(id: string): void {
-  storage.deleteById(storage.STORAGE_KEYS.users, id)
+export async function remove(id: string): Promise<void> {
+  await http.delete(`/api/users/${id}`)
 }

@@ -1,6 +1,7 @@
-// Servicio de contratos. Los contratos se filtran por las propiedades
-// visibles para la sesión: un propietario solo ve los de sus inmuebles.
-import * as storage from './storage'
+// Servicio de contratos: habla con la API por HTTP (axios).
+// Los contratos visibles son los de las propiedades visibles para la sesión;
+// la API aplica esa regla cuando se le pasan los ids de las propiedades.
+import { http } from './http'
 import * as propertyService from './property.service'
 import { ContractStatus } from '../interfaces/enums'
 import type { ContractInterface } from '../interfaces/ContractInterface'
@@ -8,32 +9,38 @@ import type { CreateContractDTO } from '../dtos/CreateContractDTO'
 import type { SessionUser } from './auth.service'
 
 /**
- * Todos los contratos registrados.
- * @returns lista completa, sin filtrar por dueño
+ * Todos los contratos registrados (vista global del administrador).
  */
-export function list(): ContractInterface[] {
-  return storage.findAll<ContractInterface>(storage.STORAGE_KEYS.contracts)
+export async function list(): Promise<ContractInterface[]> {
+  const { data } = await http.get<ContractInterface[]>('/api/contracts')
+  return data
 }
 
 /**
  * Contratos de las propiedades visibles para la sesión actual.
  * @param user usuario en sesión, o null si no hay sesión
- * @returns contratos que el usuario puede consultar
  */
-export function listForUser(user: SessionUser | null): ContractInterface[] {
-  const visibles = new Set(propertyService.listForUser(user).map((p) => p.id))
-  return list().filter((c) => visibles.has(c.propertyId))
+export async function listForUser(user: SessionUser | null): Promise<ContractInterface[]> {
+  const visibles = await propertyService.listForUser(user)
+  if (visibles.length === 0) return []
+  const { data } = await http.get<ContractInterface[]>('/api/contracts', {
+    params: { propertyIds: visibles.map((p) => p.id).join(',') },
+  })
+  return data
 }
-
-/**
 
 /**
  * Busca un contrato por su id.
  * @param id identificador del contrato
- * @returns el contrato, o null si no existe
+ * @returns el contrato, o null si no existe (404 traducido a null)
  */
-export function findById(id: string): ContractInterface | null {
-  return storage.findById<ContractInterface>(storage.STORAGE_KEYS.contracts, id)
+export async function findById(id: string): Promise<ContractInterface | null> {
+  try {
+    const { data } = await http.get<ContractInterface>(`/api/contracts/${id}`)
+    return data
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -41,8 +48,9 @@ export function findById(id: string): ContractInterface | null {
  * @param newContract datos del contrato sin id
  * @returns el contrato creado, ya con su id
  */
-export function create(newContract: CreateContractDTO): ContractInterface {
-  return storage.insert<ContractInterface>(storage.STORAGE_KEYS.contracts, newContract)
+export async function create(newContract: CreateContractDTO): Promise<ContractInterface> {
+  const { data } = await http.post<ContractInterface>('/api/contracts', newContract)
+  return data
 }
 
 /**
@@ -51,16 +59,24 @@ export function create(newContract: CreateContractDTO): ContractInterface {
  * @param changes campos a actualizar
  * @returns el contrato actualizado, o null si el id no existe
  */
-export function update(id: string, changes: Partial<CreateContractDTO>): ContractInterface | null {
-  return storage.applyChanges<ContractInterface>(storage.STORAGE_KEYS.contracts, id, changes)
+export async function update(
+  id: string,
+  changes: Partial<CreateContractDTO>,
+): Promise<ContractInterface | null> {
+  try {
+    const { data } = await http.patch<ContractInterface>(`/api/contracts/${id}`, changes)
+    return data
+  } catch {
+    return null
+  }
 }
 
 /**
  * Elimina un contrato.
  * @param id identificador del contrato
  */
-export function remove(id: string): void {
-  storage.deleteById(storage.STORAGE_KEYS.contracts, id)
+export async function remove(id: string): Promise<void> {
+  await http.delete(`/api/contracts/${id}`)
 }
 
 /**

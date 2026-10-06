@@ -1,0 +1,33 @@
+# KeyRing completo en dos contenedores: la API (Nest.js) y el frontend
+# compilado servido por nginx. Es el patrón del Tutorial 08 del curso.
+#
+# Uso:
+#   docker compose up --build     (desde la raíz del repo)
+#   frontend: http://localhost:8080
+#   API:      http://localhost:3000/api
+services:
+  api:
+    build: ./backend
+    container_name: keyring-api
+    ports:
+      - "3000:3000"
+    volumes:
+      - keyring-data:/app/data
+    environment:
+      # El frontend del navegador llama a la API por este origen (CORS)
+      - CORS_ORIGIN=http://localhost:8081,http://localhost:8080,http://localhost
+
+  frontend:
+    build:
+      context: ./frontend
+      # dist/ debe existir: correr `npm run build` en frontend/ antes.
+      # Se construye fuera para no instalar node_modules dentro del build.
+    container_name: keyring-frontend
+    ports:
+      # 8080 suele estar ocupado en la máquina de desarrollo (pgadmin, etc.)
+      - "8081:80"
+    depends_on:
+      - api
+
+volumes:
+  keyring-data:

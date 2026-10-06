@@ -9,6 +9,4 @@ export interface UserInterface {
   city: string
   memberSince: string
   role: UserRole
-  /** ids de las propiedades del usuario */
-  properties: string[]
 }

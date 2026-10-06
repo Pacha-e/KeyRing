@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Transacciones: filtros + tabla + gráfico + alta, edición y eliminación.
 // Junto con Propiedades, es una de las páginas que combinan selector, tabla y Chart.js.
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import SelectField from '../components/SelectField.vue'
@@ -33,14 +33,13 @@ const visibleTransactions = ref<TransactionInterface[]>([])
 const visibleProperties = ref<PropertyInterface[]>([])
 
 /** Recarga las transacciones y propiedades que la sesión actual puede ver. */
-function reloadFromStorage(): void {
-  visibleTransactions.value = transactionService.listForUser(authStore.user)
-  visibleProperties.value = propertyService.listForUser(authStore.user)
+async function reloadFromApi(): Promise<void> {
+  visibleTransactions.value = await transactionService.listForUser(authStore.user)
+  visibleProperties.value = await propertyService.listForUser(authStore.user)
 }
 
-// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
-// asi la primera pintada ya trae los datos en vez de una tabla vacia.
-reloadFromStorage()
+// La API responde de forma asíncrona: se carga al montar la vista.
+onMounted(() => void reloadFromApi())
 
 // --- Filtros ---
 const selectedType = ref('')
@@ -196,18 +195,18 @@ function findValidationError(): string | null {
 }
 
 /** Valida y guarda la transacción, luego recarga la tabla y el gráfico. */
-function saveTransaction(): void {
+async function saveTransaction(): Promise<void> {
   const validationError = findValidationError()
   if (validationError) {
     formError.value = validationError
     return
   }
   if (editingTransactionId.value) {
-    transactionService.update(editingTransactionId.value, { ...transactionForm })
+    await transactionService.update(editingTransactionId.value, { ...transactionForm })
   } else {
-    transactionService.create({ ...transactionForm })
+    await transactionService.create({ ...transactionForm })
   }
-  reloadFromStorage()
+  await reloadFromApi()
   cancelEditing()
 }
 
@@ -217,8 +216,7 @@ function saveTransaction(): void {
  */
 function deleteTransaction(transactionId: string): void {
   if (!window.confirm('¿Eliminar esta transacción? Esta acción no se puede deshacer.')) return
-  transactionService.remove(transactionId)
-  reloadFromStorage()
+  void transactionService.remove(transactionId).then(reloadFromApi)
 }
 </script>
 

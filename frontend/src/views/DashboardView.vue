@@ -2,7 +2,7 @@
 // Dashboard: resumen del negocio del usuario en sesión.
 // Cada tarjeta lleva a la pantalla donde se gestiona ese dato, y debajo se
 // muestra la evolución mensual y los contratos que vencen antes.
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import PageHeader from '../components/PageHeader.vue'
 import StatCard from '../components/StatCard.vue'
 import ChartCard from '../components/ChartCard.vue'
@@ -43,15 +43,14 @@ const contracts = ref<ContractInterface[]>([])
 const transactions = ref<TransactionInterface[]>([])
 
 /** Recarga los datos visibles para la sesión actual. */
-function reloadFromStorage(): void {
-  properties.value = propertyService.listForUser(authStore.user)
-  contracts.value = contractService.listForUser(authStore.user)
-  transactions.value = transactionService.listForUser(authStore.user)
+async function reloadFromApi(): Promise<void> {
+  properties.value = await propertyService.listForUser(authStore.user)
+  contracts.value = await contractService.listForUser(authStore.user)
+  transactions.value = await transactionService.listForUser(authStore.user)
 }
 
-// Se carga aquí y no en onMounted: LocalStorage responde de inmediato,
-// así la primera pintada ya trae los datos en vez de tarjetas en cero.
-reloadFromStorage()
+// La API responde de forma asíncrona: se carga al montar la vista.
+onMounted(() => void reloadFromApi())
 
 const activeContracts = computed(() => contractService.countActive(contracts.value))
 const monthlyIncome = computed(() => sumIncomeForCurrentMonth(transactions.value))

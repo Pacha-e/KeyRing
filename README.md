@@ -9,12 +9,14 @@ Proyecto del curso **Ingeniería de Desarrollo Web** — Equipo **KeyRing**.
 ## Características
 
 - SPA en **Vue 3** (Composition API, `<script setup>`) + Vite + **TypeScript** (estricto).
+- API en **Nest.js** con **TypeORM** sobre **SQLite**: los datos ya no viven en el navegador.
+- Frontend ↔ API por **axios**, con la URL base en `VITE_API_BASE_URL` (`src/config/app.config.ts`).
 - Estilos con **Tailwind CSS v4** (plugin de Vite) y tema claro.
-- Estado con **Pinia**; "base de datos" en **LocalStorage** del navegador, sembrada con datos
-  ficticios la primera vez que se abre la app.
+- Estado con **Pinia** (sesión) y carga de datos asíncrona en `onMounted`.
 - Arquitectura por capas: `interfaces/` (modelos + enums), `dtos/`, `services/`, `stores/`,
-  `router/`, `components/`, `views/`.
-- Autenticación ficticia con roles (`admin` / `user`) y rutas protegidas.
+  `router/`, `components/`, `views/`; en el backend: entidades, DTOs class-validator,
+  servicios con las reglas de dominio, controladores y módulos Nest.
+- Autenticación con roles (`admin` / `user`) validada en el servidor; rutas protegidas.
 - 13 páginas más la de «no encontrada», incluidas 2 exclusivas para administradores (Reportes y
   Usuarios).
 - Cuatro CRUD completos: propiedades, contratos, transacciones y usuarios.
@@ -24,21 +26,26 @@ Proyecto del curso **Ingeniería de Desarrollo Web** — Equipo **KeyRing**.
 ## Requisitos
 
 - Node.js 18 o superior
+- Backend: ver `backend/README` abajo; el frontend espera la API en `http://localhost:3000`
 
 ## Instalación y ejecución
 
-El proyecto Vue vive en la carpeta `frontend/`, siguiendo la estructura de proyectos del curso.
-Desde la raíz del repositorio:
+El proyecto tiene dos partes: `frontend/` (SPA Vue) y `backend/` (API Nest.js), siguiendo la
+estructura de proyectos del curso. Desde la raíz del repositorio:
 
 ```bash
+# 1. API (terminal 1)
+cd backend
+npm install
+npm run start        # http://localhost:3000/api
+
+# 2. Frontend (terminal 2)
 cd frontend
 npm install
-npm run dev
+npm run dev          # http://localhost:5173
 ```
 
-La app queda en **`http://localhost:5173/`** y la **ruta principal que se debe invocar es `/`**
-(página Home, pública). Desde ahí se entra con el botón *Ingresar* usando las credenciales de
-prueba de la siguiente sección.
+La primera vez que arranca, la API siembra SQLite con los datos ficticios del proyecto.
 
 ## Credenciales de prueba
 
@@ -50,15 +57,13 @@ prueba de la siguiente sección.
 En la pantalla de ingreso las dos cuentas aparecen como botones que rellenan el formulario, así que
 no hace falta teclearlas.
 
-Para volver a los datos de prueba, abre la consola del navegador (F12) y ejecuta:
+Para volver a los datos de prueba, borra la base de datos y reinicia la API:
 
-```js
-localStorage.clear()
+```bash
+cd backend
+rm database.sqlite
+npm run start
 ```
-
-Luego recarga: la siembra vuelve a correr. Los datos también se resiembran solos la primera vez que
-se abre una versión del proyecto con datos de ejemplo nuevos, porque la bandera de siembra lleva
-número de versión (`keyring_seeded_v2`).
 
 ## Scripts
 
@@ -78,14 +83,16 @@ número de versión (`keyring_seeded_v2`).
 KeyRing/
 ├── .gitignore             # Reglas del repositorio (dist/ SÍ se versiona, ver Despliegue)
 ├── README.md              # Este archivo
+├── docker-compose.yml     # API + frontend juntos en dos contenedores (Tutorial 08)
+├── backend/               # API Nest.js (TypeORM + SQLite)
+│   ├── Dockerfile         # Multi-stage: build TS + runtime solo con deps de producción
+│   └── src/               # main, app.module, módulo por entidad + seed
 └── frontend/              # Proyecto Vue 3 (SPA)
     ├── Dockerfile         # Imagen nginx:alpine que sirve el build
     ├── nginx.conf         # Fallback a index.html para las rutas del router
     ├── dist/              # Build de producción versionado (lo consume el despliegue)
     └── src/
 ```
-
-En el Entregable 2 se añadirá una carpeta `fullstack/` con la API, al lado de `frontend/`.
 
 ## Estructura de `frontend/src`
 
@@ -97,10 +104,10 @@ src/
 ├── interfaces/            # UserInterface, PropertyInterface, ContractInterface,
 │                          # TransactionInterface y enums.ts (enums TS + etiquetas en español)
 ├── router/index.ts        # Rutas + guardas (requiresAuth / requiresAdmin)
-├── services/              # camelCase: storage.ts (repositorio genérico tipado),
-│                          # seed.ts (datos ficticios), auth.service.ts (sesión) y
-│                          # un servicio por entidad: property, contract,
-│                          # transaction y user. Ninguna vista toca storage.ts
+├── services/              # camelCase: http.ts (axios compartido + apiErrorMessage),
+│                          # auth.service.ts (sesión) y un servicio por entidad:
+│                          # property, contract, transaction y user. Ninguna vista
+│                          # toca axios: solo los servicios conocen el transporte
 ├── stores/auth.ts         # Store Pinia de autenticación (tipado)
 ├── utils/                 # finance.ts (aritmética del negocio, funciones puras),
 │                          # format.ts (formato del peso colombiano) y
@@ -110,7 +117,7 @@ src/
 ├── views/                 # Una vista por ruta (PascalCase)
 ├── env.d.ts               # Tipos de Vite
 ├── App.vue
-└── main.ts                # Siembra de datos + montaje de la app
+└── main.ts                # Montaje de la app
 ```
 
 ## Rutas
@@ -133,7 +140,7 @@ src/
 
 El despliegue se hace sobre una máquina virtual de Google Cloud (Compute Engine `e2-micro`,
 Debian 13, con tráfico HTTP y HTTPS permitido), siguiendo el tutorial del curso. La imagen Docker
-se construye a partir del build ya compilado, por eso `frontend/dist/` se versiona.
+del frontend se construye a partir del build ya compilado, por eso `frontend/dist/` se versiona.
 
 Antes de desplegar, desde `frontend/`:
 
@@ -141,19 +148,32 @@ Antes de desplegar, desde `frontend/`:
 npm run build
 ```
 
-Y en la terminal SSH de la máquina virtual, con Docker ya instalado:
+Con Docker instalado en la máquina virtual, el stack completo (API + frontend) se levanta con
+docker-compose desde la raíz del repo:
 
 ```bash
 sudo git clone https://github.com/Pacha-e/KeyRing.git
-cd KeyRing/frontend
-sudo docker image build -t vue-image .
-sudo docker container run -d --name vue-container -p 80:80 vue-image
+cd KeyRing
+sudo docker compose up --build -d
+# API:      http://<IP-VM>:3000/api
+# Frontend: http://<IP-VM>:8081
 ```
+
+Para que el frontend desplegado hable con la API de la VM, define `VITE_API_BASE_URL` con la IP
+externa antes de compilar (los valores quedan embebidos en el bundle):
+
+```bash
+# frontend/.env.production (no se versiona)
+VITE_API_BASE_URL=http://<IP-VM>:3000
+```
+
+Y en el contenedor de la API, el origen del frontend debe estar en `CORS_ORIGIN`
+(ver `docker-compose.yml`).
 
 La aplicación está desplegada en **http://34.58.221.78** (instancia `keyring-vm`, Compute Engine,
 `us-central1-a`) usando **HTTP** (no HTTPS: la instancia no tiene certificado). Para publicar
 cambios: `npm run build`, commit del nuevo `dist/`, `git pull` en la máquina virtual y reconstruir
-la imagen y el contenedor.
+con `docker compose up --build -d`.
 
 El procedimiento completo —crear la instancia, abrir el firewall, instalar Docker y comprobar que
 responde— está en la wiki:

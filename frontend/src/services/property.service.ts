@@ -1,40 +1,45 @@
-// Servicio de propiedades. Única puerta de entrada a los datos de Property:
-// las vistas y componentes nunca hablan con storage.ts directamente.
-import * as storage from './storage'
-import { UserRole } from '../interfaces/enums'
+// Servicio de propiedades: única puerta de entrada a los datos de Property.
+// Habla con la API por HTTP (axios); las vistas nunca conocen el transporte,
+// así que cambiar la dirección de la API solo toca la configuración.
+import { http } from './http'
 import type { PropertyInterface } from '../interfaces/PropertyInterface'
 import type { CreatePropertyDTO } from '../dtos/CreatePropertyDTO'
 import type { SessionUser } from './auth.service'
 
 /**
- * Todas las propiedades registradas.
- * @returns lista completa, sin filtrar por dueño
+ * Todas las propiedades registradas (vista global del administrador).
  */
-export function list(): PropertyInterface[] {
-  return storage.findAll<PropertyInterface>(storage.STORAGE_KEYS.properties)
+export async function list(): Promise<PropertyInterface[]> {
+  const { data } = await http.get<PropertyInterface[]>('/api/properties')
+  return data
 }
 
 /**
  * Propiedades visibles para la sesión actual.
- * El administrador ve todas; el propietario solo las suyas.
+ * El administrador ve todas; el propietario solo las suyas. La regla vive en
+ * la API, que filtra por rol y dueño.
  * @param user usuario en sesión, o null si no hay sesión
- * @returns propiedades que el usuario puede consultar
  */
-export function listForUser(user: SessionUser | null): PropertyInterface[] {
+export async function listForUser(user: SessionUser | null): Promise<PropertyInterface[]> {
   if (!user) return []
-  const allProperties = list()
-  return user.role === UserRole.ADMIN
-    ? allProperties
-    : allProperties.filter((property) => property.ownerId === user.id)
+  const { data } = await http.get<PropertyInterface[]>('/api/properties', {
+    params: { role: user.role, userId: user.id },
+  })
+  return data
 }
 
 /**
  * Busca una propiedad por su id.
  * @param id identificador de la propiedad
- * @returns la propiedad, o null si no existe
+ * @returns la propiedad, o null si no existe (404 traducido a null)
  */
-export function findById(id: string): PropertyInterface | null {
-  return storage.findById<PropertyInterface>(storage.STORAGE_KEYS.properties, id)
+export async function findById(id: string): Promise<PropertyInterface | null> {
+  try {
+    const { data } = await http.get<PropertyInterface>(`/api/properties/${id}`)
+    return data
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -42,8 +47,9 @@ export function findById(id: string): PropertyInterface | null {
  * @param newProperty datos de la propiedad sin id
  * @returns la propiedad creada, ya con su id
  */
-export function create(newProperty: CreatePropertyDTO): PropertyInterface {
-  return storage.insert<PropertyInterface>(storage.STORAGE_KEYS.properties, newProperty)
+export async function create(newProperty: CreatePropertyDTO): Promise<PropertyInterface> {
+  const { data } = await http.post<PropertyInterface>('/api/properties', newProperty)
+  return data
 }
 
 /**
@@ -52,16 +58,24 @@ export function create(newProperty: CreatePropertyDTO): PropertyInterface {
  * @param changes campos a actualizar
  * @returns la propiedad actualizada, o null si el id no existe
  */
-export function update(id: string, changes: Partial<CreatePropertyDTO>): PropertyInterface | null {
-  return storage.applyChanges<PropertyInterface>(storage.STORAGE_KEYS.properties, id, changes)
+export async function update(
+  id: string,
+  changes: Partial<CreatePropertyDTO>,
+): Promise<PropertyInterface | null> {
+  try {
+    const { data } = await http.patch<PropertyInterface>(`/api/properties/${id}`, changes)
+    return data
+  } catch {
+    return null
+  }
 }
 
 /**
  * Elimina una propiedad.
  * @param id identificador de la propiedad
  */
-export function remove(id: string): void {
-  storage.deleteById(storage.STORAGE_KEYS.properties, id)
+export async function remove(id: string): Promise<void> {
+  await http.delete(`/api/properties/${id}`)
 }
 
 /**

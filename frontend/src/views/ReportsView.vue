@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Reportes (solo admin): filtros + gráficos Chart.js + tabla resumen por propiedad.
 // Es la vista global del negocio, por eso no se filtra por propietario.
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import ChartCard from '../components/ChartCard.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import FilterBar from '../components/FilterBar.vue'
@@ -33,14 +33,13 @@ const properties = ref<PropertyInterface[]>([])
 const transactions = ref<TransactionInterface[]>([])
 
 /** Recarga los datos globales del reporte. */
-function reloadFromStorage(): void {
-  properties.value = propertyService.list()
-  transactions.value = transactionService.list()
+async function reloadFromApi(): Promise<void> {
+  properties.value = await propertyService.list()
+  transactions.value = await transactionService.list()
 }
 
-// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
-// asi la primera pintada ya trae los datos en vez de una tabla vacia.
-reloadFromStorage()
+// La API responde de forma asíncrona: se carga al montar la vista.
+onMounted(() => void reloadFromApi())
 
 // --- Filtros ---
 const selectedCity = ref('')

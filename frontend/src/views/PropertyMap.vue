@@ -45,9 +45,9 @@ const SPREAD_DEGREES = 0.09
 const mapEl = ref<HTMLElement | null>(null)
 let map: L.Map | null = null
 
-// Se lee fuera de onMounted para poder anunciar cuántos marcadores hay en la
-// cabecera, sin esperar a que Leaflet termine de montarse.
-const markedProperties = propertyService.listForUser(authStore.user)
+// Propiedades visibles para la sesión; llegan de la API de forma asíncrona,
+// así que el mapa se dibuja cuando ya están cargadas.
+const markedProperties = ref<PropertyInterface[]>([])
 
 /**
  * Construye el contenido del popup con nodos del DOM.
@@ -97,7 +97,8 @@ function coordsFor(property: PropertyInterface, unlocatedIndex: number): [number
   return [base[0] + Math.sin(angle) * SPREAD_DEGREES, base[1] + Math.cos(angle) * SPREAD_DEGREES]
 }
 
-onMounted(() => {
+/** Dibuja el mapa sobre las propiedades ya cargadas. */
+function drawMap(): void {
   if (!mapEl.value) return
 
   map = L.map(mapEl.value).setView([5.5, -74.5], 6)
@@ -111,7 +112,7 @@ onMounted(() => {
   const unlocatedByCity: Record<string, number> = {}
   const placed: [number, number][] = []
 
-  markedProperties.forEach((property) => {
+  markedProperties.value.forEach((property) => {
     const hasOwnCoords =
       typeof property.latitude === 'number' && typeof property.longitude === 'number'
     const unlocatedIndex = hasOwnCoords
@@ -138,6 +139,11 @@ onMounted(() => {
   if (placed.length > 0) {
     map.fitBounds(L.latLngBounds(placed), { padding: [48, 48], maxZoom: 12 })
   }
+}
+
+onMounted(async () => {
+  markedProperties.value = await propertyService.listForUser(authStore.user)
+  drawMap()
 })
 
 onBeforeUnmount(() => {

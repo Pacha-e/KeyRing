@@ -31,3 +31,4 @@ __MACOSX/
 *.pdf
 *.docx
 *.pptx
+.claude/

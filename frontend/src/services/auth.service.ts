@@ -1,28 +1,39 @@
-import * as storage from './storage'
+// Autenticación contra la API (Nest.js). La sesión se persiste en
+// LocalStorage para sobrevivir recargas; las credenciales se validan en el
+// servidor, que nunca devuelve la contraseña.
+import { http } from './http'
 import type { UserInterface } from '../interfaces/UserInterface'
 
 const SESSION_KEY = 'keyring_session'
 
-/** Usuario en sesión: mismo modelo sin el password */
+/** Usuario en sesión: mismo modelo sin el password (la API tampoco lo envía). */
 export type SessionUser = Omit<UserInterface, 'password'>
 
-// Autenticación ficticia contra la colección de usuarios en LocalStorage.
-// Retorna el usuario sin password, o null si las credenciales no coinciden.
-export function login(email: string, password: string): SessionUser | null {
-  const user = storage
-    .findAll<UserInterface>(storage.STORAGE_KEYS.users)
-    .find((u) => u.email === email && u.password === password)
-  if (!user) return null
-  const sessionUser: Partial<UserInterface> = { ...user }
-  delete sessionUser.password
-  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser))
-  return sessionUser as SessionUser
+/**
+ * Valida credenciales contra la API y abre la sesión.
+ * @param email correo registrado
+ * @param password contraseña en texto plano (alcance del curso)
+ * @returns el usuario sin contraseña, o null si no coinciden
+ */
+export async function login(email: string, password: string): Promise<SessionUser | null> {
+  try {
+    const { data } = await http.get<SessionUser | null>('/api/users/login', {
+      params: { email, password },
+    })
+    if (!data) return null
+    localStorage.setItem(SESSION_KEY, JSON.stringify(data))
+    return data
+  } catch {
+    return null
+  }
 }
 
+/** Cierra la sesión. */
 export function logout(): void {
   localStorage.removeItem(SESSION_KEY)
 }
 
+/** Usuario con sesión abierta, o null si no la hay. */
 export function currentUser(): SessionUser | null {
   try {
     return JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as SessionUser | null

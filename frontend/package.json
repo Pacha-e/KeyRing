@@ -10,12 +10,13 @@
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,vue,css}\" \"*.{js,ts,json,md}\"",
-    "verify:servicios": "esbuild .verify/servicios.ts --bundle --format=esm --platform=node --outfile=.verify/out-servicios.mjs && node .verify/run-servicios.mjs",
+    "verify:servicios": "esbuild .verify/servicios.ts --bundle --format=esm --platform=node --external:axios --outfile=.verify/out-servicios.mjs && node .verify/run-servicios.mjs",
     "verify:guards": "node .verify/build-guards.mjs && node .verify/run-guards.mjs",
     "verify:vistas": "node .verify/build-vistas.mjs && node .verify/run-vistas.mjs",
     "verify": "npm run verify:servicios && npm run verify:guards && npm run verify:vistas"
   },
   "dependencies": {
+    "axios": "^1.20.0",
     "chart.js": "^4.4.0",
     "leaflet": "^1.9.4",
     "pinia": "^2.2.0",

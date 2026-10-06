@@ -5,15 +5,24 @@ import { useRoute, useRouter } from 'vue-router'
 import SelectField, { type SelectOption } from '../components/SelectField.vue'
 import * as contractService from '../services/contract.service'
 import * as propertyService from '../services/property.service'
+import { apiErrorMessage } from '../services/http'
 import { ContractStatus, ContractStatusLabel } from '../interfaces/enums'
 import { useAuthStore } from '../stores/auth'
 import type { CreateContractDTO } from '../dtos/CreateContractDTO'
+import type { PropertyInterface } from '../interfaces/PropertyInterface'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const properties = computed(() => propertyService.listForUser(authStore.user))
+// Propiedades visibles para la sesión; llegan de la API de forma asíncrona.
+const properties = ref<PropertyInterface[]>([])
+
+// Cargar las propiedades primero: el contrato vacío preselecciona la primera.
+async function loadProperties(): Promise<void> {
+  properties.value = await propertyService.listForUser(authStore.user)
+}
+void loadProperties()
 
 // Las opciones llevan ya su etiqueta en español: el selector solo dibuja lo que
 // se le pasa y no tiene que conocer las tablas de traducción del dominio.
@@ -47,13 +56,13 @@ const contractForm = ref<CreateContractDTO>(buildEmptyContract())
  * Carga en el formulario el contrato indicado por la ruta.
  * Si el id no existe, redirige a la lista en lugar de guardar sobre la nada.
  */
-function loadFormFromRoute(): void {
+async function loadFormFromRoute(): Promise<void> {
   formError.value = ''
   if (!isEditing.value) {
     contractForm.value = buildEmptyContract()
     return
   }
-  const existing = contractService.findById(contractId.value)
+  const existing = await contractService.findById(contractId.value)
   if (!existing) {
     router.replace({ name: 'contracts' })
     return
@@ -63,7 +72,7 @@ function loadFormFromRoute(): void {
 }
 
 // Recargar también al navegar entre /contracts/:id/edit sin desmontar la vista
-watch(contractId, loadFormFromRoute, { immediate: true })
+watch(contractId, () => void loadFormFromRoute(), { immediate: true })
 
 /**
  * Valida las reglas de negocio del contrato.
@@ -81,16 +90,21 @@ function findValidationError(): string | null {
 }
 
 /** Valida y persiste el contrato, luego vuelve al listado. */
-function saveContract(): void {
+async function saveContract(): Promise<void> {
   const validationError = findValidationError()
   if (validationError) {
     formError.value = validationError
     return
   }
-  if (isEditing.value) {
-    contractService.update(contractId.value, contractForm.value)
-  } else {
-    contractService.create(contractForm.value)
+  try {
+    if (isEditing.value) {
+      await contractService.update(contractId.value, contractForm.value)
+    } else {
+      await contractService.create(contractForm.value)
+    }
+  } catch (error) {
+    formError.value = apiErrorMessage(error)
+    return
   }
   router.push({ name: 'contracts' })
 }

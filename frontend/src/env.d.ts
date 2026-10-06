@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_APP_NAME: string
   /** Plantilla de teselas del mapa. Permite cambiar de proveedor sin tocar el código. */
   readonly VITE_MAP_TILE_URL: string
+  /** URL base de la API de KeyRing (Nest.js). */
+  readonly VITE_API_BASE_URL: string
 }
 
 interface ImportMeta {

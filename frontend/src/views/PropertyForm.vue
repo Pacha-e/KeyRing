@@ -4,6 +4,7 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SelectField, { type SelectOption } from '../components/SelectField.vue'
 import * as propertyService from '../services/property.service'
+import { apiErrorMessage } from '../services/http'
 import {
   PropertyType,
   PropertyTypeLabel,
@@ -45,13 +46,13 @@ const propertyForm = ref<CreatePropertyDTO>(buildEmptyProperty())
  * Carga en el formulario la propiedad indicada por la ruta.
  * Si el id no existe, redirige al listado en lugar de guardar sobre la nada.
  */
-function loadFormFromRoute(): void {
+async function loadFormFromRoute(): Promise<void> {
   formError.value = ''
   if (!isEditing.value) {
     propertyForm.value = buildEmptyProperty()
     return
   }
-  const existing = propertyService.findById(propertyId.value)
+  const existing = await propertyService.findById(propertyId.value)
   if (!existing) {
     router.replace({ name: 'properties' })
     return
@@ -61,7 +62,7 @@ function loadFormFromRoute(): void {
 }
 
 // Recargar también al navegar entre /properties/:id/edit sin desmontar la vista
-watch(propertyId, loadFormFromRoute, { immediate: true })
+watch(propertyId, () => void loadFormFromRoute(), { immediate: true })
 
 // Las opciones llevan ya su etiqueta en español: el selector solo dibuja lo que
 // se le pasa y no tiene que conocer las tablas de traducción del dominio.
@@ -92,7 +93,7 @@ function findValidationError(): string | null {
 }
 
 /** Valida y persiste la propiedad, luego vuelve al listado. */
-function saveProperty(): void {
+async function saveProperty(): Promise<void> {
   const validationError = findValidationError()
   if (validationError) {
     formError.value = validationError
@@ -102,10 +103,15 @@ function saveProperty(): void {
     ...propertyForm.value,
     ownerId: propertyForm.value.ownerId ?? authStore.user?.id ?? null,
   }
-  if (isEditing.value) {
-    propertyService.update(propertyId.value, values)
-  } else {
-    propertyService.create(values)
+  try {
+    if (isEditing.value) {
+      await propertyService.update(propertyId.value, values)
+    } else {
+      await propertyService.create(values)
+    }
+  } catch (error) {
+    formError.value = apiErrorMessage(error)
+    return
   }
   router.push({ name: 'properties' })
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Propiedades: selector + tabla + gráfico Chart.js, con CRUD completo.
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import FilterBar from '../components/FilterBar.vue'
@@ -31,13 +31,12 @@ const selectedCity = ref('')
 const selectedType = ref('')
 
 /** Recarga las propiedades visibles para la sesión actual. */
-function reloadFromStorage(): void {
-  visibleProperties.value = propertyService.listForUser(authStore.user)
+async function reloadFromApi(): Promise<void> {
+  visibleProperties.value = await propertyService.listForUser(authStore.user)
 }
 
-// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
-// asi la primera pintada ya trae los datos en vez de una tabla vacia.
-reloadFromStorage()
+// La API responde de forma asíncrona: se carga al montar la vista.
+onMounted(() => void reloadFromApi())
 
 const cities = computed(() => propertyService.cities(visibleProperties.value))
 const typeOptions: SelectOption[] = Object.values(PropertyType).map((v) => ({
@@ -122,8 +121,7 @@ function onDelete(id: string, nombre: string): void {
   if (!window.confirm(`¿Eliminar la propiedad "${nombre}"? Esta acción no se puede deshacer.`)) {
     return
   }
-  propertyService.remove(id)
-  reloadFromStorage()
+  void propertyService.remove(id).then(reloadFromApi)
 }
 </script>
 

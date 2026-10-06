@@ -7,7 +7,8 @@ interface AuthState {
   user: SessionUser | null
 }
 
-// Estado de sesión. Se hidrata desde LocalStorage al arrancar.
+// Estado de sesión. Se hidrata desde LocalStorage al arrancar; el login es
+// asíncrono porque valida las credenciales contra la API.
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     user: authService.currentUser(),
@@ -17,8 +18,8 @@ export const useAuthStore = defineStore('auth', {
     isAdmin: (state): boolean => state.user?.role === UserRole.ADMIN,
   },
   actions: {
-    login(email: string, password: string): boolean {
-      const user = authService.login(email, password)
+    async login(email: string, password: string): Promise<boolean> {
+      const user = await authService.login(email, password)
       if (!user) return false
       this.user = user
       return true

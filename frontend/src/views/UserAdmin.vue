@@ -1,8 +1,9 @@
 <script setup lang="ts">
 // Administración de usuarios (solo admin): listar, filtrar por rol, crear,
 // editar, cambiar de rol y eliminar, con las guardas que impiden dejar el
-// sistema en un estado inconsistente.
-import { computed, reactive, ref } from 'vue'
+// sistema en un estado inconsistente. Las guardas viven en la API; aquí se
+// consultan para decidir qué botones mostrar.
+import { computed, onMounted, reactive, ref } from 'vue'
 import DataTable, { type TableColumn } from '../components/DataTable.vue'
 import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
 import SelectField from '../components/SelectField.vue'
@@ -10,26 +11,29 @@ import FilterBar from '../components/FilterBar.vue'
 import PageHeader from '../components/PageHeader.vue'
 import StatusBadge from '../components/StatusBadge.vue'
 import * as userService from '../services/user.service'
+import { apiErrorMessage } from '../services/http'
 import { USER_ROLE_TONE } from '../utils/badges'
 import { UserRole, UserRoleLabel } from '../interfaces/enums'
 import { useAuthStore } from '../stores/auth'
-import type { UserInterface } from '../interfaces/UserInterface'
-import type { CreateUserDTO } from '../dtos/CreateUserDTO'
+import type { SessionUser } from '../services/auth.service'
 
 const authStore = useAuthStore()
 
-const allUsers = ref<UserInterface[]>([])
+const allUsers = ref<SessionUser[]>([])
 const selectedRole = ref('')
 const feedbackMessage = ref('')
 
-/** Recarga el listado completo de usuarios. */
-function reloadFromStorage(): void {
-  allUsers.value = userService.list()
+/** Recarga el listado completo de usuarios (sin contraseñas). */
+async function reloadFromApi(): Promise<void> {
+  try {
+    allUsers.value = await userService.list()
+  } catch (error) {
+    feedbackMessage.value = apiErrorMessage(error)
+  }
 }
 
-// Se carga aqui y no en onMounted: LocalStorage responde de inmediato,
-// asi la primera pintada ya trae los datos en vez de una tabla vacia.
-reloadFromStorage()
+// La API responde de forma asíncrona: se carga al montar la vista.
+onMounted(() => void reloadFromApi())
 
 // Se tipan con el enum del dominio y no con SelectOption a secas: así lo que
 // devuelve el selector sigue siendo un UserRole y no una cadena suelta.
@@ -45,10 +49,10 @@ const tableColumns: TableColumn[] = [
   { key: 'city', label: 'Ciudad' },
   { key: 'roleLabel', label: 'Rol' },
   { key: 'memberSince', label: 'Miembro desde', align: 'right' },
-  { key: 'propertyCount', label: 'Propiedades', align: 'right' },
 ]
 
-// La fila se arma campo por campo: las credenciales nunca salen del servicio.
+// La fila se arma campo por campo: la API nunca envía contraseñas y aquí
+// tampoco hay nada sensible que pintar.
 const tableRows = computed(() =>
   allUsers.value
     .filter((user) => !selectedRole.value || user.role === selectedRole.value)
@@ -61,7 +65,6 @@ const tableRows = computed(() =>
       memberSince: user.memberSince,
       role: user.role,
       roleLabel: UserRoleLabel[user.role] ?? user.role,
-      propertyCount: (user.properties ?? []).length,
     })),
 )
 
@@ -70,7 +73,7 @@ const isFormVisible = ref(false)
 const editingUserId = ref<string | null>(null)
 
 /** Usuario en blanco, con rol de propietario por defecto. */
-function buildEmptyUser(): CreateUserDTO {
+function buildEmptyUser(): Omit<SessionUser, 'id'> & { password: string } {
   return {
     fullName: '',
     email: '',
@@ -79,11 +82,10 @@ function buildEmptyUser(): CreateUserDTO {
     city: '',
     memberSince: new Date().toISOString().slice(0, 10),
     role: UserRole.USER,
-    properties: [],
   }
 }
 
-const userForm = reactive<CreateUserDTO>(buildEmptyUser())
+const userForm = reactive<Omit<SessionUser, 'id'> & { password: string }>(buildEmptyUser())
 
 /** Abre el formulario vacío para registrar un usuario nuevo. */
 function startCreating(): void {
@@ -98,12 +100,11 @@ function startCreating(): void {
  * @param userId identificador del usuario a editar
  */
 function startEditing(userId: string): void {
-  const existing = userService.findById(userId)
+  const existing = allUsers.value.find((user) => user.id === userId)
   if (!existing) return
-  const { id: _id, ...editableFields } = existing
   editingUserId.value = existing.id
   feedbackMessage.value = ''
-  Object.assign(userForm, editableFields)
+  Object.assign(userForm, buildEmptyUser(), existing)
   isFormVisible.value = true
 }
 
@@ -118,10 +119,10 @@ function cancelEditing(): void {
  * Valida las reglas de negocio del usuario.
  * @returns mensaje de error en español, o null si es válido
  */
-function findValidationError(): string | null {
+async function findValidationError(): Promise<string | null> {
   if (!userForm.fullName.trim()) return 'El nombre completo es obligatorio.'
   if (!userForm.email.trim()) return 'El correo es obligatorio.'
-  if (userService.emailTaken(userForm.email, editingUserId.value ?? undefined)) {
+  if (await userService.emailTaken(userForm.email, editingUserId.value ?? undefined)) {
     return 'Ya existe otro usuario registrado con ese correo.'
   }
   if (!editingUserId.value && !userForm.password) {
@@ -131,18 +132,23 @@ function findValidationError(): string | null {
 }
 
 /** Valida y guarda el usuario, luego recarga la tabla. */
-function saveUser(): void {
-  const validationError = findValidationError()
+async function saveUser(): Promise<void> {
+  const validationError = await findValidationError()
   if (validationError) {
     feedbackMessage.value = validationError
     return
   }
-  if (editingUserId.value) {
-    userService.update(editingUserId.value, { ...userForm })
-  } else {
-    userService.create({ ...userForm })
+  try {
+    if (editingUserId.value) {
+      await userService.update(editingUserId.value, { ...userForm })
+    } else {
+      await userService.create({ ...userForm })
+    }
+  } catch (error) {
+    feedbackMessage.value = apiErrorMessage(error)
+    return
   }
-  reloadFromStorage()
+  await reloadFromApi()
   cancelEditing()
 }
 
@@ -152,26 +158,43 @@ function saveUser(): void {
  * @param userId identificador del usuario
  * @param currentRole rol vigente
  */
-function toggleRole(userId: string, currentRole: UserRole): void {
+async function toggleRole(userId: string, currentRole: UserRole): Promise<void> {
   feedbackMessage.value = ''
-  if (currentRole === UserRole.ADMIN && userService.countAdmins() <= 1) {
+  const admins = allUsers.value.filter((user) => user.role === UserRole.ADMIN).length
+  if (currentRole === UserRole.ADMIN && admins <= 1) {
     feedbackMessage.value = 'No puedes quitarle el rol al último administrador del sistema.'
     return
   }
-  userService.update(userId, {
-    role: currentRole === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN,
-  })
-  reloadFromStorage()
+  try {
+    await userService.update(userId, {
+      role: currentRole === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN,
+    })
+  } catch (error) {
+    feedbackMessage.value = apiErrorMessage(error)
+    return
+  }
+  await reloadFromApi()
 }
+
+// Ids que nunca ofrecen botón de eliminar: el propio usuario en sesión y el
+// último administrador. Se calcula en el script y no en el template, para
+// que la vista no llame servicios (regla 10 de la wiki).
+const currentUserId = computed(() => authStore.user?.id ?? '')
+const adminIds = computed(() =>
+  allUsers.value.filter((user) => user.role === UserRole.ADMIN).map((user) => user.id),
+)
+const undeletableIds = computed(
+  () => new Set<string>([currentUserId.value, ...(adminIds.value.length <= 1 ? adminIds.value : [])]),
+)
 
 /**
  * Elimina un usuario si las guardas de integridad lo permiten.
  * @param userId identificador del usuario
  * @param fullName nombre mostrado en la confirmación
  */
-function deleteUser(userId: string, fullName: string): void {
+async function deleteUser(userId: string, fullName: string): Promise<void> {
   feedbackMessage.value = ''
-  const blockingReason = userService.blockedFromRemoval(userId, authStore.user?.id ?? '')
+  const blockingReason = await userService.blockedFromRemoval(userId, currentUserId.value)
   if (blockingReason) {
     feedbackMessage.value = blockingReason
     return
@@ -179,8 +202,13 @@ function deleteUser(userId: string, fullName: string): void {
   if (!window.confirm(`¿Eliminar al usuario "${fullName}"? Esta acción no se puede deshacer.`)) {
     return
   }
-  userService.remove(userId)
-  reloadFromStorage()
+  try {
+    await userService.remove(userId)
+  } catch (error) {
+    feedbackMessage.value = apiErrorMessage(error)
+    return
+  }
+  await reloadFromApi()
 }
 </script>
 
@@ -293,7 +321,7 @@ function deleteUser(userId: string, fullName: string): void {
           <!-- El botón no se ofrece cuando la acción nunca podría completarse:
                sobre el propio usuario en sesión o sobre el último administrador -->
           <button
-            v-if="!userService.blockedFromRemoval(String(row.id), authStore.user?.id ?? '')"
+            v-if="!undeletableIds.has(String(row.id))"
             class="text-red-600 hover:underline"
             type="button"
             @click="deleteUser(String(row.id), String(row.fullName))"

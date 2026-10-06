@@ -1,36 +1,45 @@
-// Servicio de transacciones (ingresos y gastos). Solo acceso a datos: la
-// aritmética de totales y agrupaciones vive en utils/finance.ts.
-import * as storage from './storage'
+// Servicio de transacciones (ingresos y gastos): habla con la API por HTTP.
+// Solo acceso a datos: la aritmética de totales y agrupaciones vive en
+// utils/finance.ts.
+import { http } from './http'
 import * as propertyService from './property.service'
 import type { TransactionInterface } from '../interfaces/TransactionInterface'
 import type { CreateTransactionDTO } from '../dtos/CreateTransactionDTO'
 import type { SessionUser } from './auth.service'
 
 /**
- * Todas las transacciones registradas.
- * @returns lista completa, sin filtrar por dueño
+ * Todas las transacciones registradas (vista global del administrador).
  */
-export function list(): TransactionInterface[] {
-  return storage.findAll<TransactionInterface>(storage.STORAGE_KEYS.transactions)
+export async function list(): Promise<TransactionInterface[]> {
+  const { data } = await http.get<TransactionInterface[]>('/api/transactions')
+  return data
 }
 
 /**
  * Transacciones de las propiedades visibles para la sesión actual.
  * @param user usuario en sesión, o null si no hay sesión
- * @returns transacciones que el usuario puede consultar
  */
-export function listForUser(user: SessionUser | null): TransactionInterface[] {
-  const visibles = new Set(propertyService.listForUser(user).map((p) => p.id))
-  return list().filter((t) => visibles.has(t.propertyId))
+export async function listForUser(user: SessionUser | null): Promise<TransactionInterface[]> {
+  const visibles = await propertyService.listForUser(user)
+  if (visibles.length === 0) return []
+  const { data } = await http.get<TransactionInterface[]>('/api/transactions', {
+    params: { propertyIds: visibles.map((p) => p.id).join(',') },
+  })
+  return data
 }
 
 /**
  * Busca una transacción por su id.
  * @param id identificador de la transacción
- * @returns la transacción, o null si no existe
+ * @returns la transacción, o null si no existe (404 traducido a null)
  */
-export function findById(id: string): TransactionInterface | null {
-  return storage.findById<TransactionInterface>(storage.STORAGE_KEYS.transactions, id)
+export async function findById(id: string): Promise<TransactionInterface | null> {
+  try {
+    const { data } = await http.get<TransactionInterface>(`/api/transactions/${id}`)
+    return data
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -38,8 +47,9 @@ export function findById(id: string): TransactionInterface | null {
  * @param newTransaction datos de la transacción sin id
  * @returns la transacción creada, ya con su id
  */
-export function create(newTransaction: CreateTransactionDTO): TransactionInterface {
-  return storage.insert<TransactionInterface>(storage.STORAGE_KEYS.transactions, newTransaction)
+export async function create(newTransaction: CreateTransactionDTO): Promise<TransactionInterface> {
+  const { data } = await http.post<TransactionInterface>('/api/transactions', newTransaction)
+  return data
 }
 
 /**
@@ -48,19 +58,22 @@ export function create(newTransaction: CreateTransactionDTO): TransactionInterfa
  * @param changes campos a actualizar
  * @returns la transacción actualizada, o null si el id no existe
  */
-export function update(
+export async function update(
   id: string,
   changes: Partial<CreateTransactionDTO>,
-): TransactionInterface | null {
-  return storage.applyChanges<TransactionInterface>(storage.STORAGE_KEYS.transactions, id, changes)
+): Promise<TransactionInterface | null> {
+  try {
+    const { data } = await http.patch<TransactionInterface>(`/api/transactions/${id}`, changes)
+    return data
+  } catch {
+    return null
+  }
 }
 
 /**
  * Elimina una transacción.
  * @param id identificador de la transacción
  */
-export function remove(id: string): void {
-  storage.deleteById(storage.STORAGE_KEYS.transactions, id)
+export async function remove(id: string): Promise<void> {
+  await http.delete(`/api/transactions/${id}`)
 }
-
-// Los totales, agrupaciones por mes y por fuente viven en utils/finance.ts.

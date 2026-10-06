@@ -17,9 +17,9 @@ const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-function submitLogin() {
+async function submitLogin(): Promise<void> {
   loginError.value = ''
-  const ok = authStore.login(email.value.trim(), password.value)
+  const ok = await authStore.login(email.value.trim(), password.value)
   if (!ok) {
     loginError.value = 'Credenciales incorrectas. Verifica correo y contraseña.'
     return

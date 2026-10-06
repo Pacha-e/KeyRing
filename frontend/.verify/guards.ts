@@ -1,8 +1,11 @@
 // Ejercita los guards reales de src/router/index.ts navegando por URL directa.
+// La sesión se inyecta directo en la store: el login de auth.service es asíncrono
+// contra la API, y para probar los guards basta el estado (user/no-user, admin/user).
 import { setActivePinia, createPinia } from 'pinia'
 import router from '../src/router'
 import { useAuthStore } from '../src/stores/auth'
-import { seedDatabase } from '../src/services/seed'
+import type { SessionUser } from '../src/services/auth.service'
+import { UserRole } from '../src/interfaces/enums'
 
 let fallos = 0
 const ok = (cond: boolean, msg: string) => {
@@ -16,9 +19,28 @@ async function irA(url: string): Promise<string> {
   return String(router.currentRoute.value.name)
 }
 
+/** Usuario de prueba, igual al que devuelve la API al hacer login. */
+const ADMIN: SessionUser = {
+  id: '00000000-0000-4000-8000-000000000001',
+  fullName: 'Admin KeyRing',
+  email: 'admin@keyring.co',
+  phone: '3001112233',
+  city: 'Medellin',
+  memberSince: '2026-01-01',
+  role: UserRole.ADMIN,
+}
+const USUARIO: SessionUser = {
+  id: '00000000-0000-4000-8000-000000000002',
+  fullName: 'Usuario Demo',
+  email: 'user@keyring.co',
+  phone: '3002223344',
+  city: 'Cali',
+  memberSince: '2026-01-01',
+  role: UserRole.USER,
+}
+
 async function main() {
   setActivePinia(createPinia())
-  seedDatabase()
   const auth = useAuthStore()
   auth.logout()
 
@@ -37,7 +59,7 @@ async function main() {
   ok((await irA('/')) === 'home', '/ sigue siendo publica')
 
   console.log('\n#7 - Guards: sesion de usuario normal')
-  ok(auth.login('user@keyring.co', 'user123'), 'el usuario normal inicia sesion')
+  auth.user = USUARIO
   ok(auth.isAuthenticated && !auth.isAdmin, 'isAuthenticated true, isAdmin false')
   ok((await irA('/dashboard')) === 'dashboard', 'accede a /dashboard')
   ok((await irA('/properties')) === 'properties', 'accede a /properties')
@@ -46,8 +68,7 @@ async function main() {
   ok((await irA('/login')) === 'dashboard', '/login redirige a /dashboard si ya hay sesion')
 
   console.log('\n#7 - Guards: sesion de administrador')
-  auth.logout()
-  ok(auth.login('admin@keyring.co', 'admin123'), 'el admin inicia sesion')
+  auth.user = ADMIN
   ok(auth.isAdmin, 'isAdmin true')
   ok((await irA('/reports')) === 'reports', 'accede a /reports')
   ok((await irA('/admin/users')) === 'admin-users', 'accede a /admin/users')
