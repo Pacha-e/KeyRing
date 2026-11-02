@@ -1,0 +1,33 @@
+# --- Workflow ---
+name: Nuxt
+on:
+  pull_request:
+    paths:
+      - 'nuxt/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'nuxt/**'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nuxt
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: nuxt/package.json
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e

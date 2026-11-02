@@ -1,0 +1,11 @@
+.nuxt
+.output
+.pnpm-home
+.pnpm-store
+.cache
+node_modules
+playwright-report
+test-results
+pnpm-lock.yaml
+.browsers
+.tmp

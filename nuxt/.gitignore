@@ -1,0 +1,8 @@
+.nuxt
+.output
+.cache
+node_modules
+playwright-report
+test-results
+.browsers
+.tmp
