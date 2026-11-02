@@ -9,6 +9,8 @@ export default withNuxt(
   { ignores: ['.browsers/**', '.cache/**', '.pnpm-home/**', '.pnpm-store/**', '.tmp/**'] },
   {
     rules: {
+      // The course requires utilities and services as classes with static methods.
+      '@typescript-eslint/no-extraneous-class': 'off',
       '@typescript-eslint/no-unused-vars': 'error',
       'import/order': [
         'error',
