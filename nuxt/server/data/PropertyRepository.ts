@@ -1,8 +1,8 @@
 // --- Internal imports ---
-import { PropertyStatus } from '../../app/enums/PropertyStatus';
-import { PropertyType } from '../../app/enums/PropertyType';
-import { RentalMode } from '../../app/enums/RentalMode';
-import type { Property } from '../../app/interfaces/Property';
+import { PropertyStatus } from '#shared/enums/PropertyStatus';
+import { PropertyType } from '#shared/enums/PropertyType';
+import { RentalMode } from '#shared/enums/RentalMode';
+import type { Property } from '#shared/interfaces/Property';
 
 // --- Constants ---
 const properties: Property[] = [
@@ -99,8 +99,6 @@ const properties: Property[] = [
 ];
 
 // --- Exported members ---
-// Static classes are required by the course architecture.
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class PropertyRepository {
   static findAll(): Property[] {
     return properties;

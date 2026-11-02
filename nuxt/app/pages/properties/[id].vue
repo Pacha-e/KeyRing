@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // --- Internal imports ---
-import type { Property } from '../../interfaces/Property';
+import type { Property } from '#shared/interfaces/Property';
 
 // --- State ---
 const route = useRoute();

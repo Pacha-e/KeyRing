@@ -1,9 +1,8 @@
 <script setup lang="ts">
 // --- Internal imports ---
-import { propertyStatusLabels } from '../../enums/PropertyStatus';
-import { propertyTypeLabels } from '../../enums/PropertyType';
-import type { Property } from '../../interfaces/Property';
 import { PropertyFormatter } from '../../utils/PropertyFormatter';
+import { PropertyLabels } from '../../utils/PropertyLabels';
+import type { Property } from '#shared/interfaces/Property';
 
 // --- Types ---
 defineProps<{ property: Property }>();
@@ -14,8 +13,8 @@ defineProps<{ property: Property }>();
     <h2>
       <NuxtLink :to="`/properties/${property.id}`">{{ property.name }}</NuxtLink>
     </h2>
-    <p>{{ property.city }} · {{ propertyTypeLabels[property.type] }}</p>
-    <p>{{ propertyStatusLabels[property.status] }}</p>
+    <p>{{ property.city }} · {{ PropertyLabels.type(property.type) }}</p>
+    <p>{{ PropertyLabels.status(property.status) }}</p>
     <p>
       <strong>{{ PropertyFormatter.formatCurrency(property.estimatedMonthlyRent) }}</strong> / month
     </p>

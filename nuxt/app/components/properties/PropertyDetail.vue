@@ -1,10 +1,8 @@
 <script setup lang="ts">
 // --- Internal imports ---
-import { propertyStatusLabels } from '../../enums/PropertyStatus';
-import { propertyTypeLabels } from '../../enums/PropertyType';
-import { rentalModeLabels } from '../../enums/RentalMode';
-import type { Property } from '../../interfaces/Property';
 import { PropertyFormatter } from '../../utils/PropertyFormatter';
+import { PropertyLabels } from '../../utils/PropertyLabels';
+import type { Property } from '#shared/interfaces/Property';
 
 // --- Types ---
 defineProps<{ property: Property }>();
@@ -24,15 +22,15 @@ defineProps<{ property: Property }>();
       </div>
       <div>
         <dt>Type</dt>
-        <dd>{{ propertyTypeLabels[property.type] }}</dd>
+        <dd>{{ PropertyLabels.type(property.type) }}</dd>
       </div>
       <div>
         <dt>Status</dt>
-        <dd>{{ propertyStatusLabels[property.status] }}</dd>
+        <dd>{{ PropertyLabels.status(property.status) }}</dd>
       </div>
       <div>
         <dt>Rental mode</dt>
-        <dd>{{ rentalModeLabels[property.rentalMode] }}</dd>
+        <dd>{{ PropertyLabels.rentalMode(property.rentalMode) }}</dd>
       </div>
       <div>
         <dt>Estimated monthly rent</dt>
