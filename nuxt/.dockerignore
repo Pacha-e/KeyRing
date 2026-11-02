@@ -1,0 +1,11 @@
+# Build artifacts and dependencies
+node_modules
+.nuxt
+.output
+
+# Test reports
+test-results
+playwright-report
+
+# Environment files
+.env*

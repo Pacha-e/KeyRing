@@ -24,6 +24,29 @@ This application provides the Nuxt 4 shell for Entregable 2. Feature routes will
 - `pnpm typecheck`: check TypeScript and Vue types.
 - `pnpm test:e2e`: run Playwright against an existing production build.
 
+## Docker
+
+Build the production image from the repository root:
+
+```bash
+docker build -t keyring-nuxt nuxt
+```
+
+Run a container mapping host port `3001` to the Nuxt server port `3000`:
+
+```bash
+docker run -d -p 3001:3000 --name keyring-nuxt keyring-nuxt
+```
+
+The image is multi-stage: `node:26-alpine` builds the app with the pnpm version declared in `package.json`, then a runtime stage copies only `.output/` and runs it as the non-root `node` user. The root `docker-compose` service uses `build: ./nuxt`, port mapping `3001:3000`, and `PORT=3000`.
+
+Stop and remove:
+
+```bash
+docker rm -f keyring-nuxt
+docker rmi keyring-nuxt
+```
+
 ## Folder responsibilities
 
 | Path             | Responsibility                                           |
