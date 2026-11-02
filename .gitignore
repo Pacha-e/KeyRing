@@ -1,34 +1,40 @@
 # Dependencies
-**/node_modules/
-frontend/.pnpm-store/
-frontend/.build-check/
+node_modules/
+.pnpm-store/
 
-# Build output
-**/dist/
+# Build outputs (built inside multi-stage Docker images)
+dist/
+.output/
+.nuxt/
 
-# Logs
-**/*.log
-**/npm-debug.log*
+# Test and coverage artifacts
+coverage/
+playwright-report/
+test-results/
+*.log
 
-# Environment variables (the example template is versioned)
-**/.env
-**/.env.local
-**/.env.*.local
+# Environment files: templates are tracked, real values are not
+.env
+.env.*
+!.env.example
 
-# Playwright session artifacts during QA
+# Local SQLite data directory
+backend/data/
+
+# Tool artifacts
 .playwright-mcp/
 
-# Local command guardian config (this machine's allowlist)
+# Local command-guard configuration
 .security/
 
-# Editors and operating system
+# Editor and OS files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 __MACOSX/
 
-# Course material: not published in the repository
+# Course material that should not be published
 *.pdf
 *.docx
 *.pptx

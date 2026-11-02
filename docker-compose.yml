@@ -1,33 +1,47 @@
-# KeyRing completo en dos contenedores: la API (Nest.js) y el frontend
-# compilado servido por nginx. Es el patrón del Tutorial 08 del curso.
+# Full KeyRing stack: Nest API, Vue SPA frontend and Nuxt SSR shell.
+# Build images locally with multi-stage Dockerfiles; no compiled output is versioned.
 #
-# Uso:
-#   docker compose up --build     (desde la raíz del repo)
-#   frontend: http://localhost:8080
+# Usage:
+#   docker compose up --build -d
 #   API:      http://localhost:3000/api
+#   Frontend: http://localhost
+#   Nuxt:     http://localhost:3001
 services:
-  api:
+  backend:
     build: ./backend
-    container_name: keyring-api
+    container_name: keyring-backend
     ports:
       - "3000:3000"
     volumes:
       - keyring-data:/app/data
     environment:
-      # El frontend del navegador llama a la API por este origen (CORS)
-      - CORS_ORIGIN=http://localhost:8081,http://localhost:8080,http://localhost
+      PORT: 3000
+      DATABASE_PATH: /app/data/keyring.sqlite
+      CORS_ORIGIN: "http://localhost,http://localhost:3001,http://localhost:5173,http://localhost:8081"
+    restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
-      # dist/ debe existir: correr `npm run build` en frontend/ antes.
-      # Se construye fuera para no instalar node_modules dentro del build.
+      args:
+        VITE_API_BASE_URL: http://localhost:3000
     container_name: keyring-frontend
     ports:
-      # 8080 suele estar ocupado en la máquina de desarrollo (pgadmin, etc.)
-      - "8081:80"
+      - "80:80"
     depends_on:
-      - api
+      - backend
+    restart: unless-stopped
+
+  nuxt:
+    build: ./nuxt
+    container_name: keyring-nuxt
+    ports:
+      - "3001:3000"
+    environment:
+      PORT: 3000
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 volumes:
   keyring-data:

@@ -1,22 +1,21 @@
-import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator'
-import type { TransactionSource, TransactionType } from '../../domain/enums.js'
+// --- External imports ---
+import { IsEnum, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 
-/** Datos para crear una transacción. */
+// --- Internal imports ---
+import { TransactionSource } from '../../domain/enums/transaction-source.js';
+import { TransactionType } from '../../domain/enums/transaction-type.js';
+
+// --- Exported members ---
 export class CreateTransactionDto {
-  @IsString() @IsNotEmpty() propertyId: string
-  @IsIn(['INCOME', 'EXPENSE']) type: TransactionType
-  @IsIn(['AIRBNB', 'CONTRACT', 'OTHER']) source: TransactionSource
-  @IsInt() @Min(1) amount: number
-  @IsString() @IsNotEmpty() date: string
-  @IsString() description: string
-}
+  @IsInt() @Min(1) amount: number;
 
-/** Campos modificables de una transacción; todos opcionales. */
-export class UpdateTransactionDto {
-  @IsOptional() @IsString() @IsNotEmpty() propertyId?: string
-  @IsOptional() @IsIn(['INCOME', 'EXPENSE']) type?: TransactionType
-  @IsOptional() @IsIn(['AIRBNB', 'CONTRACT', 'OTHER']) source?: TransactionSource
-  @IsOptional() @IsInt() @Min(1) amount?: number
-  @IsOptional() @IsString() @IsNotEmpty() date?: string
-  @IsOptional() @IsString() description?: string
+  @IsString() @IsNotEmpty() date: string;
+
+  @IsString() description: string;
+
+  @IsString() @IsNotEmpty() propertyId: string;
+
+  @IsEnum(TransactionSource) source: TransactionSource;
+
+  @IsEnum(TransactionType) type: TransactionType;
 }

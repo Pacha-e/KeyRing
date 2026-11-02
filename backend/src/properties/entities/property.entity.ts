@@ -1,48 +1,56 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
-import type { PropertyStatus, PropertyType, RentalMode } from '../../domain/enums.js'
+// --- External imports ---
+import type { Relation } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
+// --- Internal imports ---
+import type { PropertyStatus } from '../../domain/enums/property-status.js';
+import type { PropertyType } from '../../domain/enums/property-type.js';
+import type { RentalMode } from '../../domain/enums/rental-mode.js';
+import { User } from '../../users/entities/user.entity.js';
+
+// --- Exported members ---
 @Entity()
 export class Property {
+  @Column()
+  address: string;
+
+  @Column({ type: 'integer' })
+  adminFee: number;
+
+  @Column()
+  city: string;
+
+  @Column({ type: 'integer' })
+  estimatedMonthlyRent: number;
+
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
+
+  @Column({ type: 'real', nullable: true })
+  latitude: number | null;
+
+  @Column({ type: 'real', nullable: true })
+  longitude: number | null;
 
   @Column()
-  name: string
-
-  @Column()
-  address: string
-
-  @Column()
-  city: string
-
-  @Column()
-  type: PropertyType
-
-  @Column()
-  rentalMode: RentalMode
-
-  @Column()
-  status: PropertyStatus
-
-  /** Arriendo mensual estimado, en pesos. */
-  @Column({ type: 'integer' })
-  estimatedMonthlyRent: number
-
-  /** Cuota de administración mensual, en pesos. */
-  @Column({ type: 'integer' })
-  adminFee: number
+  name: string;
 
   @Column({ type: 'integer' })
-  otherFixedCosts: number
+  otherFixedCosts: number;
 
-  /** Id del usuario dueño. La relación vive aquí, no anidada en User. */
+  @Column()
+  rentalMode: RentalMode;
+
+  @Column()
+  status: PropertyStatus;
+
+  @Column()
+  type: PropertyType;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user: Relation<User> | null;
+
   @Column({ type: 'varchar', nullable: true })
-  ownerId: string | null
-
-  /** Coordenadas opcionales para el mapa. */
-  @Column({ type: 'real', nullable: true })
-  latitude: number | null
-
-  @Column({ type: 'real', nullable: true })
-  longitude: number | null
+  userId: string | null;
 }
