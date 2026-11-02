@@ -1,15 +1,22 @@
 {
   "name": "keyring-backend",
   "private": true,
+  "packageManager": "pnpm@11.10.0",
   "version": "0.1.0",
   "type": "module",
-  "description": "API REST de KeyRing: Nest.js + TypeORM + SQLite, siguiendo los tutoriales del curso.",
+  "description": "KeyRing REST API using NestJS, TypeORM and SQLite.",
   "scripts": {
+    "start:dev": "nest start --watch",
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main.js",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "migration:generate": "pnpm build && typeorm migration:generate -d dist/database/data-source.js",
+    "migration:run": "pnpm build && typeorm migration:run -d dist/database/data-source.js",
+    "migration:revert": "pnpm build && typeorm migration:revert -d dist/database/data-source.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
@@ -24,11 +31,15 @@
     "typeorm": "^0.3.25"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@nestjs/cli": "^11.0.0",
     "@types/express": "^5.0.0",
     "@types/node": "^26.1.2",
     "eslint": "^9.9.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
     "prettier": "^3.3.0",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.72.1"
   }
 }

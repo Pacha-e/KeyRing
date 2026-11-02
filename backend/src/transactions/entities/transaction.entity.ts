@@ -1,35 +1,37 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm'
-import type { Relation } from 'typeorm'
-import type { TransactionSource, TransactionType } from '../../domain/enums.js'
-import { Property } from '../../properties/entities/property.entity.js'
+// --- External imports ---
+import type { Relation } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
 
+// --- Internal imports ---
+import type { TransactionSource } from '../../domain/enums/transaction-source.js';
+import type { TransactionType } from '../../domain/enums/transaction-type.js';
+import { Property } from '../../properties/entities/property.entity.js';
+
+// --- Exported members ---
 @Entity()
 export class Transaction {
+  @Column({ type: 'integer' })
+  amount: number;
+
+  @Column()
+  date: string;
+
+  @Column()
+  description: string;
+
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @ManyToOne(() => Property, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'propertyId' })
-  property: Relation<Property>
+  property: Relation<Property>;
 
-  /** Id plano de la propiedad a la que pertenece el movimiento. */
   @RelationId((transaction: Transaction) => transaction.property)
-  propertyId: string
+  propertyId: string;
 
   @Column()
-  type: TransactionType
+  source: TransactionSource;
 
   @Column()
-  source: TransactionSource
-
-  /** Monto del movimiento, en pesos; siempre positivo. */
-  @Column({ type: 'integer' })
-  amount: number
-
-  /** Fecha ISO 'YYYY-MM-DD' del movimiento. */
-  @Column()
-  date: string
-
-  @Column()
-  description: string
+  type: TransactionType;
 }

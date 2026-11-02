@@ -1,40 +1,32 @@
-import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator'
-import type { UserRole } from '../../domain/enums.js'
+// --- External imports ---
+import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
-/** Datos para crear un usuario. memberSince lo fija el servidor si no viene. */
+// --- Internal imports ---
+import type { UserRole } from '../../domain/enums/user-role.js';
+
+// --- Exported members ---
 export class CreateUserDto {
   @IsString()
-  @IsNotEmpty()
-  fullName: string
+  city: string;
 
   @IsEmail()
-  email: string
+  email: string;
 
   @IsString()
   @IsNotEmpty()
-  password: string
-
-  @IsString()
-  phone: string
-
-  @IsString()
-  city: string
+  fullName: string;
 
   @IsOptional()
   @IsString()
-  memberSince?: string
+  memberSince?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password: string;
+
+  @IsString()
+  phone: string;
 
   @IsIn(['admin', 'user'])
-  role: UserRole
-}
-
-/** Campos modificables de un usuario existente; todos opcionales. */
-export class UpdateUserDto {
-  @IsOptional() @IsString() @IsNotEmpty() fullName?: string
-  @IsOptional() @IsEmail() email?: string
-  @IsOptional() @IsString() password?: string
-  @IsOptional() @IsString() phone?: string
-  @IsOptional() @IsString() city?: string
-  @IsOptional() @IsString() memberSince?: string
-  @IsOptional() @IsIn(['admin', 'user']) role?: UserRole
+  role: UserRole;
 }
