@@ -1,32 +1,24 @@
-import { defineStore } from 'pinia'
-import * as authService from '../services/auth.service'
-import type { SessionUser } from '../services/auth.service'
-import { UserRole } from '../interfaces/enums'
+// --- External imports ---
+import { defineStore } from 'pinia';
+import { computed, ref } from 'vue';
 
-interface AuthState {
-  user: SessionUser | null
-}
+// --- Internal imports ---
+import { UserRole } from '../enums/UserRole';
+import { AuthService, type SessionUser } from '../services/auth.service';
 
-// Estado de sesión. Se hidrata desde LocalStorage al arrancar; el login es
-// asíncrono porque valida las credenciales contra la API.
-export const useAuthStore = defineStore('auth', {
-  state: (): AuthState => ({
-    user: authService.currentUser(),
-  }),
-  getters: {
-    isAuthenticated: (state): boolean => state.user !== null,
-    isAdmin: (state): boolean => state.user?.role === UserRole.ADMIN,
-  },
-  actions: {
-    async login(email: string, password: string): Promise<boolean> {
-      const user = await authService.login(email, password)
-      if (!user) return false
-      this.user = user
-      return true
-    },
-    logout(): void {
-      authService.logout()
-      this.user = null
-    },
-  },
-})
+// --- Exported members ---
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<SessionUser | null>(null);
+  const isAdmin = computed(() => user.value?.role === UserRole.ADMIN);
+  const isAuthenticated = computed(() => user.value !== null);
+
+  async function login(email: string, password: string): Promise<void> {
+    user.value = await AuthService.login(email, password);
+  }
+
+  function logout(): void {
+    user.value = null;
+  }
+
+  return { isAdmin, isAuthenticated, login, logout, user };
+});

@@ -1,33 +1,34 @@
-# Dependencias
+# Dependencies
 **/node_modules/
+frontend/.pnpm-store/
+frontend/.build-check/
 
-# La carpeta dist/ SÍ se versiona: el despliegue clona el repositorio dentro de
-# la máquina virtual y construye la imagen Docker a partir del build ya
-# compilado, según el tutorial de despliegue del curso.
+# Build output
+**/dist/
 
 # Logs
 **/*.log
 **/npm-debug.log*
 
-# Variables de entorno (la plantilla de ejemplo sí se versiona)
+# Environment variables (the example template is versioned)
 **/.env
 **/.env.local
 **/.env.*.local
 
-# Artefactos de las sesiones de Playwright durante el QA
+# Playwright session artifacts during QA
 .playwright-mcp/
 
-# Config local del guardián de comandos (allowlist de esta máquina)
+# Local command guardian config (this machine's allowlist)
 .security/
 
-# Editores y sistema operativo
+# Editors and operating system
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 __MACOSX/
 
-# Material del curso: no se publica en el repositorio
+# Course material: not published in the repository
 *.pdf
 *.docx
 *.pptx

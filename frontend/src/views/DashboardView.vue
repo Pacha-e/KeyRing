@@ -1,99 +1,87 @@
 <script setup lang="ts">
-// Dashboard: resumen del negocio del usuario en sesión.
-// Cada tarjeta lleva a la pantalla donde se gestiona ese dato, y debajo se
-// muestra la evolución mensual y los contratos que vencen antes.
-import { computed, onMounted, ref } from 'vue'
-import PageHeader from '../components/PageHeader.vue'
-import StatCard from '../components/StatCard.vue'
-import ChartCard from '../components/ChartCard.vue'
-import StatusBadge from '../components/StatusBadge.vue'
-import * as propertyService from '../services/property.service'
-import * as contractService from '../services/contract.service'
-import * as transactionService from '../services/transaction.service'
-import {
-  listMonthsPresent,
-  sumAmountsByMonth,
-  sumIncomeForCurrentMonth,
-  summarizeTransactions,
-} from '../utils/finance'
-import { formatCOP } from '../utils/format'
+// --- External imports ---
+import type { ChartData } from 'chart.js';
+import { computed, onMounted, ref } from 'vue';
+
+// --- Internal imports ---
+import ChartCard from '../components/ChartCard.vue';
+import PageHeader from '../components/PageHeader.vue';
+import StatCard from '../components/StatCard.vue';
+import StatusBadge from '../components/StatusBadge.vue';
 import {
   CHART_EXPENSE,
   CHART_EXPENSE_FILL,
   CHART_INCOME,
   CHART_INCOME_FILL,
-} from '../config/chart.config'
-import { CONTRACT_STATUS_TONE } from '../utils/badges'
-import {
-  ContractStatus,
-  ContractStatusLabel,
-  PropertyStatus,
-  TransactionType,
-} from '../interfaces/enums'
-import { useAuthStore } from '../stores/auth'
-import type { PropertyInterface } from '../interfaces/PropertyInterface'
-import type { ContractInterface } from '../interfaces/ContractInterface'
-import type { TransactionInterface } from '../interfaces/TransactionInterface'
-import type { ChartData } from 'chart.js'
+} from '../config/chart.config';
+import { CONTRACT_STATUS_TONE } from '../enums/badge-tones';
+import { ContractStatus, ContractStatusLabel } from '../enums/ContractStatus';
+import { PropertyStatus } from '../enums/PropertyStatus';
+import { TransactionType } from '../enums/TransactionType';
+import type { ContractInterface } from '../interfaces/ContractInterface';
+import type { PropertyInterface } from '../interfaces/PropertyInterface';
+import type { TransactionInterface } from '../interfaces/TransactionInterface';
+import { ContractService as contractService } from '../services/contract.service';
+import { PropertyService as propertyService } from '../services/property.service';
+import { TransactionService as transactionService } from '../services/transaction.service';
+import { useAuthStore } from '../stores/auth';
+import { FinanceCalculator } from '../utils/finance';
+import { CurrencyFormatter } from '../utils/format';
 
-const authStore = useAuthStore()
-
-const properties = ref<PropertyInterface[]>([])
-const contracts = ref<ContractInterface[]>([])
-const transactions = ref<TransactionInterface[]>([])
-
-/** Recarga los datos visibles para la sesión actual. */
-async function reloadFromApi(): Promise<void> {
-  properties.value = await propertyService.listForUser(authStore.user)
-  contracts.value = await contractService.listForUser(authStore.user)
-  transactions.value = await transactionService.listForUser(authStore.user)
+// --- Types ---
+interface UpcomingContractRow {
+  id: string;
+  propertyName: string;
+  endDate: string;
+  status: ContractStatus;
+  statusLabel: string;
 }
 
-// La API responde de forma asíncrona: se carga al montar la vista.
-onMounted(() => void reloadFromApi())
+// --- Stores ---
+const authStore = useAuthStore();
 
-const activeContracts = computed(() => contractService.countActive(contracts.value))
-const monthlyIncome = computed(() => sumIncomeForCurrentMonth(transactions.value))
-const balance = computed(() => summarizeTransactions(transactions.value))
-const vacantCount = computed(
-  () => properties.value.filter((property) => property.status === PropertyStatus.VACANT).length,
-)
+// --- State ---
+const contracts = ref<ContractInterface[]>([]);
+const properties = ref<PropertyInterface[]>([]);
+const transactions = ref<TransactionInterface[]>([]);
 
-// Evolución mensual: la misma lectura de los reportes, resumida
+// --- Computed ---
+const activeContracts = computed(() => contractService.countActive(contracts.value));
+const balance = computed(() => FinanceCalculator.summarizeTransactions(transactions.value));
 const monthlyChart = computed<ChartData<'line'>>(() => {
-  const months = listMonthsPresent(transactions.value)
+  const months = FinanceCalculator.listMonthsPresent(transactions.value);
   return {
     labels: months,
     datasets: [
       {
-        label: 'Ingresos',
+        label: 'Income',
         borderColor: CHART_INCOME,
         backgroundColor: CHART_INCOME_FILL,
         fill: true,
         tension: 0.3,
         data: months.map((month) =>
-          sumAmountsByMonth(transactions.value, TransactionType.INCOME, month),
+          FinanceCalculator.sumAmountsByMonth(transactions.value, TransactionType.INCOME, month),
         ),
       },
       {
-        label: 'Gastos',
+        label: 'Expenses',
         borderColor: CHART_EXPENSE,
         backgroundColor: CHART_EXPENSE_FILL,
         fill: true,
         tension: 0.3,
         data: months.map((month) =>
-          sumAmountsByMonth(transactions.value, TransactionType.EXPENSE, month),
+          FinanceCalculator.sumAmountsByMonth(transactions.value, TransactionType.EXPENSE, month),
         ),
       },
     ],
-  }
-})
+  };
+});
 
-// Contratos que vencen antes: es lo primero que un propietario necesita ver.
-// Se pintan como lista y no como tabla porque el panel ocupa un tercio del
-// ancho y una tabla de tres columnas ahí dentro obligaba a desplazarse en
-// horizontal para leerla entera.
-const upcomingContracts = computed(() =>
+const monthlyIncome = computed(() =>
+  FinanceCalculator.sumIncomeForCurrentMonth(transactions.value),
+);
+
+const upcomingContracts = computed<UpcomingContractRow[]>(() =>
   contracts.value
     .filter((contract) => contract.status === ContractStatus.ACTIVE)
     .slice()
@@ -107,43 +95,58 @@ const upcomingContracts = computed(() =>
       status: contract.status,
       statusLabel: ContractStatusLabel[contract.status],
     })),
-)
+);
+
+const vacantCount = computed(
+  () => properties.value.filter((property) => property.status === PropertyStatus.VACANT).length,
+);
+
+// --- Methods ---
+/** Reloads data visible to the current session. */
+async function reloadFromApi(): Promise<void> {
+  properties.value = await propertyService.listForUser(authStore.user);
+  contracts.value = await contractService.listForUser(authStore.user);
+  transactions.value = await transactionService.listForUser(authStore.user);
+}
+
+// --- Lifecycle ---
+onMounted(() => void reloadFromApi());
 </script>
 
 <template>
   <section>
     <PageHeader
       title="Dashboard"
-      :subtitle="`Resumen del negocio de ${authStore.user?.fullName ?? ''}`"
+      :subtitle="`Business summary for ${authStore.user?.fullName ?? ''}`"
     />
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
-        title="Propiedades"
+        title="Properties"
         icon="home"
         :value="properties.length"
-        :hint="vacantCount ? `${vacantCount} vacante(s)` : 'todas ocupadas'"
+        :hint="vacantCount ? `${vacantCount} vacant` : 'all occupied'"
         :to="{ name: 'properties' }"
       />
       <StatCard
-        title="Contratos activos"
+        title="Active contracts"
         icon="contract"
         :value="activeContracts"
-        :hint="`de ${contracts.length} registrados`"
+        :hint="`of ${contracts.length} registered`"
         :to="{ name: 'contracts' }"
       />
       <StatCard
-        title="Ingresos del mes"
+        title="Monthly income"
         icon="income"
-        :value="formatCOP(monthlyIncome)"
-        hint="mes en curso"
+        :value="CurrencyFormatter.formatCOP(monthlyIncome)"
+        hint="current month"
         :to="{ name: 'transactions' }"
       />
       <StatCard
-        title="Balance neto"
+        title="Net balance"
         icon="balance"
-        :value="formatCOP(balance.net)"
-        :hint="`${formatCOP(balance.income)} en ingresos`"
+        :value="CurrencyFormatter.formatCOP(balance.net)"
+        :hint="`${CurrencyFormatter.formatCOP(balance.income)} in income`"
         :to="{ name: 'transactions' }"
       />
     </div>
@@ -151,16 +154,14 @@ const upcomingContracts = computed(() =>
     <div class="mt-6 grid gap-4 lg:grid-cols-3">
       <ChartCard
         class="lg:col-span-2"
-        title="Ingresos y gastos por mes"
+        title="Income and expenses by month"
         type="line"
         :chart-data="monthlyChart"
       />
 
       <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 class="mt-0 mb-1 text-base font-semibold text-ink">Próximos vencimientos</h2>
-        <p class="mt-0 mb-4 text-xs text-slate-500">
-          Contratos activos, del más cercano al más lejano
-        </p>
+        <h2 class="mt-0 mb-1 text-base font-semibold text-ink">Upcoming expirations</h2>
+        <p class="mt-0 mb-4 text-xs text-slate-500">Active contracts, nearest first</p>
 
         <ul v-if="upcomingContracts.length > 0" class="m-0 flex list-none flex-col gap-2 p-0">
           <li v-for="contract in upcomingContracts" :key="contract.id">
@@ -173,7 +174,7 @@ const upcomingContracts = computed(() =>
                   {{ contract.propertyName }}
                 </span>
                 <span class="mt-0.5 block text-xs text-slate-500">
-                  Vence el {{ contract.endDate }}
+                  Expires on {{ contract.endDate }}
                 </span>
               </span>
               <StatusBadge
@@ -185,9 +186,9 @@ const upcomingContracts = computed(() =>
         </ul>
 
         <div v-else class="rounded-lg border border-dashed border-slate-200 px-4 py-8 text-center">
-          <p class="m-0 text-sm font-medium text-slate-500">No hay contratos activos</p>
+          <p class="m-0 text-sm font-medium text-slate-500">No active contracts</p>
           <p class="mt-1 mb-0 text-sm text-slate-400">
-            Cuando registres uno, aparecerá aquí su fecha de vencimiento.
+            When you register one, its expiration date will appear here.
           </p>
         </div>
       </div>

@@ -1,4 +1,5 @@
-import type { ContractInterface } from '../interfaces/ContractInterface'
+// --- Internal imports ---
+import type { ContractInterface } from '../interfaces/ContractInterface';
 
-/** Datos para crear un contrato (el id lo genera el repositorio) */
-export type CreateContractDTO = Omit<ContractInterface, 'id'>
+// --- Types ---
+export type CreateContractDto = Omit<ContractInterface, 'id'>;

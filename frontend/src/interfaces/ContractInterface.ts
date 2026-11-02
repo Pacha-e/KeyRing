@@ -1,12 +1,14 @@
-import type { ContractStatus } from './enums'
+// --- Internal imports ---
+import type { ContractStatus } from '../enums/ContractStatus';
 
+// --- Types ---
 export interface ContractInterface {
-  id: string
-  propertyId: string
-  fixedRent: number
-  startDate: string
-  endDate: string
-  tenantName: string
-  tenantContact: string
-  status: ContractStatus
+  endDate: string;
+  fixedRent: number;
+  id: string;
+  propertyId: string;
+  startDate: string;
+  status: ContractStatus;
+  tenantContact: string;
+  tenantName: string;
 }

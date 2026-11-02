@@ -1,59 +1,59 @@
 <script setup lang="ts">
-// Administración de usuarios (solo admin): listar, filtrar por rol, crear,
-// editar, cambiar de rol y eliminar, con las guardas que impiden dejar el
-// sistema en un estado inconsistente. Las guardas viven en la API; aquí se
-// consultan para decidir qué botones mostrar.
-import { computed, onMounted, reactive, ref } from 'vue'
-import DataTable, { type TableColumn } from '../components/DataTable.vue'
-import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
-import SelectField from '../components/SelectField.vue'
-import FilterBar from '../components/FilterBar.vue'
-import PageHeader from '../components/PageHeader.vue'
-import StatusBadge from '../components/StatusBadge.vue'
-import * as userService from '../services/user.service'
-import { apiErrorMessage } from '../services/http'
-import { USER_ROLE_TONE } from '../utils/badges'
-import { UserRole, UserRoleLabel } from '../interfaces/enums'
-import { useAuthStore } from '../stores/auth'
-import type { SessionUser } from '../services/auth.service'
+// --- External imports ---
+import { computed, onMounted, reactive, ref } from 'vue';
 
-const authStore = useAuthStore()
+// --- Internal imports ---
+import FilterBar from '../components/FilterBar.vue';
+import FilterSelect from '../components/FilterSelect.vue';
+import PageHeader from '../components/PageHeader.vue';
+import SelectField from '../components/SelectField.vue';
+import StatusBadge from '../components/StatusBadge.vue';
+import { USER_ROLE_TONE } from '../enums/badge-tones';
+import { UserRole, UserRoleLabel } from '../enums/UserRole';
+import type { SelectOption } from '../interfaces/SelectOption';
+import type { SessionUser } from '../services/auth.service';
+import { UserService as userService } from '../services/user.service';
+import { useAuthStore } from '../stores/auth';
+import { HttpClient } from '../utils/HttpClient';
 
-const allUsers = ref<SessionUser[]>([])
-const selectedRole = ref('')
-const feedbackMessage = ref('')
-
-/** Recarga el listado completo de usuarios (sin contraseñas). */
-async function reloadFromApi(): Promise<void> {
-  try {
-    allUsers.value = await userService.list()
-  } catch (error) {
-    feedbackMessage.value = apiErrorMessage(error)
-  }
+// --- Types ---
+interface UserTableRow {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  city: string;
+  memberSince: string;
+  role: UserRole;
+  roleLabel: string;
 }
 
-// La API responde de forma asíncrona: se carga al montar la vista.
-onMounted(() => void reloadFromApi())
+type UserForm = Omit<SessionUser, 'id'> & { password: string };
 
-// Se tipan con el enum del dominio y no con SelectOption a secas: así lo que
-// devuelve el selector sigue siendo un UserRole y no una cadena suelta.
-const roleFilterOptions: SelectOption<UserRole>[] = Object.values(UserRole).map((role) => ({
+// --- Stores ---
+const authStore = useAuthStore();
+
+// --- State ---
+const allUsers = ref<SessionUser[]>([]);
+const editingUserId = ref<string | null>(null);
+const feedbackMessage = ref('');
+const isFormVisible = ref(false);
+const selectedRole = ref('');
+const userForm = reactive<UserForm>(buildEmptyUser());
+
+// --- Computed ---
+const adminIds = computed(() =>
+  allUsers.value.filter((user) => user.role === UserRole.ADMIN).map((user) => user.id),
+);
+
+const currentUserId = computed(() => authStore.user?.id ?? '');
+
+const roleFilterOptions: SelectOption[] = Object.values(UserRole).map((role) => ({
   value: role,
   label: UserRoleLabel[role],
-}))
+}));
 
-const tableColumns: TableColumn[] = [
-  { key: 'fullName', label: 'Nombre' },
-  { key: 'email', label: 'Correo' },
-  { key: 'phone', label: 'Teléfono' },
-  { key: 'city', label: 'Ciudad' },
-  { key: 'roleLabel', label: 'Rol' },
-  { key: 'memberSince', label: 'Miembro desde', align: 'right' },
-]
-
-// La fila se arma campo por campo: la API nunca envía contraseñas y aquí
-// tampoco hay nada sensible que pintar.
-const tableRows = computed(() =>
+const tableRows = computed<UserTableRow[]>(() =>
   allUsers.value
     .filter((user) => !selectedRole.value || user.role === selectedRole.value)
     .map((user) => ({
@@ -66,14 +66,16 @@ const tableRows = computed(() =>
       role: user.role,
       roleLabel: UserRoleLabel[user.role] ?? user.role,
     })),
-)
+);
 
-// --- Formulario de alta y edición ---
-const isFormVisible = ref(false)
-const editingUserId = ref<string | null>(null)
+const undeletableIds = computed(
+  () =>
+    new Set<string>([currentUserId.value, ...(adminIds.value.length <= 1 ? adminIds.value : [])]),
+);
 
-/** Usuario en blanco, con rol de propietario por defecto. */
-function buildEmptyUser(): Omit<SessionUser, 'id'> & { password: string } {
+// --- Methods ---
+/** Empty user with owner role by default. */
+function buildEmptyUser(): UserForm {
   return {
     fullName: '',
     email: '',
@@ -82,141 +84,125 @@ function buildEmptyUser(): Omit<SessionUser, 'id'> & { password: string } {
     city: '',
     memberSince: new Date().toISOString().slice(0, 10),
     role: UserRole.USER,
-  }
+  };
 }
 
-const userForm = reactive<Omit<SessionUser, 'id'> & { password: string }>(buildEmptyUser())
-
-/** Abre el formulario vacío para registrar un usuario nuevo. */
-function startCreating(): void {
-  editingUserId.value = null
-  feedbackMessage.value = ''
-  Object.assign(userForm, buildEmptyUser())
-  isFormVisible.value = true
-}
-
-/**
- * Abre el formulario cargado con un usuario existente.
- * @param userId identificador del usuario a editar
- */
-function startEditing(userId: string): void {
-  const existing = allUsers.value.find((user) => user.id === userId)
-  if (!existing) return
-  editingUserId.value = existing.id
-  feedbackMessage.value = ''
-  Object.assign(userForm, buildEmptyUser(), existing)
-  isFormVisible.value = true
-}
-
-/** Cierra el formulario descartando los cambios. */
+/** Closes the form discarding changes. */
 function cancelEditing(): void {
-  isFormVisible.value = false
-  editingUserId.value = null
-  feedbackMessage.value = ''
+  isFormVisible.value = false;
+  editingUserId.value = null;
+  feedbackMessage.value = '';
 }
 
-/**
- * Valida las reglas de negocio del usuario.
- * @returns mensaje de error en español, o null si es válido
- */
+/** Deletes a user if integrity guards allow it. */
+async function deleteUser(userId: string, fullName: string): Promise<void> {
+  feedbackMessage.value = '';
+  const blockingReason = await userService.blockedFromRemoval(userId, currentUserId.value);
+  if (blockingReason) {
+    feedbackMessage.value = blockingReason;
+    return;
+  }
+  if (!window.confirm(`Delete user "${fullName}"? This action cannot be undone.`)) {
+    return;
+  }
+  try {
+    await userService.remove(userId);
+  } catch (error) {
+    feedbackMessage.value = HttpClient.apiErrorMessage(error);
+    return;
+  }
+  await reloadFromApi();
+}
+
+/** Returns the first validation error, or null if the form is valid. */
 async function findValidationError(): Promise<string | null> {
-  if (!userForm.fullName.trim()) return 'El nombre completo es obligatorio.'
-  if (!userForm.email.trim()) return 'El correo es obligatorio.'
+  if (!userForm.fullName.trim()) return 'Full name is required.';
+  if (!userForm.email.trim()) return 'Email is required.';
   if (await userService.emailTaken(userForm.email, editingUserId.value ?? undefined)) {
-    return 'Ya existe otro usuario registrado con ese correo.'
+    return 'Another user is already registered with this email.';
   }
   if (!editingUserId.value && !userForm.password) {
-    return 'Asigna una contraseña inicial al usuario nuevo.'
+    return 'Assign an initial password to the new user.';
   }
-  return null
+  return null;
 }
 
-/** Valida y guarda el usuario, luego recarga la tabla. */
+/** Reloads the full user list (no passwords). */
+async function reloadFromApi(): Promise<void> {
+  try {
+    allUsers.value = await userService.findAll();
+  } catch (error) {
+    feedbackMessage.value = HttpClient.apiErrorMessage(error);
+  }
+}
+
+/** Validates and saves the user, then reloads the table. */
 async function saveUser(): Promise<void> {
-  const validationError = await findValidationError()
+  const validationError = await findValidationError();
   if (validationError) {
-    feedbackMessage.value = validationError
-    return
+    feedbackMessage.value = validationError;
+    return;
   }
   try {
     if (editingUserId.value) {
-      await userService.update(editingUserId.value, { ...userForm })
+      await userService.update(editingUserId.value, { ...userForm });
     } else {
-      await userService.create({ ...userForm })
+      await userService.create({ ...userForm });
     }
   } catch (error) {
-    feedbackMessage.value = apiErrorMessage(error)
-    return
+    feedbackMessage.value = HttpClient.apiErrorMessage(error);
+    return;
   }
-  await reloadFromApi()
-  cancelEditing()
+  await reloadFromApi();
+  cancelEditing();
 }
 
-/**
- * Alterna el rol entre administrador y propietario.
- * No permite degradar al último administrador del sistema.
- * @param userId identificador del usuario
- * @param currentRole rol vigente
- */
+/** Opens the empty form to register a new user. */
+function startCreating(): void {
+  editingUserId.value = null;
+  feedbackMessage.value = '';
+  Object.assign(userForm, buildEmptyUser());
+  isFormVisible.value = true;
+}
+
+/** Opens the form loaded with an existing user. */
+function startEditing(userId: string): void {
+  const existing = allUsers.value.find((user) => user.id === userId);
+  if (!existing) return;
+  editingUserId.value = existing.id;
+  feedbackMessage.value = '';
+  Object.assign(userForm, buildEmptyUser(), existing);
+  isFormVisible.value = true;
+}
+
+/** Toggles role between admin and owner. */
 async function toggleRole(userId: string, currentRole: UserRole): Promise<void> {
-  feedbackMessage.value = ''
-  const admins = allUsers.value.filter((user) => user.role === UserRole.ADMIN).length
+  feedbackMessage.value = '';
+  const admins = allUsers.value.filter((user) => user.role === UserRole.ADMIN).length;
   if (currentRole === UserRole.ADMIN && admins <= 1) {
-    feedbackMessage.value = 'No puedes quitarle el rol al último administrador del sistema.'
-    return
+    feedbackMessage.value = 'You cannot remove the role from the last administrator.';
+    return;
   }
   try {
     await userService.update(userId, {
       role: currentRole === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN,
-    })
+    });
   } catch (error) {
-    feedbackMessage.value = apiErrorMessage(error)
-    return
+    feedbackMessage.value = HttpClient.apiErrorMessage(error);
+    return;
   }
-  await reloadFromApi()
+  await reloadFromApi();
 }
 
-// Ids que nunca ofrecen botón de eliminar: el propio usuario en sesión y el
-// último administrador. Se calcula en el script y no en el template, para
-// que la vista no llame servicios (regla 10 de la wiki).
-const currentUserId = computed(() => authStore.user?.id ?? '')
-const adminIds = computed(() =>
-  allUsers.value.filter((user) => user.role === UserRole.ADMIN).map((user) => user.id),
-)
-const undeletableIds = computed(
-  () => new Set<string>([currentUserId.value, ...(adminIds.value.length <= 1 ? adminIds.value : [])]),
-)
-
-/**
- * Elimina un usuario si las guardas de integridad lo permiten.
- * @param userId identificador del usuario
- * @param fullName nombre mostrado en la confirmación
- */
-async function deleteUser(userId: string, fullName: string): Promise<void> {
-  feedbackMessage.value = ''
-  const blockingReason = await userService.blockedFromRemoval(userId, currentUserId.value)
-  if (blockingReason) {
-    feedbackMessage.value = blockingReason
-    return
-  }
-  if (!window.confirm(`¿Eliminar al usuario "${fullName}"? Esta acción no se puede deshacer.`)) {
-    return
-  }
-  try {
-    await userService.remove(userId)
-  } catch (error) {
-    feedbackMessage.value = apiErrorMessage(error)
-    return
-  }
-  await reloadFromApi()
-}
+// --- Lifecycle ---
+onMounted(() => void reloadFromApi());
 </script>
 
 <template>
   <section>
     <PageHeader
-      title="Administración de usuarios"
-      :subtitle="`${allUsers.length} cuenta(s) registradas · página exclusiva para administradores`"
+      title="User administration"
+      :subtitle="`${allUsers.length} account(s) registered · admin only`"
     >
       <template #actions>
         <button
@@ -224,7 +210,7 @@ async function deleteUser(userId: string, fullName: string): Promise<void> {
           type="button"
           @click="startCreating"
         >
-          + Nuevo usuario
+          + New user
         </button>
       </template>
     </PageHeader>
@@ -235,18 +221,18 @@ async function deleteUser(userId: string, fullName: string): Promise<void> {
       @submit.prevent="saveUser"
     >
       <h2 class="font-brand col-span-full m-0 text-lg font-semibold text-ink">
-        {{ editingUserId ? 'Editar usuario' : 'Nuevo usuario' }}
+        {{ editingUserId ? 'Edit user' : 'New user' }}
       </h2>
       <label class="flex flex-col gap-1.5">
-        <span class="text-sm font-medium text-ink">Nombre completo</span>
+        <span class="text-sm font-medium text-ink">Full name</span>
         <input v-model="userForm.fullName" class="field-input" />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-sm font-medium text-ink">Correo</span>
+        <span class="text-sm font-medium text-ink">Email</span>
         <input v-model="userForm.email" type="email" class="field-input" />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-sm font-medium text-ink">Contraseña</span>
+        <span class="text-sm font-medium text-ink">Password</span>
         <input
           v-model="userForm.password"
           type="password"
@@ -255,34 +241,34 @@ async function deleteUser(userId: string, fullName: string): Promise<void> {
         />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-sm font-medium text-ink">Teléfono</span>
+        <span class="text-sm font-medium text-ink">Phone</span>
         <input v-model="userForm.phone" class="field-input" />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-sm font-medium text-ink">Ciudad</span>
+        <span class="text-sm font-medium text-ink">City</span>
         <input v-model="userForm.city" class="field-input" />
       </label>
-      <SelectField v-model="userForm.role" label="Rol" :options="roleFilterOptions" />
+      <SelectField v-model="userForm.role" label="Role" :options="roleFilterOptions" />
 
       <div class="col-span-full mt-2 flex gap-3 border-t border-slate-200 pt-5">
         <button
           class="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-dark"
           type="submit"
         >
-          Guardar
+          Save
         </button>
         <button
           class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
           type="button"
           @click="cancelEditing"
         >
-          Cancelar
+          Cancel
         </button>
       </div>
     </form>
 
     <FilterBar>
-      <FilterSelect v-model="selectedRole" label="Rol" :options="roleFilterOptions" />
+      <FilterSelect v-model="selectedRole" label="Role" :options="roleFilterOptions" />
     </FilterBar>
 
     <p
@@ -293,43 +279,104 @@ async function deleteUser(userId: string, fullName: string): Promise<void> {
       {{ feedbackMessage }}
     </p>
 
-    <DataTable
-      :columns="tableColumns"
-      :rows="tableRows"
-      :empty-message="selectedRole ? 'Ningún usuario con ese rol' : 'Todavía no hay usuarios'"
-      empty-hint="Crea una cuenta con el botón “Nuevo usuario”."
-    >
-      <template #cell-roleLabel="{ value, row }">
-        <StatusBadge :label="String(value)" :tone="USER_ROLE_TONE[row.role as UserRole]" />
-      </template>
-      <template #actions="{ row }">
-        <div class="flex gap-3">
-          <button
-            class="text-primary hover:underline"
-            type="button"
-            @click="startEditing(String(row.id))"
+    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-sidebar/[0.04]">
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Name
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Email
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Phone
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              City
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Role
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Member since
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(row, index) in tableRows"
+            :key="String(row.id ?? index)"
+            class="transition-colors odd:bg-white even:bg-slate-50/60 hover:bg-primary/[0.06]"
           >
-            Editar
-          </button>
-          <button
-            class="text-primary hover:underline"
-            type="button"
-            @click="toggleRole(String(row.id), row.role as UserRole)"
-          >
-            Cambiar rol
-          </button>
-          <!-- El botón no se ofrece cuando la acción nunca podría completarse:
-               sobre el propio usuario en sesión o sobre el último administrador -->
-          <button
-            v-if="!undeletableIds.has(String(row.id))"
-            class="text-red-600 hover:underline"
-            type="button"
-            @click="deleteUser(String(row.id), String(row.fullName))"
-          >
-            Eliminar
-          </button>
-        </div>
-      </template>
-    </DataTable>
+            <td class="border-b border-slate-100 px-4 py-3">{{ row.fullName }}</td>
+            <td class="border-b border-slate-100 px-4 py-3">{{ row.email }}</td>
+            <td class="border-b border-slate-100 px-4 py-3">{{ row.phone }}</td>
+            <td class="border-b border-slate-100 px-4 py-3">{{ row.city }}</td>
+            <td class="border-b border-slate-100 px-4 py-3">
+              <StatusBadge :label="row.roleLabel" :tone="USER_ROLE_TONE[row.role as UserRole]" />
+            </td>
+            <td
+              class="border-b border-slate-100 px-4 py-3 text-right tabular-nums whitespace-nowrap"
+            >
+              {{ row.memberSince }}
+            </td>
+            <td class="border-b border-slate-100 px-4 py-3 whitespace-nowrap">
+              <div class="flex gap-3">
+                <button
+                  class="text-primary hover:underline"
+                  type="button"
+                  @click="startEditing(String(row.id))"
+                >
+                  Edit
+                </button>
+                <button
+                  class="text-primary hover:underline"
+                  type="button"
+                  @click="toggleRole(String(row.id), row.role as UserRole)"
+                >
+                  Toggle role
+                </button>
+                <button
+                  v-if="!undeletableIds.has(String(row.id))"
+                  class="text-red-600 hover:underline"
+                  type="button"
+                  @click="deleteUser(String(row.id), String(row.fullName))"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="tableRows.length === 0">
+            <td class="px-4 py-12 text-center" colspan="7">
+              <p class="m-0 text-sm font-medium text-slate-500">
+                {{ selectedRole ? 'No users with that role' : 'No users yet' }}
+              </p>
+              <p class="mt-1 mb-0 text-sm text-slate-400">
+                Create an account with the “New user” button.
+              </p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 </template>

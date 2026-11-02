@@ -1,42 +1,39 @@
 <script setup lang="ts">
-// Selector de filtro reutilizable. options: [{ value, label }] o strings.
-//
-// Añade la opción “Todos” delante y delega el resto en SelectField, para que un
-// filtro y un campo de formulario sean exactamente el mismo control y no haya
-// que mantener dos desplegables distintos.
-import { computed } from 'vue'
-import SelectField, { type SelectOption } from './SelectField.vue'
+// --- External imports ---
+import { computed } from 'vue';
 
-export type { SelectOption }
+// --- Internal imports ---
+import type { SelectOption } from '../interfaces/SelectOption';
+import SelectField from './SelectField.vue';
+
+// --- Props and emits ---
+const emit = defineEmits<{ 'update:modelValue': [value: string] }>();
 
 const props = withDefaults(
   defineProps<{
-    label: string
-    options?: (SelectOption | string)[]
-    modelValue?: string | number
-    allLabel?: string
+    allLabel?: string;
+    label: string;
+    modelValue?: string | number;
+    options?: (SelectOption | string)[];
   }>(),
-  { options: () => [], modelValue: '', allLabel: 'Todos' },
-)
+  { allLabel: 'All', modelValue: '', options: () => [] },
+);
 
-const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
-
-// “Todos” es una opción más de la lista, con la cadena vacía como valor: así
-// quitar el filtro se hace igual que ponerlo.
+// --- Computed ---
 const optionsWithAll = computed<SelectOption[]>(() => [
   { value: '', label: props.allLabel },
   ...props.options.map((option) =>
     typeof option === 'string' ? { value: option, label: option } : option,
   ),
-])
+]);
 </script>
 
 <template>
   <SelectField
     class="min-w-48"
-    :label="label"
+    :label="props.label"
     label-variant="filter"
-    :model-value="modelValue"
+    :model-value="props.modelValue"
     :options="optionsWithAll"
     @update:model-value="(value) => emit('update:modelValue', String(value))"
   />

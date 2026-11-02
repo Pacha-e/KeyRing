@@ -1,24 +1,21 @@
-import type { PropertyType, RentalMode, PropertyStatus } from './enums'
+// --- Internal imports ---
+import type { PropertyStatus } from '../enums/PropertyStatus';
+import type { PropertyType } from '../enums/PropertyType';
+import type { RentalMode } from '../enums/RentalMode';
 
+// --- Types ---
 export interface PropertyInterface {
-  id: string
-  name: string
-  address: string
-  city: string
-  type: PropertyType
-  rentalMode: RentalMode
-  status: PropertyStatus
-  estimatedMonthlyRent: number
-  adminFee: number
-  otherFixedCosts: number
-  /** id del usuario dueño de la propiedad */
-  ownerId: string | null
-  /**
-   * Coordenadas del inmueble, para situarlo en el mapa.
-   *
-   * Son opcionales porque una propiedad se puede registrar sin saberlas todavía;
-   * cuando faltan, el mapa la sitúa en el centro de su ciudad y lo advierte.
-   */
-  latitude?: number
-  longitude?: number
+  address: string;
+  adminFee: number;
+  city: string;
+  estimatedMonthlyRent: number;
+  id: string;
+  latitude?: number;
+  longitude?: number;
+  name: string;
+  otherFixedCosts: number;
+  rentalMode: RentalMode;
+  status: PropertyStatus;
+  type: PropertyType;
+  userId: string | null;
 }

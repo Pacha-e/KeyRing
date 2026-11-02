@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import AppNavbar from './components/AppNavbar.vue'
-import PublicHeader from './components/PublicHeader.vue'
-import AppFooter from './components/AppFooter.vue'
+// --- External imports ---
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 
-const route = useRoute()
+// --- Internal imports ---
+import AppFooter from './components/AppFooter.vue';
+import AppNavbar from './components/AppNavbar.vue';
+import PublicHeader from './components/PublicHeader.vue';
 
-// 'bare': solo el contenido centrado (login). 'public': header público, sin sidebar (home).
-// 'app': layout con sidebar (todo lo demás, ya protegido por los guards del router).
+// --- State ---
+const route = useRoute();
+
+// --- Computed ---
 const layout = computed<'bare' | 'public' | 'app'>(() => {
-  if (route.name === 'login') return 'bare'
-  if (route.name === 'home') return 'public'
-  return 'app'
-})
+  if (route.name === 'login') return 'bare';
+  if (route.name === 'home') return 'public';
+  return 'app';
+});
 </script>
 
 <template>
