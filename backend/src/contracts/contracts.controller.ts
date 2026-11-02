@@ -1,39 +1,53 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
-import { ContractsService } from './contracts.service.js'
-import { Contract } from './entities/contract.entity.js'
-import { CreateContractDto, UpdateContractDto } from './dto/create-contract.dto.js'
+// --- External imports ---
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 
+// --- Internal imports ---
+import { ContractsService } from './contracts.service.js';
+import { CreateContractDto } from './dto/create-contract.dto.js';
+import { UpdateContractDto } from './dto/update-contract.dto.js';
+import { Contract } from './entities/contract.entity.js';
+
+// --- Exported members ---
 @Controller('contracts')
 export class ContractsController {
   constructor(private readonly contractsService: ContractsService) {}
 
-  /**
-   * GET /api/contracts?propertyIds=a,b — contratos de las propiedades visibles.
-   * Sin query devuelve todos (reportes del administrador).
-   */
+  @Post()
+  create(@Body() createContractDto: CreateContractDto): Promise<Contract> {
+    return this.contractsService.create(createContractDto);
+  }
+
   @Get()
   findAll(@Query('propertyIds') propertyIds?: string): Promise<Contract[]> {
-    if (propertyIds === undefined) return this.contractsService.findAll()
-    return this.contractsService.findVisible(propertyIds.split(',').filter(Boolean))
+    if (propertyIds === undefined) return this.contractsService.findAll();
+    return this.contractsService.findVisible(propertyIds.split(',').filter(Boolean));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<Contract> {
-    return this.contractsService.findOne(id)
-  }
-
-  @Post()
-  create(@Body() createContractDto: CreateContractDto): Promise<Contract> {
-    return this.contractsService.create(createContractDto)
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() changes: UpdateContractDto): Promise<Contract> {
-    return this.contractsService.update(id, changes)
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Contract> {
+    return this.contractsService.findOne(id);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<void> {
-    await this.contractsService.remove(id)
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    await this.contractsService.remove(id);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() changes: UpdateContractDto,
+  ): Promise<Contract> {
+    return this.contractsService.update(id, changes);
   }
 }

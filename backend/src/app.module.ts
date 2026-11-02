@@ -1,21 +1,19 @@
-import { Module } from '@nestjs/common'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { HomeModule } from './home/home.module.js'
-import { UsersModule } from './users/users.module.js'
-import { PropertiesModule } from './properties/properties.module.js'
-import { ContractsModule } from './contracts/contracts.module.js'
-import { TransactionsModule } from './transactions/transactions.module.js'
-import { SeedModule } from './seed/seed.module.js'
+// --- External imports ---
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
+// --- Internal imports ---
+import { ContractsModule } from './contracts/contracts.module.js';
+import { dataSource } from './database/data-source.js';
+import { SeedModule } from './database/seeders/seed.module.js';
+import { PropertiesModule } from './properties/properties.module.js';
+import { TransactionsModule } from './transactions/transactions.module.js';
+import { UsersModule } from './users/users.module.js';
+
+// --- Exported members ---
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'better-sqlite3',
-      database: process.env.SQLITE_PATH ?? 'database.sqlite',
-      autoLoadEntities: true,
-      synchronize: true,
-    }),
-    HomeModule,
+    TypeOrmModule.forRoot(dataSource.options),
     UsersModule,
     PropertiesModule,
     ContractsModule,

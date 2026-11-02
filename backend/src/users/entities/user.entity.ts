@@ -1,40 +1,33 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
-import type { UserRole } from '../../domain/enums.js'
+// --- External imports ---
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
+// --- Internal imports ---
+import type { UserRole } from '../../domain/enums/user-role.js';
+
+// --- Exported members ---
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
   @Column()
-  fullName: string
+  city: string;
 
   @Column({ unique: true })
-  email: string
-
-  /**
-   * Contraseña en texto plano, como corresponde al alcance del curso.
-   * Ninguna respuesta de la API la incluye: el servicio la retira antes
-   * de devolver cualquier usuario.
-   */
-  @Column()
-  password: string
+  email: string;
 
   @Column()
-  phone: string
+  fullName: string;
+
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  city: string
-
-  /** Fecha ISO 'YYYY-MM-DD' de registro del usuario. */
-  @Column()
-  memberSince: string
+  memberSince: string;
 
   @Column()
-  role: UserRole
+  password: string;
 
-  /**
-   * Las propiedades del usuario no viajan anidadas: la relación vive en
-   * Property.ownerId, que es la única fuente de verdad de la propiedad.
-   */
+  @Column()
+  phone: string;
+
+  @Column()
+  role: UserRole;
 }

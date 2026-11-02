@@ -1,39 +1,39 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm'
-import type { Relation } from 'typeorm'
-import type { ContractStatus } from '../../domain/enums.js'
-import { Property } from '../../properties/entities/property.entity.js'
+// --- External imports ---
+import type { Relation } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
 
+// --- Internal imports ---
+import type { ContractStatus } from '../../domain/enums/contract-status.js';
+import { Property } from '../../properties/entities/property.entity.js';
+
+// --- Exported members ---
 @Entity()
 export class Contract {
+  @Column()
+  endDate: string;
+
+  @Column({ type: 'integer' })
+  fixedRent: number;
+
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   @ManyToOne(() => Property, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'propertyId' })
-  property: Relation<Property>
+  property: Relation<Property>;
 
-  /** Id plano de la propiedad arrendada; es el que consume el frontend. */
   @RelationId((contract: Contract) => contract.property)
-  propertyId: string
-
-  /** Canon mensual pactado, en pesos. */
-  @Column({ type: 'integer' })
-  fixedRent: number
-
-  /** Fecha ISO 'YYYY-MM-DD' de inicio de vigencia. */
-  @Column()
-  startDate: string
-
-  /** Fecha ISO 'YYYY-MM-DD' de fin de vigencia. */
-  @Column()
-  endDate: string
+  propertyId: string;
 
   @Column()
-  tenantName: string
+  startDate: string;
 
   @Column()
-  tenantContact: string
+  status: ContractStatus;
 
   @Column()
-  status: ContractStatus
+  tenantContact: string;
+
+  @Column()
+  tenantName: string;
 }

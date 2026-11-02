@@ -1,34 +1,34 @@
-import { IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator'
-import type { PropertyStatus, PropertyType, RentalMode } from '../../domain/enums.js'
+// --- External imports ---
+import { IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
-/** Datos para crear una propiedad. */
+// --- Internal imports ---
+import { PropertyStatus } from '../../domain/enums/property-status.js';
+import { PropertyType } from '../../domain/enums/property-type.js';
+import { RentalMode } from '../../domain/enums/rental-mode.js';
+
+// --- Exported members ---
 export class CreatePropertyDto {
-  @IsString() @IsNotEmpty() name: string
-  @IsString() address: string
-  @IsString() @IsNotEmpty() city: string
-  @IsIn(['HOUSE', 'APARTMENT', 'FARM']) type: PropertyType
-  @IsIn(['AIRBNB', 'FIXED_CONTRACT', 'BOTH']) rentalMode: RentalMode
-  @IsIn(['ACTIVE', 'VACANT']) status: PropertyStatus
-  @IsInt() @Min(0) estimatedMonthlyRent: number
-  @IsInt() @Min(0) adminFee: number
-  @IsInt() @Min(0) otherFixedCosts: number
-  @IsOptional() @IsString() ownerId?: string | null
-  @IsOptional() @IsNumber() latitude?: number | null
-  @IsOptional() @IsNumber() longitude?: number | null
-}
+  @IsString() address: string;
 
-/** Campos modificables de una propiedad; todos opcionales. */
-export class UpdatePropertyDto {
-  @IsOptional() @IsString() @IsNotEmpty() name?: string
-  @IsOptional() @IsString() address?: string
-  @IsOptional() @IsString() @IsNotEmpty() city?: string
-  @IsOptional() @IsIn(['HOUSE', 'APARTMENT', 'FARM']) type?: PropertyType
-  @IsOptional() @IsIn(['AIRBNB', 'FIXED_CONTRACT', 'BOTH']) rentalMode?: RentalMode
-  @IsOptional() @IsIn(['ACTIVE', 'VACANT']) status?: PropertyStatus
-  @IsOptional() @IsInt() @Min(0) estimatedMonthlyRent?: number
-  @IsOptional() @IsInt() @Min(0) adminFee?: number
-  @IsOptional() @IsInt() @Min(0) otherFixedCosts?: number
-  @IsOptional() @IsString() ownerId?: string | null
-  @IsOptional() @IsNumber() latitude?: number | null
-  @IsOptional() @IsNumber() longitude?: number | null
+  @IsInt() @Min(0) adminFee: number;
+
+  @IsString() @IsNotEmpty() city: string;
+
+  @IsInt() @Min(0) estimatedMonthlyRent: number;
+
+  @IsOptional() @IsNumber() latitude?: number | null;
+
+  @IsOptional() @IsNumber() longitude?: number | null;
+
+  @IsString() @IsNotEmpty() name: string;
+
+  @IsInt() @Min(0) otherFixedCosts: number;
+
+  @IsEnum(RentalMode) rentalMode: RentalMode;
+
+  @IsEnum(PropertyStatus) status: PropertyStatus;
+
+  @IsEnum(PropertyType) type: PropertyType;
+
+  @IsOptional() @IsString() userId?: string | null;
 }
