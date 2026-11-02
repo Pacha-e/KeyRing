@@ -1,200 +1,123 @@
 # KeyRing
 
-Dashboard web para la gestión de propiedades de arriendo: alquileres cortos tipo **Airbnb** y
-**contratos fijos**. Permite administrar propiedades, contratos e ingresos/gastos, con reportes
-gráficos (Chart.js) y mapa de ubicaciones (Leaflet).
+KeyRing is a property-management dashboard for short-term rentals and fixed contracts. It provides authentication, property and contract CRUD, transactions, reports, and a map view. The project is developed for the *Ingeniería de Desarrollo Web* course.
 
-Proyecto del curso **Ingeniería de Desarrollo Web** — Equipo **KeyRing**.
+The repository is a monorepo with three applications:
 
-## Características
+- **backend/** — NestJS REST API with TypeORM and SQLite.
+- **frontend/** — Vue 3 single-page application served by nginx in production.
+- **nuxt/** — Nuxt 4 hybrid shell (SSR, prerendered blog, and CSR tools).
 
-- SPA en **Vue 3** (Composition API, `<script setup>`) + Vite + **TypeScript** (estricto).
-- API en **Nest.js** con **TypeORM** sobre **SQLite**: los datos ya no viven en el navegador.
-- Frontend ↔ API por **axios**, con la URL base en `VITE_API_BASE_URL` (`src/config/app.config.ts`).
-- Estilos con **Tailwind CSS v4** (plugin de Vite) y tema claro.
-- Estado con **Pinia** (sesión) y carga de datos asíncrona en `onMounted`.
-- Arquitectura por capas: `interfaces/` (modelos + enums), `dtos/`, `services/`, `stores/`,
-  `router/`, `components/`, `views/`; en el backend: entidades, DTOs class-validator,
-  servicios con las reglas de dominio, controladores y módulos Nest.
-- Autenticación con roles (`admin` / `user`) validada en el servidor; rutas protegidas.
-- 13 páginas más la de «no encontrada», incluidas 2 exclusivas para administradores (Reportes y
-  Usuarios).
-- Cuatro CRUD completos: propiedades, contratos, transacciones y usuarios.
-- Componentes reutilizables: `DataTable`, `SelectField`, `FilterSelect`, `FilterBar`, `ChartCard`,
-  `StatCard`, `StatusBadge`, `PageHeader`, `AppIcon`, `AppNavbar`, `AppFooter`, `PublicHeader`.
+Compiled output is **not** versioned. Production images are built with multi-stage Dockerfiles.
 
-## Requisitos
+## Repository layout
 
-- Node.js 18 o superior
-- Backend: ver `backend/README` abajo; el frontend espera la API en `http://localhost:3000`
+| Path | Responsibility |
+| --- | --- |
+| `backend/` | NestJS API, entities, DTOs, migrations, and seeders. |
+| `frontend/` | Vue SPA source, public assets, and nginx configuration. |
+| `nuxt/` | Nuxt 4 application pages, layouts, server API, and rendering rules. |
+| `docs/assets/` | Source assets such as the original logo. |
+| `.github/` | Pull request and issue templates. |
+| `tools/` | Helper scripts, e.g. `build-logo-assets.py`. |
+| `docker-compose.yml` | Full-stack local orchestration. |
+| `.editorconfig`, `.gitignore`, `.nvmrc` | Shared editor and version-control settings. |
 
-## Instalación y ejecución
+## Prerequisites
 
-El proyecto tiene dos partes: `frontend/` (SPA Vue) y `backend/` (API Nest.js), siguiendo la
-estructura de proyectos del curso. Desde la raíz del repositorio:
+- Node.js 26 (see `.nvmrc`)
+- pnpm 11 or later (managed by `packageManager` fields)
+- Docker and Docker Compose (for the containerized stack)
+
+## Local development
+
+Run each app in its own terminal from the repository root.
+
+### Backend
 
 ```bash
-# 1. API (terminal 1)
 cd backend
-npm install
-npm run start        # http://localhost:3000/api
+pnpm install
+pnpm dev
+```
 
-# 2. Frontend (terminal 2)
+API base URL: `http://localhost:3000/api`
+
+### Frontend
+
+```bash
 cd frontend
-npm install
-npm run dev          # http://localhost:5173
+pnpm install
+pnpm dev
 ```
 
-La primera vez que arranca, la API siembra SQLite con los datos ficticios del proyecto.
+Development server: `http://localhost:5173`
 
-## Credenciales de prueba
+The frontend expects the API at `http://localhost:3000/api`. To change this, create `frontend/.env` from `frontend/.env.example` and set `VITE_API_BASE_URL`.
 
-| Rol | Correo | Contraseña |
+### Nuxt
+
+```bash
+cd nuxt
+pnpm install
+pnpm dev --port 3001
+```
+
+Development server: `http://localhost:3001`
+
+## Quality gates
+
+Run the relevant checks before opening a pull request.
+
+| App | Lint | Format check | Type check | Build | E2E tests |
+| --- | --- | --- | --- | --- | --- |
+| backend | `pnpm lint` | `pnpm format:check` | `pnpm build` (includes TypeScript) | `pnpm build` | — |
+| frontend | `pnpm lint` | `pnpm format:check` | `pnpm typecheck` | `pnpm build` | `pnpm test:e2e` |
+| nuxt | `pnpm lint` | `pnpm format:check` | `pnpm typecheck` | `pnpm build` | `pnpm test:e2e` |
+
+## Docker Compose
+
+Build and run the whole stack locally:
+
+```bash
+docker compose up --build -d
+```
+
+| Service | URL | Notes |
 | --- | --- | --- |
-| Administrador | `admin@keyring.co` | `admin123` |
-| Usuario | `user@keyring.co` | `user123` |
+| backend | `http://localhost:3000/api` | SQLite data persists in the `keyring-data` volume. |
+| frontend | `http://localhost` | Static SPA served by nginx. |
+| nuxt | `http://localhost:3001` | Node server running the Nitro output. |
 
-En la pantalla de ingreso las dos cuentas aparecen como botones que rellenan el formulario, así que
-no hace falta teclearlas.
 
-Para volver a los datos de prueba, borra la base de datos y reinicia la API:
+## Deployment on GCP
 
-```bash
-cd backend
-rm database.sqlite
-npm run start
-```
+The course deployment uses a Google Compute Engine VM:
 
-## Scripts
+1. Create a VM (e.g. `e2-micro` or `e2-medium`) with Debian 13 and allow HTTP/HTTPS traffic.
+2. Add a firewall rule that exposes port `3000` for the API.
+3. Install Docker and the Docker Compose plugin on the VM.
+4. Clone the repository and move into the project root.
+5. Set `VITE_API_BASE_URL` to the VM external IP (either in `frontend/.env.production` or as a Docker build argument).
+6. Run `docker compose up --build -d`.
+7. Verify the public IP over HTTP:
+   - Frontend: `http://<VM_IP>`
+   - API: `http://<VM_IP>:3000/api`
 
-| Comando | Descripción |
-| --- | --- |
-| `npm run dev` | Servidor de desarrollo (Vite) |
-| `npm run build` | Build de producción en `dist/` |
-| `npm run preview` | Sirve el build de producción |
-| `npm run type-check` | Verificación de tipos con `vue-tsc --noEmit` |
-| `npm run lint` | ESLint (flat config + eslint-plugin-vue + typescript-eslint) |
-| `npm run format` | Prettier sobre `src/` y archivos raíz |
-| `npm run verify` | Las tres suites de verificación: servicios, guardas y vistas |
+For a larger team or heavier builds, use an `e2-medium` instance and build inside Docker instead of committing compiled `dist/` folders.
 
-## Estructura del repositorio
+## Branch and pull-request workflow
 
-```
-KeyRing/
-├── .gitignore             # Reglas del repositorio (dist/ SÍ se versiona, ver Despliegue)
-├── README.md              # Este archivo
-├── docker-compose.yml     # API + frontend juntos en dos contenedores (Tutorial 08)
-├── backend/               # API Nest.js (TypeORM + SQLite)
-│   ├── Dockerfile         # Multi-stage: build TS + runtime solo con deps de producción
-│   └── src/               # main, app.module, módulo por entidad + seed
-└── frontend/              # Proyecto Vue 3 (SPA)
-    ├── Dockerfile         # Imagen nginx:alpine que sirve el build
-    ├── nginx.conf         # Fallback a index.html para las rutas del router
-    ├── dist/              # Build de producción versionado (lo consume el despliegue)
-    └── src/
-```
+1. Create an issue describing the change.
+2. Create a feature or chore branch from `main`.
+3. Make focused commits that keep generated files and build output out of version control.
+4. Open a pull request using the template in `.github/PULL_REQUEST_TEMPLATE.md`.
+5. Ensure CI checks and the verification checklist pass.
+6. Request a review and merge only after approval.
 
-## Estructura de `frontend/src`
+## Documentation
 
-```
-src/
-├── assets/main.css        # Entrada Tailwind v4 (@import "tailwindcss") + tokens de marca
-├── components/            # Componentes reutilizables (PascalCase)
-├── dtos/                  # DTOs de creación (campos de la entidad menos id)
-├── interfaces/            # UserInterface, PropertyInterface, ContractInterface,
-│                          # TransactionInterface y enums.ts (enums TS + etiquetas en español)
-├── router/index.ts        # Rutas + guardas (requiresAuth / requiresAdmin)
-├── services/              # camelCase: http.ts (axios compartido + apiErrorMessage),
-│                          # auth.service.ts (sesión) y un servicio por entidad:
-│                          # property, contract, transaction y user. Ninguna vista
-│                          # toca axios: solo los servicios conocen el transporte
-├── stores/auth.ts         # Store Pinia de autenticación (tipado)
-├── utils/                 # finance.ts (aritmética del negocio, funciones puras),
-│                          # format.ts (formato del peso colombiano) y
-│                          # badges.ts (color de cada estado del dominio)
-├── config/                # app.config.ts (variables de entorno) y
-│                          # chart.config.ts (paleta de los gráficos)
-├── views/                 # Una vista por ruta (PascalCase)
-├── env.d.ts               # Tipos de Vite
-├── App.vue
-└── main.ts                # Montaje de la app
-```
-
-## Rutas
-
-| Ruta | Vista | Acceso |
-| --- | --- | --- |
-| `/` | Home | Pública |
-| `/login` | Login | Pública |
-| `/dashboard` | Dashboard | Autenticado |
-| `/properties` | Lista de propiedades | Autenticado |
-| `/properties/new`, `/properties/:id/edit` | Formulario de propiedad | Autenticado |
-| `/contracts` | Contratos | Autenticado |
-| `/contracts/new`, `/contracts/:id/edit` | Formulario de contrato | Autenticado |
-| `/transactions` | Transacciones | Autenticado |
-| `/map` | Mapa (Leaflet) | Autenticado |
-| `/reports` | Reportes (Chart.js) | Solo admin |
-| `/admin/users` | Administración de usuarios | Solo admin |
-
-## Despliegue
-
-El despliegue se hace sobre una máquina virtual de Google Cloud (Compute Engine `e2-micro`,
-Debian 13, con tráfico HTTP y HTTPS permitido), siguiendo el tutorial del curso. La imagen Docker
-del frontend se construye a partir del build ya compilado, por eso `frontend/dist/` se versiona.
-
-Antes de desplegar, desde `frontend/`:
-
-```bash
-npm run build
-```
-
-Con Docker instalado en la máquina virtual, el stack completo (API + frontend) se levanta con
-docker-compose desde la raíz del repo:
-
-```bash
-sudo git clone https://github.com/Pacha-e/KeyRing.git
-cd KeyRing
-sudo docker compose up --build -d
-# API:      http://<IP-VM>:3000/api
-# Frontend: http://<IP-VM>:8081
-```
-
-Para que el frontend desplegado hable con la API de la VM, define `VITE_API_BASE_URL` con la IP
-externa antes de compilar (los valores quedan embebidos en el bundle):
-
-```bash
-# frontend/.env.production (no se versiona)
-VITE_API_BASE_URL=http://<IP-VM>:3000
-```
-
-Y en el contenedor de la API, el origen del frontend debe estar en `CORS_ORIGIN`
-(ver `docker-compose.yml`).
-
-La aplicación está desplegada en **http://34.58.221.78** (instancia `keyring-vm`, Compute Engine,
-`us-central1-a`) usando **HTTP** (no HTTPS: la instancia no tiene certificado). Para publicar
-cambios: `npm run build`, commit del nuevo `dist/`, `git pull` en la máquina virtual y reconstruir
-con `docker compose up --build -d`.
-
-El procedimiento completo —crear la instancia, abrir el firewall, instalar Docker y comprobar que
-responde— está en la wiki:
-[Despliegue en GCP](https://github.com/Pacha-e/KeyRing/wiki/Despliegue-en-GCP).
-
-## Documentación
-
-La [wiki del repositorio](https://github.com/Pacha-e/KeyRing/wiki) tiene el detalle:
-
-| Página | Para qué |
-| --- | --- |
-| [Entregable](https://github.com/Pacha-e/KeyRing/wiki/Entregable) | Logo, modelo verbal, diagrama de clases y de arquitectura |
-| [Arquitectura del código](https://github.com/Pacha-e/KeyRing/wiki/Arquitectura-del-codigo) | Recorrido archivo por archivo de todas las capas |
-| [Reglas de programación](https://github.com/Pacha-e/KeyRing/wiki/Reglas-de-programacion) | Reglas por categoría: rutas, vistas, componentes, servicios |
-| [Guía de estilo](https://github.com/Pacha-e/KeyRing/wiki/Guia-de-estilo) | Cómo se usan ESLint y Prettier |
-| [Preguntas y respuestas](https://github.com/Pacha-e/KeyRing/wiki/Preguntas-y-respuestas) | Material de estudio del proyecto |
-| [Pantallazos](https://github.com/Pacha-e/KeyRing/wiki/Pantallazos) | Capturas de las tres secciones principales |
-
-## Convenciones
-
-- Componentes y vistas en **PascalCase**; servicios y stores en **camelCase**; interfaces y DTOs en
-  **PascalCase** (`UserInterface.ts`, `CreatePropertyDTO.ts`).
-- Todo el texto de la UI en **español**; comentarios de código mínimos y en español.
-- Antes de subir cambios: `npm run type-check`, `npm run lint` y `npm run format`.
+- [Pull request template](.github/PULL_REQUEST_TEMPLATE.md)
+- [Feature request template](.github/ISSUE_TEMPLATE/feature_request.md)
+- [Bug report template](.github/ISSUE_TEMPLATE/bug_report.md)
+- [Source logo asset](docs/assets/logo-original.jpeg)
