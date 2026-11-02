@@ -8,16 +8,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,vue,css}\" \"*.{js,ts,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,vue,css}\" \"*.{js,ts,json,md}\"",
-    "verify:servicios": "esbuild .verify/servicios.ts --bundle --format=esm --platform=node --external:axios --outfile=.verify/out-servicios.mjs && node .verify/run-servicios.mjs",
-    "verify:guards": "node .verify/build-guards.mjs && node .verify/run-guards.mjs",
-    "verify:vistas": "node .verify/build-vistas.mjs && node .verify/run-vistas.mjs",
-    "verify": "npm run verify:servicios && npm run verify:guards && npm run verify:vistas",
     "test:e2e": "playwright test"
   },
   "dependencies": {
