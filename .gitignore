@@ -1,33 +1,40 @@
-# Dependencias
-**/node_modules/
+# Dependencies
+node_modules/
+.pnpm-store/
 
-# La carpeta dist/ SÍ se versiona: el despliegue clona el repositorio dentro de
-# la máquina virtual y construye la imagen Docker a partir del build ya
-# compilado, según el tutorial de despliegue del curso.
+# Build outputs (built inside multi-stage Docker images)
+dist/
+.output/
+.nuxt/
 
-# Logs
-**/*.log
-**/npm-debug.log*
+# Test and coverage artifacts
+coverage/
+playwright-report/
+test-results/
+*.log
 
-# Variables de entorno (la plantilla de ejemplo sí se versiona)
-**/.env
-**/.env.local
-**/.env.*.local
+# Environment files: templates are tracked, real values are not
+.env
+.env.*
+!.env.example
 
-# Artefactos de las sesiones de Playwright durante el QA
+# Local SQLite data directory
+backend/data/
+
+# Tool artifacts
 .playwright-mcp/
 
-# Config local del guardián de comandos (allowlist de esta máquina)
+# Local command-guard configuration
 .security/
 
-# Editores y sistema operativo
+# Editor and OS files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 __MACOSX/
 
-# Material del curso: no se publica en el repositorio
+# Course material that should not be published
 *.pdf
 *.docx
 *.pptx
