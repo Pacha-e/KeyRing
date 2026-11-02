@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 // --- Internal imports ---
+import { ContractStatus } from '../domain/enums/contract-status.js';
 import { Property } from '../properties/entities/property.entity.js';
 import type { CreateContractDto } from './dto/create-contract.dto.js';
 import type { UpdateContractDto } from './dto/update-contract.dto.js';
@@ -29,7 +30,7 @@ export class ContractsService {
   }
 
   countActive(contracts: Contract[]): number {
-    return contracts.filter((contract) => contract.status === 'ACTIVE').length;
+    return contracts.filter((contract) => contract.status === ContractStatus.Active).length;
   }
 
   async create(createContractDto: CreateContractDto): Promise<Contract> {

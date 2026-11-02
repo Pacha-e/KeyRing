@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 
 // --- Internal imports ---
 import { Contract } from '../../contracts/entities/contract.entity.js';
+import { ContractStatus } from '../../domain/enums/contract-status.js';
 import { Property } from '../../properties/entities/property.entity.js';
 
 // --- Exported members ---
@@ -24,40 +25,40 @@ export class ContractSeeder {
     if (await this.contractsRepository.count()) return;
     const contracts = [
       {
-        property: properties[1],
-        fixedRent: 4200000,
-        startDate: this.isoDaysAgo(150),
         endDate: this.isoDaysAgo(-215),
-        tenantName: 'Carlos Ríos',
+        fixedRent: 4200000,
+        property: properties[1],
+        startDate: this.isoDaysAgo(150),
+        status: ContractStatus.Active,
         tenantContact: '3105551234',
-        status: 'ACTIVE' as const,
+        tenantName: 'Carlos Ríos',
       },
       {
-        property: properties[2],
-        fixedRent: 2600000,
-        startDate: this.isoDaysAgo(90),
         endDate: this.isoDaysAgo(-275),
-        tenantName: 'María Gómez',
+        fixedRent: 2600000,
+        property: properties[2],
+        startDate: this.isoDaysAgo(90),
+        status: ContractStatus.Active,
         tenantContact: '3116662345',
-        status: 'ACTIVE' as const,
+        tenantName: 'María Gómez',
       },
       {
-        property: properties[5],
-        fixedRent: 5800000,
-        startDate: this.isoDaysAgo(300),
         endDate: this.isoDaysAgo(-65),
-        tenantName: 'Finca Eventos SAS',
+        fixedRent: 5800000,
+        property: properties[5],
+        startDate: this.isoDaysAgo(300),
+        status: ContractStatus.Active,
         tenantContact: '6027778899',
-        status: 'ACTIVE' as const,
+        tenantName: 'Finca Eventos SAS',
       },
       {
-        property: properties[3],
-        fixedRent: 5000000,
-        startDate: this.isoDaysAgo(500),
         endDate: this.isoDaysAgo(135),
-        tenantName: 'Pedro Sandoval',
+        fixedRent: 5000000,
+        property: properties[3],
+        startDate: this.isoDaysAgo(500),
+        status: ContractStatus.Expired,
         tenantContact: '3158889900',
-        status: 'EXPIRED' as const,
+        tenantName: 'Pedro Sandoval',
       },
     ];
     await Promise.all(

@@ -1,8 +1,8 @@
 // --- External imports ---
-import { IsIn, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 
 // --- Internal imports ---
-import type { ContractStatus } from '../../domain/enums/contract-status.js';
+import { ContractStatus } from '../../domain/enums/contract-status.js';
 
 // --- Exported members ---
 export class CreateContractDto {
@@ -14,7 +14,7 @@ export class CreateContractDto {
 
   @IsString() @IsNotEmpty() startDate: string;
 
-  @IsIn(['ACTIVE', 'EXPIRED', 'TERMINATED']) status: ContractStatus;
+  @IsEnum(ContractStatus) status: ContractStatus;
 
   @IsString() @IsNotEmpty() tenantContact: string;
 

@@ -4,7 +4,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 // --- Internal imports ---
+import { PasswordHasher } from '../../common/utils/password-hasher.js';
 import { User } from '../../users/entities/user.entity.js';
+import { UserRole } from '../../domain/enums/user-role.js';
 
 // --- Exported members ---
 @Injectable()
@@ -21,24 +23,24 @@ export class UserSeeder {
     if (await this.usersRepository.count()) return this.usersRepository.find();
     const admin = await this.usersRepository.save(
       this.usersRepository.create({
-        fullName: 'Admin KeyRing',
-        email: 'admin@keyring.co',
-        password: 'admin123',
-        phone: '3001112233',
         city: 'Medellín',
+        email: 'admin@keyring.co',
+        fullName: 'Admin KeyRing',
         memberSince: this.isoDaysAgo(400),
-        role: 'admin',
+        password: await PasswordHasher.hash('admin123'),
+        phone: '3001112233',
+        role: UserRole.Admin,
       }),
     );
     const user = await this.usersRepository.save(
       this.usersRepository.create({
-        fullName: 'Demo User',
-        email: 'user@keyring.co',
-        password: 'user123',
-        phone: '3004445566',
         city: 'Bogotá',
+        email: 'user@keyring.co',
+        fullName: 'Demo User',
         memberSince: this.isoDaysAgo(200),
-        role: 'user',
+        password: await PasswordHasher.hash('user123'),
+        phone: '3004445566',
+        role: UserRole.User,
       }),
     );
 

@@ -1,2 +1,6 @@
 // --- Types ---
-export type PropertyType = 'HOUSE' | 'APARTMENT' | 'FARM';
+export enum PropertyType {
+  Apartment = 'APARTMENT',
+  Farm = 'FARM',
+  House = 'HOUSE',
+}

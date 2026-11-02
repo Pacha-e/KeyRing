@@ -31,3 +31,12 @@ Migrations also run at startup. Back up existing databases before schema changes
 | `POST` | `/api/users` | Create a new user |
 | `PATCH` | `/api/users/:id` | Update a user |
 | `DELETE` | `/api/users/:id` | Delete a user |
+
+## Demo users
+
+| Email | Password |
+|---|---|
+| `admin@keyring.co` | `admin123` |
+| `user@keyring.co` | `user123` |
+
+The password migration is irreversible. Restore a database backup to recover its previous values.

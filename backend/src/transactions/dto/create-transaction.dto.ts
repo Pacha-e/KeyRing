@@ -1,9 +1,9 @@
 // --- External imports ---
-import { IsIn, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 
 // --- Internal imports ---
-import type { TransactionSource } from '../../domain/enums/transaction-source.js';
-import type { TransactionType } from '../../domain/enums/transaction-type.js';
+import { TransactionSource } from '../../domain/enums/transaction-source.js';
+import { TransactionType } from '../../domain/enums/transaction-type.js';
 
 // --- Exported members ---
 export class CreateTransactionDto {
@@ -15,7 +15,7 @@ export class CreateTransactionDto {
 
   @IsString() @IsNotEmpty() propertyId: string;
 
-  @IsIn(['AIRBNB', 'CONTRACT', 'OTHER']) source: TransactionSource;
+  @IsEnum(TransactionSource) source: TransactionSource;
 
-  @IsIn(['INCOME', 'EXPENSE']) type: TransactionType;
+  @IsEnum(TransactionType) type: TransactionType;
 }

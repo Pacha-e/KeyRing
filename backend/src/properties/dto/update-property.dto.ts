@@ -1,10 +1,10 @@
 // --- External imports ---
-import { IsIn, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 // --- Internal imports ---
-import type { PropertyStatus } from '../../domain/enums/property-status.js';
-import type { PropertyType } from '../../domain/enums/property-type.js';
-import type { RentalMode } from '../../domain/enums/rental-mode.js';
+import { PropertyStatus } from '../../domain/enums/property-status.js';
+import { PropertyType } from '../../domain/enums/property-type.js';
+import { RentalMode } from '../../domain/enums/rental-mode.js';
 
 // --- Exported members ---
 export class UpdatePropertyDto {
@@ -24,11 +24,11 @@ export class UpdatePropertyDto {
 
   @IsOptional() @IsInt() @Min(0) otherFixedCosts?: number;
 
-  @IsOptional() @IsIn(['AIRBNB', 'FIXED_CONTRACT', 'BOTH']) rentalMode?: RentalMode;
+  @IsOptional() @IsEnum(RentalMode) rentalMode?: RentalMode;
 
-  @IsOptional() @IsIn(['ACTIVE', 'VACANT']) status?: PropertyStatus;
+  @IsOptional() @IsEnum(PropertyStatus) status?: PropertyStatus;
 
-  @IsOptional() @IsIn(['HOUSE', 'APARTMENT', 'FARM']) type?: PropertyType;
+  @IsOptional() @IsEnum(PropertyType) type?: PropertyType;
 
   @IsOptional() @IsString() userId?: string | null;
 }

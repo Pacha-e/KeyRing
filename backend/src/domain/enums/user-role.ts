@@ -1,2 +1,5 @@
 // --- Types ---
-export type UserRole = 'admin' | 'user';
+export enum UserRole {
+  Admin = 'admin',
+  User = 'user',
+}

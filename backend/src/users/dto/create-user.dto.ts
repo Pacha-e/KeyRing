@@ -1,8 +1,8 @@
 // --- External imports ---
-import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 // --- Internal imports ---
-import type { UserRole } from '../../domain/enums/user-role.js';
+import { UserRole } from '../../domain/enums/user-role.js';
 
 // --- Exported members ---
 export class CreateUserDto {
@@ -27,6 +27,6 @@ export class CreateUserDto {
   @IsString()
   phone: string;
 
-  @IsIn(['admin', 'user'])
+  @IsEnum(UserRole)
   role: UserRole;
 }

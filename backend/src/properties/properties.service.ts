@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 // --- Internal imports ---
+import { UserRole } from '../domain/enums/user-role.js';
 import type { CreatePropertyDto } from './dto/create-property.dto.js';
 import type { UpdatePropertyDto } from './dto/update-property.dto.js';
 import { Property } from './entities/property.entity.js';
@@ -43,7 +44,7 @@ export class PropertiesService {
   }
 
   async findVisible(role: string, userId: string): Promise<Property[]> {
-    if (role === 'admin') return this.findAll();
+    if (role === UserRole.Admin) return this.findAll();
     return this.propertiesRepository.find({ where: { userId } });
   }
 

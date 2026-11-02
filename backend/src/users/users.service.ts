@@ -4,7 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 // --- Internal imports ---
-import type { UserRole } from '../domain/enums/user-role.js';
+import { PasswordHasher } from '../common/utils/password-hasher.js';
+import { UserRole } from '../domain/enums/user-role.js';
 import type { CreateUserDto } from './dto/create-user.dto.js';
 import type { LoginDto } from './dto/login.dto.js';
 import type { UpdateUserDto } from './dto/update-user.dto.js';
@@ -25,20 +26,21 @@ export class UsersService {
     if (id === currentUserId) return 'You cannot delete your own user.';
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) return 'The user no longer exists.';
-    if (user.role === 'admin' && (await this.countAdmins()) <= 1) {
+    if (user.role === UserRole.Admin && (await this.countAdmins()) <= 1) {
       return 'You cannot delete the last system administrator.';
     }
     return null;
   }
 
   countAdmins(): Promise<number> {
-    return this.usersRepository.count({ where: { role: 'admin' as UserRole } });
+    return this.usersRepository.count({ where: { role: UserRole.Admin } });
   }
 
   async create(createUserDto: CreateUserDto): Promise<SafeUser> {
     const user = this.usersRepository.create({
       ...createUserDto,
       memberSince: createUserDto.memberSince ?? new Date().toISOString().slice(0, 10),
+      password: await PasswordHasher.hash(createUserDto.password),
     });
     return this.stripPassword(await this.usersRepository.save(user));
   }
@@ -60,7 +62,7 @@ export class UsersService {
 
   async login(loginDto: LoginDto): Promise<SafeUser> {
     const user = await this.usersRepository.findOneBy({ email: loginDto.email });
-    if (!user || user.password !== loginDto.password) {
+    if (!user || !(await PasswordHasher.matches(loginDto.password, user.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
     return this.stripPassword(user);
@@ -83,7 +85,12 @@ export class UsersService {
   async update(id: string, changes: UpdateUserDto): Promise<SafeUser> {
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) throw new NotFoundException(`User ${id} not found`);
-    this.usersRepository.merge(user, changes);
+    this.usersRepository.merge(user, {
+      ...changes,
+      ...(changes.password !== undefined
+        ? { password: await PasswordHasher.hash(changes.password) }
+        : {}),
+    });
     return this.stripPassword(await this.usersRepository.save(user));
   }
 }

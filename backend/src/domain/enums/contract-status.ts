@@ -1,2 +1,6 @@
 // --- Types ---
-export type ContractStatus = 'ACTIVE' | 'EXPIRED' | 'TERMINATED';
+export enum ContractStatus {
+  Active = 'ACTIVE',
+  Expired = 'EXPIRED',
+  Terminated = 'TERMINATED',
+}

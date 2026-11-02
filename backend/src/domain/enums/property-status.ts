@@ -1,2 +1,5 @@
 // --- Types ---
-export type PropertyStatus = 'ACTIVE' | 'VACANT';
+export enum PropertyStatus {
+  Active = 'ACTIVE',
+  Vacant = 'VACANT',
+}

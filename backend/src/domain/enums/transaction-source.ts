@@ -1,2 +1,6 @@
 // --- Types ---
-export type TransactionSource = 'AIRBNB' | 'CONTRACT' | 'OTHER';
+export enum TransactionSource {
+  Airbnb = 'AIRBNB',
+  Contract = 'CONTRACT',
+  Other = 'OTHER',
+}

@@ -1,2 +1,6 @@
 // --- Types ---
-export type RentalMode = 'AIRBNB' | 'FIXED_CONTRACT' | 'BOTH';
+export enum RentalMode {
+  Airbnb = 'AIRBNB',
+  Both = 'BOTH',
+  FixedContract = 'FIXED_CONTRACT',
+}
