@@ -1,98 +1,116 @@
 <script setup lang="ts">
-// Transacciones: filtros + tabla + gráfico + alta, edición y eliminación.
-// Junto con Propiedades, es una de las páginas que combinan selector, tabla y Chart.js.
-import { computed, onMounted, reactive, ref } from 'vue'
-import DataTable, { type TableColumn } from '../components/DataTable.vue'
-import FilterSelect, { type SelectOption } from '../components/FilterSelect.vue'
-import SelectField from '../components/SelectField.vue'
-import FilterBar from '../components/FilterBar.vue'
-import PageHeader from '../components/PageHeader.vue'
-import StatusBadge from '../components/StatusBadge.vue'
-import ChartCard from '../components/ChartCard.vue'
-import * as transactionService from '../services/transaction.service'
-import * as propertyService from '../services/property.service'
-import { listMonthsPresent, sumAmountsByMonth, summarizeTransactions } from '../utils/finance'
-import { formatCOP, formatNumber } from '../utils/format'
-import { CHART_EXPENSE, CHART_INCOME } from '../config/chart.config'
-import { TRANSACTION_SOURCE_TONE, TRANSACTION_TYPE_TONE } from '../utils/badges'
-import {
-  TransactionType,
-  TransactionTypeLabel,
-  TransactionSource,
-  TransactionSourceLabel,
-} from '../interfaces/enums'
-import { useAuthStore } from '../stores/auth'
-import type { TransactionInterface } from '../interfaces/TransactionInterface'
-import type { PropertyInterface } from '../interfaces/PropertyInterface'
-import type { CreateTransactionDTO } from '../dtos/CreateTransactionDTO'
-import type { ChartData } from 'chart.js'
+// --- External imports ---
+import type { ChartData } from 'chart.js';
+import { computed, onMounted, reactive, ref } from 'vue';
 
-const authStore = useAuthStore()
+// --- Internal imports ---
+import ChartCard from '../components/ChartCard.vue';
+import FilterBar from '../components/FilterBar.vue';
+import FilterSelect from '../components/FilterSelect.vue';
+import PageHeader from '../components/PageHeader.vue';
+import SelectField from '../components/SelectField.vue';
+import StatusBadge from '../components/StatusBadge.vue';
+import { CHART_EXPENSE, CHART_INCOME } from '../config/chart.config';
+import type { CreateTransactionDto as CreateTransactionDTO } from '../dtos/CreateTransactionDto';
+import { TRANSACTION_SOURCE_TONE, TRANSACTION_TYPE_TONE } from '../enums/badge-tones';
+import { TransactionSource, TransactionSourceLabel } from '../enums/TransactionSource';
+import { TransactionType, TransactionTypeLabel } from '../enums/TransactionType';
+import type { PropertyInterface } from '../interfaces/PropertyInterface';
+import type { SelectOption } from '../interfaces/SelectOption';
+import type { TransactionInterface } from '../interfaces/TransactionInterface';
+import { PropertyService as propertyService } from '../services/property.service';
+import { TransactionService as transactionService } from '../services/transaction.service';
+import { useAuthStore } from '../stores/auth';
+import { FinanceCalculator } from '../utils/finance';
+import { CurrencyFormatter } from '../utils/format';
+import { HttpClient } from '../utils/HttpClient';
 
-const visibleTransactions = ref<TransactionInterface[]>([])
-const visibleProperties = ref<PropertyInterface[]>([])
-
-/** Recarga las transacciones y propiedades que la sesión actual puede ver. */
-async function reloadFromApi(): Promise<void> {
-  visibleTransactions.value = await transactionService.listForUser(authStore.user)
-  visibleProperties.value = await propertyService.listForUser(authStore.user)
+// --- Types ---
+interface TransactionTableRow extends TransactionInterface {
+  formattedAmount: string;
+  propertyName: string;
+  sourceLabel: string;
+  typeLabel: string;
 }
 
-// La API responde de forma asíncrona: se carga al montar la vista.
-onMounted(() => void reloadFromApi())
+// --- Stores ---
+const authStore = useAuthStore();
 
-// --- Filtros ---
-const selectedType = ref('')
-const selectedSource = ref('')
-const selectedMonth = ref('')
+// --- State ---
+const editingTransactionId = ref<string | null>(null);
+const formError = ref('');
+const isFormVisible = ref(false);
+const selectedMonth = ref('');
+const selectedSource = ref('');
+const selectedType = ref('');
+const visibleProperties = ref<PropertyInterface[]>([]);
+// Order kept: transactionForm initializer reads visibleProperties.
+const transactionForm = reactive<CreateTransactionDTO>(buildEmptyTransaction());
+const visibleTransactions = ref<TransactionInterface[]>([]);
 
-// Se tipan con el enum del dominio y no con SelectOption a secas: así lo que
-// devuelve el selector sigue siendo un TransactionType y no una cadena suelta.
-const typeFilterOptions: SelectOption<TransactionType>[] = Object.values(TransactionType).map(
-  (type) => ({ value: type, label: TransactionTypeLabel[type] }),
-)
-const sourceFilterOptions: SelectOption<TransactionSource>[] = Object.values(TransactionSource).map(
-  (source) => ({ value: source, label: TransactionSourceLabel[source] }),
-)
-const monthFilterOptions = computed(() =>
-  listMonthsPresent(visibleTransactions.value).slice().reverse(),
-)
+// --- Computed ---
+const filteredBalance = computed(() =>
+  FinanceCalculator.summarizeTransactions(matchingTransactions.value),
+);
 
-/** Hay algún filtro puesto, y por tanto algo que limpiar. */
 const hasActiveFilters = computed(() =>
   Boolean(selectedType.value || selectedSource.value || selectedMonth.value),
-)
+);
 
-/** Devuelve los tres filtros a su estado inicial. */
-function clearFilters(): void {
-  selectedType.value = ''
-  selectedSource.value = ''
-  selectedMonth.value = ''
-}
+const incomeVsExpenseChart = computed<ChartData<'bar'>>(() => {
+  const months = FinanceCalculator.listMonthsPresent(matchingTransactions.value);
+  return {
+    labels: months,
+    datasets: [
+      {
+        label: 'Income',
+        backgroundColor: CHART_INCOME,
+        data: months.map((month) =>
+          FinanceCalculator.sumAmountsByMonth(
+            matchingTransactions.value,
+            TransactionType.INCOME,
+            month,
+          ),
+        ),
+      },
+      {
+        label: 'Expenses',
+        backgroundColor: CHART_EXPENSE,
+        data: months.map((month) =>
+          FinanceCalculator.sumAmountsByMonth(
+            matchingTransactions.value,
+            TransactionType.EXPENSE,
+            month,
+          ),
+        ),
+      },
+    ],
+  };
+});
 
 const matchingTransactions = computed(() =>
   visibleTransactions.value.filter((transaction) => {
-    if (selectedType.value && transaction.type !== selectedType.value) return false
-    if (selectedSource.value && transaction.source !== selectedSource.value) return false
-    if (selectedMonth.value && !transaction.date.startsWith(selectedMonth.value)) return false
-    return true
+    if (selectedType.value && transaction.type !== selectedType.value) return false;
+    if (selectedSource.value && transaction.source !== selectedSource.value) return false;
+    if (selectedMonth.value && !transaction.date.startsWith(selectedMonth.value)) return false;
+    return true;
   }),
-)
+);
 
-// --- Tabla ---
-const tableColumns: TableColumn[] = [
-  { key: 'date', label: 'Fecha' },
-  { key: 'propertyName', label: 'Propiedad' },
-  { key: 'typeLabel', label: 'Tipo' },
-  { key: 'sourceLabel', label: 'Fuente' },
-  { key: 'formattedAmount', label: 'Monto (COP)', align: 'right' },
-  { key: 'description', label: 'Descripción' },
-]
+const monthFilterOptions = computed(() =>
+  FinanceCalculator.listMonthsPresent(visibleTransactions.value).slice().reverse(),
+);
 
-/** Balance de lo que se está viendo, para que el subtítulo hable de lo filtrado. */
-const filteredBalance = computed(() => summarizeTransactions(matchingTransactions.value))
+const propertySelectOptions = computed<SelectOption[]>(() =>
+  visibleProperties.value.map((property) => ({ value: property.id, label: property.name })),
+);
 
-const tableRows = computed(() =>
+const sourceFilterOptions: SelectOption[] = Object.values(TransactionSource).map((source) => ({
+  value: source,
+  label: TransactionSourceLabel[source],
+}));
+
+const tableRows = computed<TransactionTableRow[]>(() =>
   matchingTransactions.value
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -102,44 +120,17 @@ const tableRows = computed(() =>
         visibleProperties.value.find((p) => p.id === transaction.propertyId)?.name ?? '—',
       typeLabel: TransactionTypeLabel[transaction.type] ?? transaction.type,
       sourceLabel: TransactionSourceLabel[transaction.source] ?? transaction.source,
-      formattedAmount: formatNumber(transaction.amount),
+      formattedAmount: CurrencyFormatter.formatNumber(transaction.amount),
     })),
-)
+);
 
-// --- Gráfico: ingresos frente a gastos, mes a mes, sobre lo filtrado ---
-const incomeVsExpenseChart = computed<ChartData<'bar'>>(() => {
-  const months = listMonthsPresent(matchingTransactions.value)
-  return {
-    labels: months,
-    datasets: [
-      {
-        label: 'Ingresos',
-        backgroundColor: CHART_INCOME,
-        data: months.map((month) =>
-          sumAmountsByMonth(matchingTransactions.value, TransactionType.INCOME, month),
-        ),
-      },
-      {
-        label: 'Gastos',
-        backgroundColor: CHART_EXPENSE,
-        data: months.map((month) =>
-          sumAmountsByMonth(matchingTransactions.value, TransactionType.EXPENSE, month),
-        ),
-      },
-    ],
-  }
-})
+const typeFilterOptions: SelectOption[] = Object.values(TransactionType).map((type) => ({
+  value: type,
+  label: TransactionTypeLabel[type],
+}));
 
-// --- Formulario de alta y edición (se muestra dentro de la misma página) ---
-const isFormVisible = ref(false)
-const editingTransactionId = ref<string | null>(null)
-const formError = ref('')
-
-const propertySelectOptions = computed<SelectOption<string>[]>(() =>
-  visibleProperties.value.map((property) => ({ value: property.id, label: property.name })),
-)
-
-/** Transacción en blanco, con la primera propiedad disponible preseleccionada. */
+// --- Methods ---
+/** Empty transaction with the first available property preselected. */
 function buildEmptyTransaction(): CreateTransactionDTO {
   return {
     propertyId: visibleProperties.value[0]?.id ?? '',
@@ -148,83 +139,95 @@ function buildEmptyTransaction(): CreateTransactionDTO {
     amount: 0,
     date: new Date().toISOString().slice(0, 10),
     description: '',
-  }
+  };
 }
 
-const transactionForm = reactive<CreateTransactionDTO>(buildEmptyTransaction())
-
-/** Abre el formulario vacío para registrar una transacción nueva. */
-function startCreating(): void {
-  editingTransactionId.value = null
-  formError.value = ''
-  Object.assign(transactionForm, buildEmptyTransaction())
-  isFormVisible.value = true
-}
-
-/**
- * Abre el formulario cargado con una transacción existente.
- * @param transactionId identificador de la transacción a editar
- */
-function startEditing(transactionId: string): void {
-  const existing = visibleTransactions.value.find((t) => t.id === transactionId)
-  if (!existing) return
-  const { id: _id, ...editableFields } = existing
-  editingTransactionId.value = existing.id
-  formError.value = ''
-  Object.assign(transactionForm, editableFields)
-  isFormVisible.value = true
-}
-
-/** Cierra el formulario descartando los cambios. */
+/** Closes the form discarding changes. */
 function cancelEditing(): void {
-  isFormVisible.value = false
-  editingTransactionId.value = null
-  formError.value = ''
+  isFormVisible.value = false;
+  editingTransactionId.value = null;
+  formError.value = '';
 }
 
-/**
- * Valida las reglas de negocio de la transacción.
- * @returns mensaje de error en español, o null si es válida
- */
-function findValidationError(): string | null {
-  if (!transactionForm.propertyId) return 'Selecciona la propiedad del movimiento.'
-  if (transactionForm.amount <= 0) return 'El monto debe ser mayor que cero.'
-  if (!transactionForm.date) return 'Indica la fecha del movimiento.'
-  if (!transactionForm.description.trim()) return 'Describe brevemente el movimiento.'
-  return null
+/** Resets the filters to their initial state. */
+function clearFilters(): void {
+  selectedType.value = '';
+  selectedSource.value = '';
+  selectedMonth.value = '';
 }
 
-/** Valida y guarda la transacción, luego recarga la tabla y el gráfico. */
-async function saveTransaction(): Promise<void> {
-  const validationError = findValidationError()
-  if (validationError) {
-    formError.value = validationError
-    return
-  }
-  if (editingTransactionId.value) {
-    await transactionService.update(editingTransactionId.value, { ...transactionForm })
-  } else {
-    await transactionService.create({ ...transactionForm })
-  }
-  await reloadFromApi()
-  cancelEditing()
-}
-
-/**
- * Elimina una transacción tras confirmación del usuario.
- * @param transactionId identificador de la transacción
- */
+/** Deletes a transaction after user confirmation. */
 function deleteTransaction(transactionId: string): void {
-  if (!window.confirm('¿Eliminar esta transacción? Esta acción no se puede deshacer.')) return
-  void transactionService.remove(transactionId).then(reloadFromApi)
+  if (!window.confirm('Delete this transaction? This action cannot be undone.')) return;
+  void transactionService.remove(transactionId).then(reloadFromApi);
 }
+
+/** Returns the first validation error, or null if the form is valid. */
+function findValidationError(): string | null {
+  if (!transactionForm.propertyId) return 'Select the transaction property.';
+  if (transactionForm.amount <= 0) return 'Amount must be greater than zero.';
+  if (!transactionForm.date) return 'Enter the transaction date.';
+  if (!transactionForm.description.trim()) return 'Briefly describe the transaction.';
+  return null;
+}
+
+/** Reloads transactions and properties visible to the current session. */
+async function reloadFromApi(): Promise<void> {
+  visibleTransactions.value = await transactionService.listForUser(authStore.user);
+  visibleProperties.value = await propertyService.listForUser(authStore.user);
+}
+
+/** Validates and saves the transaction, then reloads the table and chart. */
+async function saveTransaction(): Promise<void> {
+  const validationError = findValidationError();
+  if (validationError) {
+    formError.value = validationError;
+    return;
+  }
+  try {
+    if (editingTransactionId.value) {
+      await transactionService.update(editingTransactionId.value, { ...transactionForm });
+    } else {
+      await transactionService.create({ ...transactionForm });
+    }
+  } catch (error) {
+    formError.value = HttpClient.apiErrorMessage(error);
+    return;
+  }
+  await reloadFromApi();
+  cancelEditing();
+}
+
+/** Opens the empty form to register a new transaction. */
+function startCreating(): void {
+  editingTransactionId.value = null;
+  formError.value = '';
+  Object.assign(transactionForm, buildEmptyTransaction());
+  isFormVisible.value = true;
+}
+
+/** Opens the form loaded with an existing transaction. */
+function startEditing(transactionId: string): void {
+  const existing = visibleTransactions.value.find(
+    (transaction) => transaction.id === transactionId,
+  );
+  if (!existing) return;
+  const { id: _id, ...editableFields } = existing;
+  editingTransactionId.value = existing.id;
+  formError.value = '';
+  Object.assign(transactionForm, editableFields);
+  isFormVisible.value = true;
+}
+
+// --- Lifecycle ---
+onMounted(() => void reloadFromApi());
 </script>
 
 <template>
   <section>
     <PageHeader
-      title="Transacciones"
-      :subtitle="`${matchingTransactions.length} movimiento(s) · balance ${formatCOP(filteredBalance.net)}`"
+      title="Transactions"
+      :subtitle="`${matchingTransactions.length} movement(s) · balance ${CurrencyFormatter.formatCOP(filteredBalance.net)}`"
     >
       <template #actions>
         <button
@@ -232,7 +235,7 @@ function deleteTransaction(transactionId: string): void {
           type="button"
           @click="startCreating"
         >
-          + Nueva transacción
+          + New transaction
         </button>
       </template>
     </PageHeader>
@@ -243,25 +246,25 @@ function deleteTransaction(transactionId: string): void {
       @submit.prevent="saveTransaction"
     >
       <h2 class="font-brand col-span-full m-0 text-lg font-semibold text-ink">
-        {{ editingTransactionId ? 'Editar transacción' : 'Nueva transacción' }}
+        {{ editingTransactionId ? 'Edit transaction' : 'New transaction' }}
       </h2>
       <SelectField
         v-model="transactionForm.propertyId"
-        label="Propiedad"
+        label="Property"
         :options="propertySelectOptions"
       />
-      <SelectField v-model="transactionForm.type" label="Tipo" :options="typeFilterOptions" />
-      <SelectField v-model="transactionForm.source" label="Fuente" :options="sourceFilterOptions" />
+      <SelectField v-model="transactionForm.type" label="Type" :options="typeFilterOptions" />
+      <SelectField v-model="transactionForm.source" label="Source" :options="sourceFilterOptions" />
       <label class="flex flex-col gap-1.5">
-        <span class="text-sm font-medium text-ink">Monto (COP)</span>
+        <span class="text-sm font-medium text-ink">Amount (COP)</span>
         <input v-model.number="transactionForm.amount" type="number" min="0" class="field-input" />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-sm font-medium text-ink">Fecha</span>
+        <span class="text-sm font-medium text-ink">Date</span>
         <input v-model="transactionForm.date" type="date" class="field-input" />
       </label>
       <label class="flex flex-col gap-1.5">
-        <span class="text-sm font-medium text-ink">Descripción</span>
+        <span class="text-sm font-medium text-ink">Description</span>
         <input v-model="transactionForm.description" class="field-input" />
       </label>
 
@@ -278,80 +281,136 @@ function deleteTransaction(transactionId: string): void {
           class="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-dark"
           type="submit"
         >
-          Guardar
+          Save
         </button>
         <button
           class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
           type="button"
           @click="cancelEditing"
         >
-          Cancelar
+          Cancel
         </button>
       </div>
     </form>
 
     <FilterBar>
-      <FilterSelect v-model="selectedType" label="Tipo" :options="typeFilterOptions" />
-      <FilterSelect v-model="selectedSource" label="Fuente" :options="sourceFilterOptions" />
-      <FilterSelect v-model="selectedMonth" label="Mes" :options="monthFilterOptions" />
+      <FilterSelect v-model="selectedType" label="Type" :options="typeFilterOptions" />
+      <FilterSelect v-model="selectedSource" label="Source" :options="sourceFilterOptions" />
+      <FilterSelect v-model="selectedMonth" label="Month" :options="monthFilterOptions" />
       <button
         v-if="hasActiveFilters"
         class="py-2 text-sm text-primary underline-offset-4 hover:underline"
         type="button"
         @click="clearFilters"
       >
-        Limpiar filtros
+        Clear filters
       </button>
     </FilterBar>
 
-    <ChartCard title="Ingresos vs gastos por mes" type="bar" :chart-data="incomeVsExpenseChart" />
+    <ChartCard title="Income vs expenses by month" type="bar" :chart-data="incomeVsExpenseChart" />
 
-    <div class="mt-6">
-      <DataTable
-        :columns="tableColumns"
-        :rows="tableRows"
-        :empty-message="
-          hasActiveFilters
-            ? 'Ningún movimiento coincide con el filtro'
-            : 'Todavía no hay movimientos'
-        "
-        :empty-hint="
-          hasActiveFilters
-            ? 'Prueba a quitar alguno de los filtros.'
-            : 'Registra el primero con el botón “Nueva transacción”.'
-        "
-      >
-        <template #cell-typeLabel="{ value, row }">
-          <StatusBadge
-            :label="String(value)"
-            :tone="TRANSACTION_TYPE_TONE[row.type as TransactionType]"
-          />
-        </template>
-        <template #cell-sourceLabel="{ value, row }">
-          <StatusBadge
-            :label="String(value)"
-            :tone="TRANSACTION_SOURCE_TONE[row.source as TransactionSource]"
-          />
-        </template>
-        <template #actions="{ row }">
-          <div class="flex gap-3">
-            <button
-              class="text-primary hover:underline"
-              type="button"
-              @click="startEditing(String(row.id))"
+    <div class="mt-6 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr class="bg-sidebar/[0.04]">
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
             >
-              Editar
-            </button>
-            <button
-              class="text-red-600 hover:underline"
-              type="button"
-              @click="deleteTransaction(String(row.id))"
+              Date
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
             >
-              Eliminar
-            </button>
-          </div>
-        </template>
-      </DataTable>
+              Property
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Type
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Source
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-right text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Amount (COP)
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Description
+            </th>
+            <th
+              class="border-b border-slate-200 px-4 py-3 text-left text-xs font-semibold tracking-wide text-slate-500 uppercase"
+            >
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(row, index) in tableRows"
+            :key="String(row.id ?? index)"
+            class="transition-colors odd:bg-white even:bg-slate-50/60 hover:bg-primary/[0.06]"
+          >
+            <td class="border-b border-slate-100 px-4 py-3">{{ row.date }}</td>
+            <td class="border-b border-slate-100 px-4 py-3">{{ row.propertyName }}</td>
+            <td class="border-b border-slate-100 px-4 py-3">
+              <StatusBadge
+                :label="row.typeLabel"
+                :tone="TRANSACTION_TYPE_TONE[row.type as TransactionType]"
+              />
+            </td>
+            <td class="border-b border-slate-100 px-4 py-3">
+              <StatusBadge
+                :label="row.sourceLabel"
+                :tone="TRANSACTION_SOURCE_TONE[row.source as TransactionSource]"
+              />
+            </td>
+            <td
+              class="border-b border-slate-100 px-4 py-3 text-right tabular-nums whitespace-nowrap"
+            >
+              {{ row.formattedAmount }}
+            </td>
+            <td class="border-b border-slate-100 px-4 py-3">{{ row.description }}</td>
+            <td class="border-b border-slate-100 px-4 py-3 whitespace-nowrap">
+              <div class="flex gap-3">
+                <button
+                  class="text-primary hover:underline"
+                  type="button"
+                  @click="startEditing(String(row.id))"
+                >
+                  Edit
+                </button>
+                <button
+                  class="text-red-600 hover:underline"
+                  type="button"
+                  @click="deleteTransaction(String(row.id))"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="tableRows.length === 0">
+            <td class="px-4 py-12 text-center" colspan="7">
+              <p class="m-0 text-sm font-medium text-slate-500">
+                {{ hasActiveFilters ? 'No movements match the filter' : 'No movements yet' }}
+              </p>
+              <p class="mt-1 mb-0 text-sm text-slate-400">
+                {{
+                  hasActiveFilters
+                    ? 'Try removing one of the filters.'
+                    : 'Register the first one with the “New transaction” button.'
+                }}
+              </p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </section>
 </template>

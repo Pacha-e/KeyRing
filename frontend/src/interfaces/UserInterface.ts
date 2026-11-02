@@ -1,12 +1,14 @@
-import type { UserRole } from './enums'
+// --- Internal imports ---
+import type { UserRole } from '../enums/UserRole';
 
+// --- Types ---
 export interface UserInterface {
-  id: string
-  fullName: string
-  email: string
-  password: string
-  phone: string
-  city: string
-  memberSince: string
-  role: UserRole
+  city: string;
+  email: string;
+  fullName: string;
+  id: string;
+  memberSince: string;
+  password: string;
+  phone: string;
+  role: UserRole;
 }

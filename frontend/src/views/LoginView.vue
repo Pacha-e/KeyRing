@@ -1,61 +1,58 @@
 <script setup lang="ts">
-// Login: formulario funcional contra auth.service vía el store de Pinia.
-// La pantalla se divide en dos: a la izquierda la marca, repitiendo el lenguaje
-// de la portada para que entrar no parezca salir del producto; a la derecha el
-// formulario.
-import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import AppIcon, { type IconName } from '../components/AppIcon.vue'
-import { APP_NAME } from '../config/app.config'
-import { useAuthStore } from '../stores/auth'
+// --- External imports ---
+import { ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
-const email = ref('')
-const password = ref('')
-const loginError = ref('')
+// --- Internal imports ---
+import AppIcon, { type IconName } from '../components/AppIcon.vue';
+import { APP_NAME } from '../config/app.config';
+import { useAuthStore } from '../stores/auth';
 
-const authStore = useAuthStore()
-const router = useRouter()
-const route = useRoute()
-
-async function submitLogin(): Promise<void> {
-  loginError.value = ''
-  const ok = await authStore.login(email.value.trim(), password.value)
-  if (!ok) {
-    loginError.value = 'Credenciales incorrectas. Verifica correo y contraseña.'
-    return
-  }
-  const redirect = route.query.redirect
-  router.push(typeof redirect === 'string' ? redirect : { name: 'dashboard' })
-}
-
-/** Lo que el usuario encontrará al entrar, resumido en el panel de marca. */
-const highlights: { icon: IconName; label: string }[] = [
-  { icon: 'home', label: 'El estado de cada inmueble' },
-  { icon: 'contract', label: 'Contratos y sus vencimientos' },
-  { icon: 'balance', label: 'Ingresos, gastos y utilidad real' },
-]
-
-/** Cuenta de demostración de las que trae la base sembrada. */
+// --- Types ---
 interface DemoAccount {
-  label: string
-  email: string
-  password: string
+  label: string;
+  email: string;
+  password: string;
 }
 
-const demoAccounts: DemoAccount[] = [
-  { label: 'Administrador', email: 'admin@keyring.co', password: 'admin123' },
-  { label: 'Propietario', email: 'user@keyring.co', password: 'user123' },
-]
+// --- Stores ---
+const authStore = useAuthStore();
+const route = useRoute();
+const router = useRouter();
 
-/**
- * Rellena el formulario con una cuenta de demostración.
- * Están para que quien evalúe el proyecto entre sin teclear credenciales.
- * @param account cuenta con la que rellenar el formulario
- */
-function useDemoAccount(account: DemoAccount): void {
-  email.value = account.email
-  password.value = account.password
-  loginError.value = ''
+// --- State ---
+const demoAccounts: DemoAccount[] = [
+  { label: 'Administrator', email: 'admin@keyring.co', password: 'admin123' },
+  { label: 'Owner', email: 'user@keyring.co', password: 'user123' },
+];
+const email = ref('');
+const highlights: { icon: IconName; label: string }[] = [
+  { icon: 'home', label: 'Every property status' },
+  { icon: 'contract', label: 'Contracts and their expiration dates' },
+  { icon: 'balance', label: 'Income, expenses and real profit' },
+];
+const loginError = ref('');
+const password = ref('');
+
+// --- Methods ---
+/** Fills the form with a demo account. */
+function fillDemoAccount(account: DemoAccount): void {
+  email.value = account.email;
+  password.value = account.password;
+  loginError.value = '';
+}
+
+/** Submits credentials through the auth store. */
+async function submitLogin(): Promise<void> {
+  loginError.value = '';
+  try {
+    await authStore.login(email.value.trim(), password.value);
+    const redirect = route.query.redirect;
+    await router.push(typeof redirect === 'string' ? redirect : { name: 'dashboard' });
+  } catch (error) {
+    loginError.value =
+      error instanceof Error ? error.message : 'Could not sign in. Please try again.';
+  }
 }
 </script>
 
@@ -63,8 +60,7 @@ function useDemoAccount(account: DemoAccount): void {
   <section
     class="grid w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:grid-cols-2"
   >
-    <!-- Panel de marca. Se oculta en móvil, donde el espacio se necesita
-         entero para el formulario. -->
+    <!-- Brand panel: hidden on mobile where the form needs the full space. -->
     <aside class="hidden flex-col justify-between gap-10 bg-sidebar p-10 text-white md:flex">
       <router-link
         class="font-brand inline-flex items-center gap-2 text-xl font-semibold text-white no-underline"
@@ -84,9 +80,9 @@ function useDemoAccount(account: DemoAccount): void {
       </router-link>
 
       <div>
-        <p class="font-brand m-0 text-3xl leading-tight font-semibold">Propiedades en equilibrio</p>
+        <p class="font-brand m-0 text-3xl leading-tight font-semibold">Properties in balance</p>
         <p class="mt-3 mb-0 text-sm leading-relaxed text-white/70">
-          Todo tu portafolio de arriendos en un mismo tablero.
+          Your whole rental portfolio on a single board.
         </p>
       </div>
 
@@ -99,7 +95,7 @@ function useDemoAccount(account: DemoAccount): void {
     </aside>
 
     <div class="p-8 sm:p-10">
-      <!-- En móvil el panel de marca no se ve, así que la marca vuelve aquí -->
+      <!-- On mobile the brand panel is hidden, so the brand appears here. -->
       <router-link
         class="font-brand mb-6 inline-flex items-center gap-2 text-lg font-semibold text-ink no-underline md:hidden"
         :to="{ name: 'home' }"
@@ -117,12 +113,12 @@ function useDemoAccount(account: DemoAccount): void {
         {{ APP_NAME }}
       </router-link>
 
-      <h1 class="font-brand m-0 text-2xl font-semibold text-ink">Entrar</h1>
-      <p class="mt-1 mb-6 text-sm text-slate-500">Administra tus propiedades y tus contratos.</p>
+      <h1 class="font-brand m-0 text-2xl font-semibold text-ink">Sign in</h1>
+      <p class="mt-1 mb-6 text-sm text-slate-500">Manage your properties and contracts.</p>
 
       <form @submit.prevent="submitLogin">
         <label class="mb-4 flex flex-col gap-1.5">
-          <span class="text-sm font-medium">Correo</span>
+          <span class="text-sm font-medium">Email</span>
           <input
             v-model="email"
             type="email"
@@ -132,7 +128,7 @@ function useDemoAccount(account: DemoAccount): void {
           />
         </label>
         <label class="mb-4 flex flex-col gap-1.5">
-          <span class="text-sm font-medium">Contraseña</span>
+          <span class="text-sm font-medium">Password</span>
           <input
             v-model="password"
             type="password"
@@ -154,15 +150,14 @@ function useDemoAccount(account: DemoAccount): void {
           class="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-dark"
           type="submit"
         >
-          Entrar
+          Sign in
         </button>
       </form>
 
-      <!-- Las cuentas sembradas se ofrecen como botones: quien evalúa el
-           proyecto entra de un clic en vez de copiar credenciales a mano. -->
+      <!-- Demo accounts are offered as buttons so reviewers can enter with one click. -->
       <div class="mt-8 border-t border-slate-200 pt-5">
         <p class="mt-0 mb-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">
-          Cuentas de prueba
+          Demo accounts
         </p>
         <div class="flex flex-wrap gap-3">
           <button
@@ -170,7 +165,7 @@ function useDemoAccount(account: DemoAccount): void {
             :key="account.email"
             class="rounded-lg border border-slate-300 px-3 py-2 text-left text-xs text-slate-600 transition hover:border-primary hover:text-primary"
             type="button"
-            @click="useDemoAccount(account)"
+            @click="fillDemoAccount(account)"
           >
             <span class="block font-medium">{{ account.label }}</span>
             {{ account.email }}

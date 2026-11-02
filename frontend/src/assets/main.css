@@ -1,9 +1,9 @@
-/* KeyRing — entrada Tailwind v4 + tokens de marca (paleta tomada del mockup) */
+/* KeyRing — Tailwind v4 entry + brand tokens (palette from the mockup) */
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
-/* Tokens de marca disponibles como utilidades: bg-primary, text-primary, etc. */
+/* Brand tokens exposed as utilities: bg-primary, text-primary, etc. */
 @theme {
   --color-primary: #b3543a;
   --color-primary-dark: #973f28;
@@ -34,11 +34,10 @@ h3 {
   font-family: var(--font-serif);
 }
 
-/* Campo de formulario. Se define aquí porque el mismo conjunto de clases se
-   repetía en los cuatro formularios del proyecto: así el día que cambie el
-   estilo de un input, cambia en todos a la vez. Los colores van literales
-   —slate-300 y el terracota de la marca— para no depender de que Tailwind
-   exponga esas variables. */
+/* Form field. Defined here because the same set of classes was repeated across
+   the project's four forms: this way, when the input style changes, it changes
+   everywhere at once. Colors are literal — slate-300 and the brand terracotta —
+   to avoid depending on Tailwind exposing those variables. */
 .field-input {
   border: 1px solid #cbd5e1;
   border-radius: 0.5rem;
@@ -53,7 +52,7 @@ h3 {
   outline: 2px solid var(--color-primary);
 }
 
-/* Leaflet necesita altura explícita en el contenedor del mapa */
+/* Leaflet needs an explicit height on the map container */
 .map-container {
   height: 480px;
 }
