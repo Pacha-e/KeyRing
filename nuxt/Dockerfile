@@ -6,8 +6,8 @@
 FROM node:26-alpine AS build
 WORKDIR /app
 
-# Activate pnpm via corepack using the version declared in package.json
-RUN corepack enable && corepack prepare pnpm@11.10.0 --activate
+# Node 26 images no longer ship corepack: install the pnpm version pinned in package.json
+RUN npm install -g pnpm@11.10.0
 
 # Install dependencies first for layer caching; postinstall (nuxt prepare) needs the
 # full source, so scripts are skipped here and the build below prepares the app.
