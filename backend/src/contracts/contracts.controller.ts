@@ -1,5 +1,15 @@
 // --- External imports ---
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 
 // --- Internal imports ---
 import { ContractsService } from './contracts.service.js';
@@ -24,17 +34,20 @@ export class ContractsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<Contract> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Contract> {
     return this.contractsService.findOne(id);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.contractsService.remove(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() changes: UpdateContractDto): Promise<Contract> {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() changes: UpdateContractDto,
+  ): Promise<Contract> {
     return this.contractsService.update(id, changes);
   }
 }

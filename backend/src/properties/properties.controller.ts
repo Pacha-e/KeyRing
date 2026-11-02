@@ -1,5 +1,15 @@
 // --- External imports ---
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 
 // --- Internal imports ---
 import { CreatePropertyDto } from './dto/create-property.dto.js';
@@ -18,7 +28,7 @@ export class PropertiesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<Property> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Property> {
     return this.propertiesService.findOne(id);
   }
 
@@ -31,12 +41,15 @@ export class PropertiesController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.propertiesService.remove(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() changes: UpdatePropertyDto): Promise<Property> {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() changes: UpdatePropertyDto,
+  ): Promise<Property> {
     return this.propertiesService.update(id, changes);
   }
 }

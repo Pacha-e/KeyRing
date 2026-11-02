@@ -1,5 +1,15 @@
 // --- External imports ---
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 
 // --- Internal imports ---
 import { CreateTransactionDto } from './dto/create-transaction.dto.js';
@@ -24,17 +34,20 @@ export class TransactionsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<Transaction> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Transaction> {
     return this.transactionsService.findOne(id);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.transactionsService.remove(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() changes: UpdateTransactionDto): Promise<Transaction> {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() changes: UpdateTransactionDto,
+  ): Promise<Transaction> {
     return this.transactionsService.update(id, changes);
   }
 }

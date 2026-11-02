@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -41,7 +42,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<SafeUser> {
+  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<SafeUser> {
     return this.usersService.findOne(id);
   }
 
@@ -52,12 +53,15 @@ export class UsersController {
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.usersService.remove(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() changes: UpdateUserDto): Promise<SafeUser> {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() changes: UpdateUserDto,
+  ): Promise<SafeUser> {
     return this.usersService.update(id, changes);
   }
 }
