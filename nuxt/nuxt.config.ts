@@ -6,9 +6,12 @@ export default defineNuxtConfig({
   nitro: {
     prerender: {
       crawlLinks: false,
-      // The blog task will supply this route; remove this exception when it exists.
-      failOnError: false,
-      routes: ['/blog'],
+      routes: [
+        '/blog',
+        '/blog/how-to-calculate-rental-yield',
+        '/blog/fixed-costs-every-landlord-should-track',
+        '/blog/short-term-vs-long-term-rentals',
+      ],
     },
   },
   routeRules: {
