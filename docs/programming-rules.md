@@ -70,7 +70,7 @@ These are course requirements for new changes, not claims of full compliance. Ch
 12. **Nuxt rendering.**
    - Rule: Keep properties SSR, blog prerendered and tools CSR; property pages fetch from server API, which reads server data.
    - Why: meet course rendering requirements.
-   - Verify: inspect `nuxt/nuxt.config.ts:15` and run route/build tests after branches are integrated.
+   - Verify: inspect `nuxt/nuxt.config.ts:15` and run route/build tests against the current repository.
 13. **Tests and delivery.**
    - Rule: Test behavior affected by the change, run available lint, format, typecheck and tests; move issue → branch → PR → CI → review, with no direct main change.
    - Why: reviewable and reproducible delivery.
@@ -94,8 +94,13 @@ These are course requirements for new changes, not claims of full compliance. Ch
    - Why: Avoid storing plaintext credentials or exposing password hashes in API responses.
    - Verify: review user creation, updates, login and response stripping; test the migration on a disposable database. Evidence: `backend/src/users/users.service.ts:41`, `backend/src/common/utils/password-hasher.ts:5`, and `backend/src/database/migrations/1793595073943-HashPlaintextPasswords.ts:14`.
 
+18. **Authentication and authorization.**
+   - Rule: Protect Nest API routes with the authentication guard; use current database roles and property ownership for authorization. Login returns a user and opaque token; logout revokes the token.
+   - Why: Browser state alone cannot authorize requests.
+   - Verify: test unauthorized, cross-owner and admin requests, expiration and logout. Sessions are held in memory for 12 hours and are lost on backend restart. Evidence: `backend/src/auth/auth.service.ts`, `frontend/src/utils/HttpClient.ts`.
+
 ## Known deviations and limits
 
-- The source branches are separate, so no integrated build or deployment has been established here. CI workflows exist in individual branches: `.github/workflows/nuxt.yml` and `.github/workflows/frontend.yml`.
+- CI workflows are present for the backend, frontend and Nuxt applications; a running deployment must be verified separately.
 - Pinia restores existing state or uses store defaults; no frontend domain seeder is present in the supplied source inventory. Backend seeders check counts but concurrent startup idempotence and partial seed recovery are not established. `backend/src/database/seeders/property.seeder.ts:17`.
 - Nuxt property data uses numeric IDs and its own enum values, unlike the backend UUID/enum model. `nuxt/shared/interfaces/Property.ts`, `backend/src/properties/entities/property.entity.ts`.

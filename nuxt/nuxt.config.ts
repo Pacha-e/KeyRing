@@ -15,8 +15,11 @@ export default defineNuxtConfig({
     },
   },
   routeRules: {
+    '/blog': { prerender: true },
     '/blog/**': { prerender: true },
+    '/properties': { ssr: true },
     '/properties/**': { ssr: true },
+    '/tools': { ssr: false },
     '/tools/**': { ssr: false },
   },
   typescript: { strict: true },

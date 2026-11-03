@@ -19,20 +19,22 @@ import { PropertyService as propertyService } from '../services/property.service
 import { TransactionService as transactionService } from '../services/transaction.service';
 import { FinanceCalculator } from '../utils/finance';
 import { CurrencyFormatter } from '../utils/format';
+import { HttpClient } from '../utils/HttpClient';
 
 // --- Types ---
 interface PropertyReportRow {
-  id: string;
-  name: string;
   city: string;
-  income: string;
   expense: string;
+  id: string;
+  income: string;
+  name: string;
   net: string;
 }
 
 // --- State ---
 const monthFrom = ref('');
 const monthTo = ref('');
+const pageError = ref('');
 const properties = ref<PropertyInterface[]>([]);
 const selectedCity = ref('');
 const selectedPropertyType = ref('');
@@ -136,7 +138,7 @@ const tableRows = computed<PropertyReportRow[]>(() =>
   filteredProperties.value.map((property) => {
     const { income, expense, net } = FinanceCalculator.summarizePropertyBalance(
       property.id,
-      transactions.value,
+      filteredTransactions.value,
     );
     return {
       id: property.id,
@@ -160,8 +162,13 @@ function clearFilters(): void {
 
 /** Reloads global report data. */
 async function reloadFromApi(): Promise<void> {
-  properties.value = await propertyService.findAll();
-  transactions.value = await transactionService.findAll();
+  try {
+    properties.value = await propertyService.findAll();
+    transactions.value = await transactionService.findAll();
+    pageError.value = '';
+  } catch (error) {
+    pageError.value = HttpClient.apiErrorMessage(error);
+  }
 }
 
 // --- Lifecycle ---
@@ -170,6 +177,7 @@ onMounted(() => void reloadFromApi());
 
 <template>
   <section>
+    <p v-if="pageError" role="alert" class="mb-4 text-sm text-red-700">{{ pageError }}</p>
     <PageHeader
       title="Reports"
       :subtitle="`${filteredProperties.length} property(ies) · profit ${CurrencyFormatter.formatCOP(filteredBalance.net)} · admin only`"

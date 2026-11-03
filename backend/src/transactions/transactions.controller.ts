@@ -9,45 +9,74 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 
 // --- Internal imports ---
+import { AuthService } from '../auth/auth.service.js';
+import type { AuthRequest } from '../auth/auth.service.js';
+import { TransactionsService } from './transactions.service.js';
 import { CreateTransactionDto } from './dto/create-transaction.dto.js';
 import { UpdateTransactionDto } from './dto/update-transaction.dto.js';
 import { Transaction } from './entities/transaction.entity.js';
-import { TransactionsService } from './transactions.service.js';
 
 // --- Exported members ---
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(
+    private readonly service: TransactionsService,
+    private readonly auth: AuthService,
+  ) {}
 
   @Post()
-  create(@Body() createTransactionDto: CreateTransactionDto): Promise<Transaction> {
-    return this.transactionsService.create(createTransactionDto);
+  async create(
+    @Body() dto: CreateTransactionDto,
+    @Req() request: AuthRequest,
+  ): Promise<Transaction> {
+    await this.auth.property(request.user!, dto.propertyId);
+    return this.service.create(dto);
   }
 
   @Get()
-  findAll(@Query('propertyIds') propertyIds?: string): Promise<Transaction[]> {
-    if (propertyIds === undefined) return this.transactionsService.findAll();
-    return this.transactionsService.findVisible(propertyIds.split(',').filter(Boolean));
+  async findAll(
+    @Req() request: AuthRequest,
+    @Query('propertyIds') propertyIds?: string,
+  ): Promise<Transaction[]> {
+    let ids = await this.auth.visibleIds(request.user!);
+    if (propertyIds !== undefined) {
+      const requested = new Set(propertyIds.split(',').filter(Boolean));
+      ids = ids.filter((id) => requested.has(id));
+    }
+    return this.service.findVisible(ids);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Transaction> {
-    return this.transactionsService.findOne(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: AuthRequest,
+  ): Promise<Transaction> {
+    const item = await this.service.findOne(id);
+    await this.auth.property(request.user!, item.propertyId);
+    return item;
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.transactionsService.remove(id);
+  async remove(@Param('id', ParseUUIDPipe) id: string, @Req() request: AuthRequest): Promise<void> {
+    const item = await this.service.findOne(id);
+    await this.auth.property(request.user!, item.propertyId);
+    await this.service.remove(id);
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() changes: UpdateTransactionDto,
+    @Req() request: AuthRequest,
   ): Promise<Transaction> {
-    return this.transactionsService.update(id, changes);
+    const item = await this.service.findOne(id);
+    await this.auth.property(request.user!, item.propertyId);
+    if (changes.propertyId !== undefined)
+      await this.auth.property(request.user!, changes.propertyId);
+    return this.service.update(id, changes);
   }
 }

@@ -20,9 +20,9 @@ const layout = computed<'bare' | 'public' | 'app'>(() => {
 </script>
 
 <template>
-  <div v-if="layout === 'app'" class="flex min-h-screen bg-page text-ink">
+  <div v-if="layout === 'app'" class="flex min-h-screen flex-col bg-page text-ink md:flex-row">
     <AppNavbar />
-    <main class="flex-1 px-8 py-8">
+    <main class="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
       <router-view />
     </main>
   </div>

@@ -5,9 +5,9 @@ import { APP_NAME } from '../config/app.config';
 
 // --- Types ---
 interface Feature {
+  description: string;
   icon: IconName;
   title: string;
-  description: string;
 }
 
 // --- State ---

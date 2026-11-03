@@ -2,6 +2,7 @@
 import { TransactionType } from '../enums/TransactionType';
 import type { PropertyInterface } from '../interfaces/PropertyInterface';
 import type { TransactionInterface } from '../interfaces/TransactionInterface';
+import { DateFormatter } from './format';
 
 // --- Types ---
 export interface FinancialSummary {
@@ -55,7 +56,7 @@ export class FinanceCalculator {
   }
 
   static sumIncomeForCurrentMonth(transactions: TransactionInterface[]): number {
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonth = DateFormatter.bogotaDate().slice(0, 7);
     return FinanceCalculator.sumAmountsByMonth(transactions, TransactionType.INCOME, currentMonth);
   }
 
@@ -73,7 +74,6 @@ export class FinanceCalculator {
     const expense = FinanceCalculator.sumAmountsByType(transactions, TransactionType.EXPENSE);
     return { income, expense, net: income - expense };
   }
-
   static sumNetProfitByCity(
     properties: PropertyInterface[],
     transactions: TransactionInterface[],

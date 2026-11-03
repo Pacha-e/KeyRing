@@ -33,9 +33,9 @@ const mergedOptions = computed<ChartOptions<ChartType>>(() => ({
 </script>
 
 <template>
-  <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+  <div class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
     <h3 class="font-brand mt-0 mb-4 text-base font-semibold text-ink">{{ props.title }}</h3>
-    <div :style="{ height: `${props.height}px` }">
+    <div class="relative min-w-0" :style="{ height: `${props.height}px` }">
       <component :is="chartComponent" :data="props.chartData" :options="mergedOptions" />
     </div>
   </div>

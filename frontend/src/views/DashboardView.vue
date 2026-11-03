@@ -27,12 +27,13 @@ import { TransactionService as transactionService } from '../services/transactio
 import { useAuthStore } from '../stores/auth';
 import { FinanceCalculator } from '../utils/finance';
 import { CurrencyFormatter } from '../utils/format';
+import { HttpClient } from '../utils/HttpClient';
 
 // --- Types ---
 interface UpcomingContractRow {
+  endDate: string;
   id: string;
   propertyName: string;
-  endDate: string;
   status: ContractStatus;
   statusLabel: string;
 }
@@ -42,6 +43,7 @@ const authStore = useAuthStore();
 
 // --- State ---
 const contracts = ref<ContractInterface[]>([]);
+const pageError = ref('');
 const properties = ref<PropertyInterface[]>([]);
 const transactions = ref<TransactionInterface[]>([]);
 
@@ -104,9 +106,14 @@ const vacantCount = computed(
 // --- Methods ---
 /** Reloads data visible to the current session. */
 async function reloadFromApi(): Promise<void> {
-  properties.value = await propertyService.listForUser(authStore.user);
-  contracts.value = await contractService.listForUser(authStore.user);
-  transactions.value = await transactionService.listForUser(authStore.user);
+  try {
+    properties.value = await propertyService.listForUser(authStore.user);
+    contracts.value = await contractService.listForUser(authStore.user);
+    transactions.value = await transactionService.listForUser(authStore.user);
+    pageError.value = '';
+  } catch (error) {
+    pageError.value = HttpClient.apiErrorMessage(error);
+  }
 }
 
 // --- Lifecycle ---
@@ -115,6 +122,7 @@ onMounted(() => void reloadFromApi());
 
 <template>
   <section>
+    <p v-if="pageError" role="alert" class="mb-4 text-sm text-red-700">{{ pageError }}</p>
     <PageHeader
       title="Dashboard"
       :subtitle="`Business summary for ${authStore.user?.fullName ?? ''}`"

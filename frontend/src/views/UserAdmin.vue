@@ -14,16 +14,17 @@ import type { SelectOption } from '../interfaces/SelectOption';
 import type { SessionUser } from '../services/auth.service';
 import { UserService as userService } from '../services/user.service';
 import { useAuthStore } from '../stores/auth';
+import { DateFormatter } from '../utils/format';
 import { HttpClient } from '../utils/HttpClient';
 
 // --- Types ---
 interface UserTableRow {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string;
   city: string;
+  email: string;
+  fullName: string;
+  id: string;
   memberSince: string;
+  phone: string;
   role: UserRole;
   roleLabel: string;
 }
@@ -82,7 +83,7 @@ function buildEmptyUser(): UserForm {
     password: '',
     phone: '',
     city: '',
-    memberSince: new Date().toISOString().slice(0, 10),
+    memberSince: DateFormatter.bogotaDate(),
     role: UserRole.USER,
   };
 }
@@ -97,7 +98,13 @@ function cancelEditing(): void {
 /** Deletes a user if integrity guards allow it. */
 async function deleteUser(userId: string, fullName: string): Promise<void> {
   feedbackMessage.value = '';
-  const blockingReason = await userService.blockedFromRemoval(userId, currentUserId.value);
+  let blockingReason;
+  try {
+    blockingReason = await userService.blockedFromRemoval(userId, currentUserId.value);
+  } catch (error) {
+    feedbackMessage.value = HttpClient.apiErrorMessage(error);
+    return;
+  }
   if (blockingReason) {
     feedbackMessage.value = blockingReason;
     return;
@@ -138,14 +145,21 @@ async function reloadFromApi(): Promise<void> {
 
 /** Validates and saves the user, then reloads the table. */
 async function saveUser(): Promise<void> {
-  const validationError = await findValidationError();
+  let validationError;
+  try {
+    validationError = await findValidationError();
+  } catch (error) {
+    feedbackMessage.value = HttpClient.apiErrorMessage(error);
+    return;
+  }
   if (validationError) {
     feedbackMessage.value = validationError;
     return;
   }
   try {
     if (editingUserId.value) {
-      await userService.update(editingUserId.value, { ...userForm });
+      const { password, ...changes } = userForm;
+      await userService.update(editingUserId.value, password ? { ...changes, password } : changes);
     } else {
       await userService.create({ ...userForm });
     }
@@ -153,8 +167,8 @@ async function saveUser(): Promise<void> {
     feedbackMessage.value = HttpClient.apiErrorMessage(error);
     return;
   }
-  await reloadFromApi();
   cancelEditing();
+  await reloadFromApi();
 }
 
 /** Opens the empty form to register a new user. */

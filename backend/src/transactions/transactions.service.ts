@@ -19,12 +19,6 @@ export class TransactionsService {
     private readonly propertiesRepository: Repository<Property>,
   ) {}
 
-  private assertValid(draft: Pick<Transaction, 'amount'>): void {
-    if (draft.amount <= 0) {
-      throw new BadRequestException('The amount must be greater than zero.');
-    }
-  }
-
   async create(createTransactionDto: CreateTransactionDto): Promise<Transaction> {
     this.assertValid(createTransactionDto);
     const property = await this.findPropertyOrThrow(createTransactionDto.propertyId);
@@ -43,12 +37,6 @@ export class TransactionsService {
     const transaction = await this.transactionsRepository.findOneBy({ id });
     if (!transaction) throw new NotFoundException(`Transaction ${id} not found`);
     return transaction;
-  }
-
-  private async findPropertyOrThrow(propertyId: string): Promise<Property> {
-    const property = await this.propertiesRepository.findOneBy({ id: propertyId });
-    if (!property) throw new NotFoundException(`Property ${propertyId} not found`);
-    return property;
   }
 
   async findVisible(visiblePropertyIds: string[]): Promise<Transaction[]> {
@@ -70,5 +58,17 @@ export class TransactionsService {
         : transaction.property;
     this.transactionsRepository.merge(transaction, { ...changes, property });
     return this.transactionsRepository.save(transaction);
+  }
+
+  private assertValid(draft: Pick<Transaction, 'amount'>): void {
+    if (draft.amount <= 0) {
+      throw new BadRequestException('The amount must be greater than zero.');
+    }
+  }
+
+  private async findPropertyOrThrow(propertyId: string): Promise<Property> {
+    const property = await this.propertiesRepository.findOneBy({ id: propertyId });
+    if (!property) throw new NotFoundException(`Property ${propertyId} not found`);
+    return property;
   }
 }

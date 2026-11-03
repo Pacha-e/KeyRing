@@ -4,11 +4,15 @@ on:
   pull_request:
     paths:
       - 'nuxt/**'
+      - '.github/workflows/nuxt.yml'
+      - 'docker-compose.yml'
   push:
     branches:
       - main
     paths:
       - 'nuxt/**'
+      - '.github/workflows/nuxt.yml'
+      - 'docker-compose.yml'
 
 jobs:
   verify:

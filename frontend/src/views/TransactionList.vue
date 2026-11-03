@@ -22,7 +22,7 @@ import { PropertyService as propertyService } from '../services/property.service
 import { TransactionService as transactionService } from '../services/transaction.service';
 import { useAuthStore } from '../stores/auth';
 import { FinanceCalculator } from '../utils/finance';
-import { CurrencyFormatter } from '../utils/format';
+import { CurrencyFormatter, DateFormatter } from '../utils/format';
 import { HttpClient } from '../utils/HttpClient';
 
 // --- Types ---
@@ -40,6 +40,7 @@ const authStore = useAuthStore();
 const editingTransactionId = ref<string | null>(null);
 const formError = ref('');
 const isFormVisible = ref(false);
+const pageError = ref('');
 const selectedMonth = ref('');
 const selectedSource = ref('');
 const selectedType = ref('');
@@ -137,7 +138,7 @@ function buildEmptyTransaction(): CreateTransactionDTO {
     type: TransactionType.INCOME,
     source: TransactionSource.AIRBNB,
     amount: 0,
-    date: new Date().toISOString().slice(0, 10),
+    date: DateFormatter.bogotaDate(),
     description: '',
   };
 }
@@ -159,7 +160,12 @@ function clearFilters(): void {
 /** Deletes a transaction after user confirmation. */
 function deleteTransaction(transactionId: string): void {
   if (!window.confirm('Delete this transaction? This action cannot be undone.')) return;
-  void transactionService.remove(transactionId).then(reloadFromApi);
+  void transactionService
+    .remove(transactionId)
+    .then(reloadFromApi)
+    .catch((error: unknown) => {
+      pageError.value = HttpClient.apiErrorMessage(error);
+    });
 }
 
 /** Returns the first validation error, or null if the form is valid. */
@@ -173,8 +179,17 @@ function findValidationError(): string | null {
 
 /** Reloads transactions and properties visible to the current session. */
 async function reloadFromApi(): Promise<void> {
-  visibleTransactions.value = await transactionService.listForUser(authStore.user);
-  visibleProperties.value = await propertyService.listForUser(authStore.user);
+  try {
+    const [transactions, properties] = await Promise.all([
+      transactionService.listForUser(authStore.user),
+      propertyService.listForUser(authStore.user),
+    ]);
+    visibleTransactions.value = transactions;
+    visibleProperties.value = properties;
+    pageError.value = '';
+  } catch (error) {
+    pageError.value = HttpClient.apiErrorMessage(error);
+  }
 }
 
 /** Validates and saves the transaction, then reloads the table and chart. */
@@ -194,8 +209,8 @@ async function saveTransaction(): Promise<void> {
     formError.value = HttpClient.apiErrorMessage(error);
     return;
   }
-  await reloadFromApi();
   cancelEditing();
+  await reloadFromApi();
 }
 
 /** Opens the empty form to register a new transaction. */
@@ -239,6 +254,8 @@ onMounted(() => void reloadFromApi());
         </button>
       </template>
     </PageHeader>
+
+    <p v-if="pageError" role="alert" class="mb-4 text-sm text-red-700">{{ pageError }}</p>
 
     <form
       v-if="isFormVisible"

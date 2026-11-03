@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // --- External imports ---
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue';
 
 // --- Internal imports ---
 import type { SelectOption } from '../interfaces/SelectOption';
@@ -28,10 +28,10 @@ const props = withDefaults(
 
 // --- State ---
 const highlighted = ref(0);
-let instanceCount = 0;
 const isOpen = ref(false);
-const labelId = `select-label-${++instanceCount}`;
+const labelId = `select-label-${useId()}`;
 const listEl = ref<HTMLElement | null>(null);
+const listId = `${labelId}-list`;
 const rootEl = ref<HTMLElement | null>(null);
 
 // --- Computed ---
@@ -147,6 +147,10 @@ watch(isOpen, (open) => {
       role="combobox"
       aria-haspopup="listbox"
       :aria-expanded="isOpen"
+      :aria-controls="isOpen ? listId : undefined"
+      :aria-activedescendant="
+        isOpen && items.length ? `${listId}-option-${highlighted}` : undefined
+      "
       :aria-labelledby="props.label ? labelId : undefined"
       class="flex w-full items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2 text-left text-sm text-ink shadow-sm transition hover:border-slate-400 focus:outline-2 focus:outline-primary"
       :class="isOpen ? 'border-primary' : 'border-slate-300'"
@@ -166,6 +170,7 @@ watch(isOpen, (open) => {
 
     <ul
       v-if="isOpen"
+      :id="listId"
       ref="listEl"
       role="listbox"
       :aria-labelledby="props.label ? labelId : undefined"
@@ -173,6 +178,7 @@ watch(isOpen, (open) => {
     >
       <li
         v-for="(option, index) in items"
+        :id="`${listId}-option-${index}`"
         :key="String(option.value)"
         role="option"
         :aria-selected="index === selectedIndex"
@@ -188,7 +194,7 @@ watch(isOpen, (open) => {
         <AppIcon v-if="index === selectedIndex" name="check" :size="15" class="shrink-0" />
       </li>
 
-      <li v-if="items.length === 0" class="px-3 py-2 text-sm text-slate-400">
+      <li v-if="items.length === 0" role="presentation" class="px-3 py-2 text-sm text-slate-400">
         No options available
       </li>
     </ul>

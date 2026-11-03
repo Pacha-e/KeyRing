@@ -21,6 +21,7 @@ const router = useRouter();
 
 // --- State ---
 const formError = ref('');
+const isFormReady = ref(false);
 const propertyForm = ref<CreatePropertyDTO>(buildEmptyProperty());
 
 // --- Computed ---
@@ -79,17 +80,26 @@ function findValidationError(): string | null {
  */
 async function loadFormFromRoute(): Promise<void> {
   formError.value = '';
+  isFormReady.value = false;
   if (!isEditing.value) {
     propertyForm.value = buildEmptyProperty();
+    isFormReady.value = true;
     return;
   }
-  const existing = await propertyService.findById(propertyId.value);
+  let existing;
+  try {
+    existing = await propertyService.findById(propertyId.value);
+  } catch (error) {
+    formError.value = HttpClient.apiErrorMessage(error);
+    return;
+  }
   if (!existing) {
     router.replace({ name: 'properties' });
     return;
   }
   const { id: _id, ...editableFields } = existing;
   propertyForm.value = editableFields;
+  isFormReady.value = true;
 }
 
 /** Validates and persists the property, then returns to the list. */
@@ -130,7 +140,10 @@ watch(propertyId, () => void loadFormFromRoute());
     </h1>
     <p class="mt-0 mb-6 text-sm text-slate-500">Property data, rental mode and fixed costs.</p>
 
-    <form class="grid gap-4 sm:grid-cols-2" @submit.prevent="saveProperty">
+    <p v-if="!isFormReady && formError" role="alert" class="text-red-700">{{ formError }}</p>
+    <p v-else-if="!isFormReady" class="text-slate-500">Loading property...</p>
+
+    <form v-if="isFormReady" class="grid gap-4 sm:grid-cols-2" @submit.prevent="saveProperty">
       <label class="col-span-full flex flex-col gap-1.5">
         <span class="text-sm font-medium text-ink">Name</span>
         <input v-model="propertyForm.name" required class="field-input" />

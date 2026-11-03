@@ -1,5 +1,5 @@
 // --- External imports ---
-import { IsEnum, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsString, IsUUID, Matches, Min } from 'class-validator';
 
 // --- Internal imports ---
 import { TransactionSource } from '../../domain/enums/transaction-source.js';
@@ -9,11 +9,11 @@ import { TransactionType } from '../../domain/enums/transaction-type.js';
 export class CreateTransactionDto {
   @IsInt() @Min(1) amount: number;
 
-  @IsString() @IsNotEmpty() date: string;
+  @IsDateString({ strict: true }) @Matches(/^\d{4}-\d{2}-\d{2}$/) date: string;
 
   @IsString() description: string;
 
-  @IsString() @IsNotEmpty() propertyId: string;
+  @IsUUID() propertyId: string;
 
   @IsEnum(TransactionSource) source: TransactionSource;
 

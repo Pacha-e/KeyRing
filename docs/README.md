@@ -1,6 +1,6 @@
 # Course documentation
 
-These documents describe the application across development branches; their integration has not been verified. Paths are relative to the repository root.
+These documents describe the current repository structure; deployment must be verified separately. Paths are relative to the repository root.
 
 - [Style guide](style-guide.md)
 - [Programming rules](programming-rules.md)

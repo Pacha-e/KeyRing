@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // --- Internal imports ---
 import { PropertyFormatter } from '../../utils/PropertyFormatter';
-import { PropertyLabels } from '../../utils/PropertyLabels';
+import { PropertyLabels } from '#shared/enums/PropertyLabels';
 import type { Property } from '#shared/interfaces/Property';
 
 // --- Types ---

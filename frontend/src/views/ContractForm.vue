@@ -21,6 +21,7 @@ const router = useRouter();
 
 // --- State ---
 const formError = ref('');
+const isFormReady = ref(false);
 const properties = ref<PropertyInterface[]>([]);
 // Order kept: contractForm initializer reads properties.
 const contractForm = ref<CreateContractDTO>(buildEmptyContract());
@@ -69,22 +70,38 @@ function findValidationError(): string | null {
  */
 async function loadFormFromRoute(): Promise<void> {
   formError.value = '';
+  isFormReady.value = false;
   if (!isEditing.value) {
     contractForm.value = buildEmptyContract();
+    isFormReady.value = true;
     return;
   }
-  const existing = await contractService.findById(contractId.value);
+  let existing;
+  try {
+    existing = await contractService.findById(contractId.value);
+  } catch (error) {
+    formError.value = HttpClient.apiErrorMessage(error);
+    return;
+  }
   if (!existing) {
     router.replace({ name: 'contracts' });
     return;
   }
   const { id: _id, ...editableFields } = existing;
   contractForm.value = editableFields;
+  isFormReady.value = true;
 }
 
 /** Loads the properties visible to the current session. */
 async function loadProperties(): Promise<void> {
-  properties.value = await propertyService.listForUser(authStore.user);
+  try {
+    properties.value = await propertyService.listForUser(authStore.user);
+    if (!isEditing.value && !contractForm.value.propertyId) {
+      contractForm.value.propertyId = properties.value[0]?.id ?? '';
+    }
+  } catch (error) {
+    formError.value = HttpClient.apiErrorMessage(error);
+  }
 }
 
 /** Validates and persists the contract, then returns to the list. */
@@ -121,7 +138,15 @@ watch(contractId, () => void loadFormFromRoute(), { immediate: true });
     </h1>
     <p class="mt-0 mb-6 text-sm text-slate-500">Tenant, rent and term for a property agreement.</p>
 
-    <p v-if="properties.length === 0" class="text-slate-500">
+    <p
+      v-if="formError && (!isFormReady || properties.length === 0)"
+      role="alert"
+      class="text-red-700"
+    >
+      {{ formError }}
+    </p>
+    <p v-else-if="!isFormReady" class="text-slate-500">Loading contract...</p>
+    <p v-else-if="properties.length === 0" class="text-slate-500">
       Register a property first to create contracts.
     </p>
 

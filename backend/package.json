@@ -16,7 +16,8 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "migration:generate": "pnpm build && typeorm migration:generate -d dist/database/data-source.js",
     "migration:run": "pnpm build && typeorm migration:run -d dist/database/data-source.js",
-    "migration:revert": "pnpm build && typeorm migration:revert -d dist/database/data-source.js"
+    "migration:revert": "pnpm build && typeorm migration:revert -d dist/database/data-source.js",
+    "test:integration": "node test/auth.integration.mjs && node test/seed.integration.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

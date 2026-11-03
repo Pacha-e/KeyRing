@@ -14,14 +14,21 @@ const linkClass =
 const router = useRouter();
 
 // --- Methods ---
-function onLogout(): void {
-  authStore.logout();
-  router.push({ name: 'home' });
+async function onLogout(): Promise<void> {
+  try {
+    await authStore.logout();
+  } catch (error) {
+    console.warn('Could not revoke the server session.', error);
+  } finally {
+    await router.push({ name: 'home' });
+  }
 }
 </script>
 
 <template>
-  <aside class="sticky top-0 flex h-screen w-60 shrink-0 self-start flex-col bg-sidebar text-white">
+  <aside
+    class="flex w-full shrink-0 flex-col bg-sidebar text-white md:sticky md:top-0 md:h-screen md:w-60 md:self-start"
+  >
     <div class="px-5 pt-6 pb-4">
       <router-link
         class="font-brand flex items-center gap-2 text-xl font-semibold text-white no-underline"
@@ -32,7 +39,7 @@ function onLogout(): void {
       </router-link>
     </div>
 
-    <nav v-if="authStore.isAuthenticated" class="flex flex-1 flex-col gap-1 px-3">
+    <nav v-if="authStore.isAuthenticated" class="flex flex-1 flex-wrap gap-1 px-3 md:flex-col">
       <router-link :class="linkClass" :active-class="linkActiveClass" :to="{ name: 'dashboard' }">
         Dashboard
       </router-link>

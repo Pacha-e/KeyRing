@@ -1,6 +1,6 @@
 # Style guide
 
-These documents describe the application across development branches; their integration has not been verified. Paths are relative to the repository root.
+This guide describes the current repository structure; deployment must be verified separately. Paths are relative to the repository root.
 
 ## TypeScript
 
