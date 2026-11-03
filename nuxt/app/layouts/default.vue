@@ -1,8 +1,9 @@
 <!-- --- Template --- -->
 <template>
-  <div>
-    <header>
-      <nav aria-label="Main navigation">
+  <div class="site-shell">
+    <header class="site-header">
+      <NuxtLink class="site-brand" to="/">KeyRing</NuxtLink>
+      <nav class="site-nav" aria-label="Main navigation">
         <NuxtLink to="/">Home</NuxtLink>
         <NuxtLink to="/blog">Blog</NuxtLink>
         <NuxtLink to="/properties">Properties</NuxtLink>
