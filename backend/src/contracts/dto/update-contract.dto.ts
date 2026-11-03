@@ -1,22 +1,46 @@
 // --- External imports ---
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  Matches,
+  Min,
+  ValidateIf,
+} from 'class-validator';
 
 // --- Internal imports ---
 import { ContractStatus } from '../../domain/enums/contract-status.js';
 
 // --- Exported members ---
 export class UpdateContractDto {
-  @IsOptional() @IsString() @IsNotEmpty() endDate?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsDateString({ strict: true })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  endDate?: string;
 
-  @IsOptional() @IsInt() @Min(1) fixedRent?: number;
+  @ValidateIf((_object, value: unknown) => value !== undefined) @IsInt() @Min(1) fixedRent?: number;
 
-  @IsOptional() @IsString() @IsNotEmpty() propertyId?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined) @IsUUID() propertyId?: string;
 
-  @IsOptional() @IsString() @IsNotEmpty() startDate?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsDateString({ strict: true })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  startDate?: string;
 
-  @IsOptional() @IsEnum(ContractStatus) status?: ContractStatus;
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsEnum(ContractStatus)
+  status?: ContractStatus;
 
-  @IsOptional() @IsString() @IsNotEmpty() tenantContact?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsString()
+  @IsNotEmpty()
+  tenantContact?: string;
 
-  @IsOptional() @IsString() @IsNotEmpty() tenantName?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsString()
+  @IsNotEmpty()
+  tenantName?: string;
 }

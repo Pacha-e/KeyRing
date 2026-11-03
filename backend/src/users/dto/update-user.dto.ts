@@ -1,22 +1,39 @@
 // --- External imports ---
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  Matches,
+  ValidateIf,
+} from 'class-validator';
 
 // --- Internal imports ---
 import { UserRole } from '../../domain/enums/user-role.js';
 
 // --- Exported members ---
 export class UpdateUserDto {
-  @IsOptional() @IsString() city?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined) @IsString() city?: string;
 
-  @IsOptional() @IsEmail() email?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined) @IsEmail() email?: string;
 
-  @IsOptional() @IsString() @IsNotEmpty() fullName?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsString()
+  @IsNotEmpty()
+  fullName?: string;
 
-  @IsOptional() @IsString() memberSince?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsDateString({ strict: true })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  memberSince?: string;
 
-  @IsOptional() @IsString() password?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsString()
+  @IsNotEmpty()
+  password?: string;
 
-  @IsOptional() @IsString() phone?: string;
+  @ValidateIf((_object, value: unknown) => value !== undefined) @IsString() phone?: string;
 
-  @IsOptional() @IsEnum(UserRole) role?: UserRole;
+  @ValidateIf((_object, value: unknown) => value !== undefined) @IsEnum(UserRole) role?: UserRole;
 }

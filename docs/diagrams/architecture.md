@@ -1,6 +1,6 @@
 # Architecture
 
-These documents describe the application across development branches; their integration has not been verified. Paths are relative to the repository root.
+This document describes the current repository structure; deployment must be verified separately. Paths are relative to the repository root.
 
 ## SPA and backend
 
@@ -8,16 +8,21 @@ These documents describe the application across development branches; their inte
 flowchart LR
   Browser[Vue SPA views] --> Service[Static domain services]
   Service --> Http[Axios HttpClient]
-  Http -->|REST /api| Controller[Nest controllers and DTOs]
+  Http -->|REST /api with Bearer token| Guard[Authentication guard]
+  Guard --> Controller[Nest controllers and DTOs]
   Controller --> NestService[Nest services]
   NestService --> Repo[TypeORM repositories]
   Repo --> DB[(SQLite)]
   Migration[Versioned migrations] --> DB
   Seeder[Separate seeders] --> Repo
   Pinia[PiniaConfig and auth store] --> Browser
+  Guard --> Session[In-memory sessions]
+  Controller --> Auth[Role and ownership checks]
 ```
 
 Evidence: `frontend/src/services/property.service.ts:8`, `frontend/src/utils/HttpClient.ts:5`, `backend/src/properties/properties.controller.ts:13`, `backend/src/database/data-source.ts:18`, `backend/src/database/seeders/seed.runner.ts:12`.
+
+The SPA sends an opaque Bearer token to the Nest API. Sessions expire after 12 hours, are revoked on logout, and are held in memory, so restarting the backend invalidates them. Authorization checks use the current user and property ownership from the database. The Nuxt property fixtures and API below are independent of this Nest authentication.
 
 ## Nuxt hybrid routes
 
@@ -30,7 +35,7 @@ flowchart LR
   Tools[Tools pages: CSR] --> ToolData[Local tool data and calculator]
 ```
 
-The blog and tools branches provide separate pages; they do not go through the properties API. The properties branch has the route rules but does not yet contain those pages. Prerender configuration sets `crawlLinks: false` and seeds only `/blog`, so static generation of every article is not established. Evidence: `nuxt/nuxt.config.ts:8`, `nuxt/server/api/properties/index.get.ts:2`, `nuxt/app/pages/blog/index.vue:3`, `nuxt/app/pages/tools/rent-calculator.vue`.
+Blog and tools pages do not use the properties API. Property list and detail pages fetch from the Nuxt server. Prerender configuration sets `crawlLinks: false` and explicitly seeds `/blog` and all three article routes. Evidence: `nuxt/nuxt.config.ts:8`, `nuxt/server/api/properties/index.get.ts:2`, `nuxt/app/pages/blog/index.vue:3`, `nuxt/app/pages/tools/rent-calculator.vue`.
 
 ## Deployment configuration
 
@@ -43,12 +48,12 @@ flowchart TB
   Backend --> SQLite[(SQLite volume)]
 ```
 
-The Compose file configures three services and a SQLite volume; the frontend image uses nginx. The GCP VM is the course deployment target, not a verified running deployment. The Compose branch and application branches are separate; integration and image builds have not been verified. Evidence: `docker-compose.yml`, `frontend/Dockerfile`, course requirements.
+The Compose file configures three services and a SQLite volume; the frontend image uses nginx. The GCP VM is the course deployment target, not a verified running deployment. Image builds and a running deployment require separate verification. Evidence: `docker-compose.yml`, `frontend/Dockerfile`, course requirements.
 
 ## Folder responsibilities
 
 ```text
-frontend/src/             SPA (frontend course-rules branch)
+frontend/src/             Vue SPA
   views/                  route screens and service calls
   components/             reusable presentation
   router/                 navigation and guards
@@ -57,12 +62,12 @@ frontend/src/             SPA (frontend course-rules branch)
   stores/                 session state and PiniaConfig
   interfaces/ dtos/ enums/  domain and transfer contracts
   assets/ config/         styles and configuration
-backend/src/              Nest backend (backend course-rules branch)
+backend/src/              Nest backend
   users/ properties/ contracts/ transactions/  controllers, services, entities, DTOs
   domain/enums/           shared domain unions
   database/migrations/    versioned schema
   database/seeders/       initial data
-nuxt/                     Nuxt properties branch, with separate blog and tools branches
+nuxt/                     Nuxt hybrid application
   app/pages/              route screens
   app/components/         UI components
   app/layouts/            shared shell

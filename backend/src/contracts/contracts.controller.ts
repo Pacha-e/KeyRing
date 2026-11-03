@@ -9,9 +9,12 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 
 // --- Internal imports ---
+import { AuthService } from '../auth/auth.service.js';
+import type { AuthRequest } from '../auth/auth.service.js';
 import { ContractsService } from './contracts.service.js';
 import { CreateContractDto } from './dto/create-contract.dto.js';
 import { UpdateContractDto } from './dto/update-contract.dto.js';
@@ -20,34 +23,57 @@ import { Contract } from './entities/contract.entity.js';
 // --- Exported members ---
 @Controller('contracts')
 export class ContractsController {
-  constructor(private readonly contractsService: ContractsService) {}
+  constructor(
+    private readonly service: ContractsService,
+    private readonly auth: AuthService,
+  ) {}
 
   @Post()
-  create(@Body() createContractDto: CreateContractDto): Promise<Contract> {
-    return this.contractsService.create(createContractDto);
+  async create(@Body() dto: CreateContractDto, @Req() request: AuthRequest): Promise<Contract> {
+    await this.auth.property(request.user!, dto.propertyId);
+    return this.service.create(dto);
   }
 
   @Get()
-  findAll(@Query('propertyIds') propertyIds?: string): Promise<Contract[]> {
-    if (propertyIds === undefined) return this.contractsService.findAll();
-    return this.contractsService.findVisible(propertyIds.split(',').filter(Boolean));
+  async findAll(
+    @Req() request: AuthRequest,
+    @Query('propertyIds') propertyIds?: string,
+  ): Promise<Contract[]> {
+    let ids = await this.auth.visibleIds(request.user!);
+    if (propertyIds !== undefined) {
+      const requested = new Set(propertyIds.split(',').filter(Boolean));
+      ids = ids.filter((id) => requested.has(id));
+    }
+    return this.service.findVisible(ids);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string): Promise<Contract> {
-    return this.contractsService.findOne(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: AuthRequest,
+  ): Promise<Contract> {
+    const item = await this.service.findOne(id);
+    await this.auth.property(request.user!, item.propertyId);
+    return item;
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.contractsService.remove(id);
+  async remove(@Param('id', ParseUUIDPipe) id: string, @Req() request: AuthRequest): Promise<void> {
+    const item = await this.service.findOne(id);
+    await this.auth.property(request.user!, item.propertyId);
+    await this.service.remove(id);
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() changes: UpdateContractDto,
+    @Req() request: AuthRequest,
   ): Promise<Contract> {
-    return this.contractsService.update(id, changes);
+    const item = await this.service.findOne(id);
+    await this.auth.property(request.user!, item.propertyId);
+    if (changes.propertyId !== undefined)
+      await this.auth.property(request.user!, changes.propertyId);
+    return this.service.update(id, changes);
   }
 }

@@ -1,3 +1,6 @@
 allowBuilds:
   esbuild: true
   vue-demi: true
+
+overrides:
+  follow-redirects: 1.16.2

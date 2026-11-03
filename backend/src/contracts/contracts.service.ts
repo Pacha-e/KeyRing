@@ -20,15 +20,6 @@ export class ContractsService {
     private readonly propertiesRepository: Repository<Property>,
   ) {}
 
-  private assertValid(draft: Pick<Contract, 'startDate' | 'endDate' | 'fixedRent'>): void {
-    if (draft.fixedRent <= 0) {
-      throw new BadRequestException('Rent must be greater than zero.');
-    }
-    if (draft.startDate >= draft.endDate) {
-      throw new BadRequestException('The start date must be before the end date.');
-    }
-  }
-
   countActive(contracts: Contract[]): number {
     return contracts.filter((contract) => contract.status === ContractStatus.Active).length;
   }
@@ -53,12 +44,6 @@ export class ContractsService {
     return contract;
   }
 
-  private async findPropertyOrThrow(propertyId: string): Promise<Property> {
-    const property = await this.propertiesRepository.findOneBy({ id: propertyId });
-    if (!property) throw new NotFoundException(`Property ${propertyId} not found`);
-    return property;
-  }
-
   async findVisible(visiblePropertyIds: string[]): Promise<Contract[]> {
     const all = await this.findAll();
     const visible = new Set(visiblePropertyIds);
@@ -78,5 +63,20 @@ export class ContractsService {
         : contract.property;
     this.contractsRepository.merge(contract, { ...changes, property });
     return this.contractsRepository.save(contract);
+  }
+
+  private assertValid(draft: Pick<Contract, 'startDate' | 'endDate' | 'fixedRent'>): void {
+    if (draft.fixedRent <= 0) {
+      throw new BadRequestException('Rent must be greater than zero.');
+    }
+    if (draft.startDate >= draft.endDate) {
+      throw new BadRequestException('The start date must be before the end date.');
+    }
+  }
+
+  private async findPropertyOrThrow(propertyId: string): Promise<Property> {
+    const property = await this.propertiesRepository.findOneBy({ id: propertyId });
+    if (!property) throw new NotFoundException(`Property ${propertyId} not found`);
+    return property;
   }
 }

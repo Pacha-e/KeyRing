@@ -1,6 +1,6 @@
 # KeyRing Nuxt application
 
-This application provides the Nuxt 4 shell for Entregable 2. Feature routes will be added separately.
+This Nuxt 4 application implements the hybrid rendering routes for Entregable 2.
 
 ## Rendering map
 
@@ -11,7 +11,7 @@ This application provides the Nuxt 4 shell for Entregable 2. Feature routes will
 | `/properties/**` | Server-side rendering | Render property content on request.        |
 | `/tools/**`      | Client-side rendering | Run interactive tools in the browser.      |
 
-`/blog` is listed as a prerender seed but does not exist yet. The temporary `failOnError: false` allows the scaffold to build and may hide other prerender failures; remove it when the blog route is added and verify the generated HTML. Production uses `pnpm build` and the Nitro server, not `pnpm generate`.
+The blog index and all three article routes are explicit prerender seeds. Property pages fetch their data from the independent Nuxt server API. Production uses `pnpm build` and the Nitro server, not `pnpm generate`.
 
 ## Scripts
 

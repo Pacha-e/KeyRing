@@ -20,11 +20,12 @@ import { PropertyService as propertyService } from '../services/property.service
 import { useAuthStore } from '../stores/auth';
 import { FinanceCalculator } from '../utils/finance';
 import { CurrencyFormatter } from '../utils/format';
+import { HttpClient } from '../utils/HttpClient';
 
 // --- Types ---
 interface PropertyTableRow extends PropertyInterface {
-  rentalLabel: string;
   rent: string;
+  rentalLabel: string;
   statusLabel: string;
   typeLabel: string;
 }
@@ -33,6 +34,7 @@ interface PropertyTableRow extends PropertyInterface {
 const authStore = useAuthStore();
 
 // --- State ---
+const pageError = ref('');
 const selectedCity = ref('');
 const selectedType = ref('');
 const visibleProperties = ref<PropertyInterface[]>([]);
@@ -104,12 +106,22 @@ function clearFilters(): void {
 /** Deletes a property after user confirmation. */
 function onDelete(id: string, name: string): void {
   if (!window.confirm(`Delete property "${name}"? This cannot be undone.`)) return;
-  void propertyService.remove(id).then(reloadFromApi);
+  void propertyService
+    .remove(id)
+    .then(reloadFromApi)
+    .catch((error: unknown) => {
+      pageError.value = HttpClient.apiErrorMessage(error);
+    });
 }
 
 /** Reloads the properties visible for the current session. */
 async function reloadFromApi(): Promise<void> {
-  visibleProperties.value = await propertyService.listForUser(authStore.user);
+  try {
+    visibleProperties.value = await propertyService.listForUser(authStore.user);
+    pageError.value = '';
+  } catch (error) {
+    pageError.value = HttpClient.apiErrorMessage(error);
+  }
 }
 
 // --- Lifecycle ---
@@ -131,6 +143,8 @@ onMounted(() => void reloadFromApi());
         </router-link>
       </template>
     </PageHeader>
+
+    <p v-if="pageError" role="alert" class="mb-4 text-sm text-red-700">{{ pageError }}</p>
 
     <FilterBar>
       <FilterSelect v-model="selectedCity" label="City" :options="cities" />

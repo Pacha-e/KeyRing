@@ -1,24 +1,18 @@
 // --- External imports ---
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 
 // --- Internal imports ---
-import { Property } from '../../properties/entities/property.entity.js';
 import { PropertyStatus } from '../../domain/enums/property-status.js';
 import { PropertyType } from '../../domain/enums/property-type.js';
 import { RentalMode } from '../../domain/enums/rental-mode.js';
+import { Property } from '../../properties/entities/property.entity.js';
 import { User } from '../../users/entities/user.entity.js';
 
 // --- Exported members ---
 @Injectable()
 export class PropertySeeder {
-  constructor(
-    @InjectRepository(Property) private readonly propertiesRepository: Repository<Property>,
-  ) {}
-
-  async seed(users: User[]): Promise<Property[]> {
-    if (await this.propertiesRepository.count()) return this.propertiesRepository.find();
+  async seed(manager: EntityManager, users: User[]): Promise<Property[]> {
     const [admin, user] = users;
     const propertyDrafts = [
       {
@@ -103,8 +97,8 @@ export class PropertySeeder {
 
     const properties = await Promise.all(
       propertyDrafts.map((draft) =>
-        this.propertiesRepository.save(
-          this.propertiesRepository.create({
+        manager.getRepository(Property).save(
+          manager.getRepository(Property).create({
             ...draft,
             userId: draft.city === 'Cali' ? user.id : admin.id,
           }),

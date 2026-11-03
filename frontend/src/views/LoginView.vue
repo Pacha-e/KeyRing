@@ -10,8 +10,8 @@ import { useAuthStore } from '../stores/auth';
 
 // --- Types ---
 interface DemoAccount {
-  label: string;
   email: string;
+  label: string;
   password: string;
 }
 

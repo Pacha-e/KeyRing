@@ -1,5 +1,13 @@
 // --- External imports ---
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+} from 'class-validator';
 
 // --- Internal imports ---
 import { UserRole } from '../../domain/enums/user-role.js';
@@ -17,7 +25,8 @@ export class CreateUserDto {
   fullName: string;
 
   @IsOptional()
-  @IsString()
+  @IsDateString({ strict: true })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
   memberSince?: string;
 
   @IsString()

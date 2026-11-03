@@ -15,6 +15,7 @@ import { PropertyStatusLabel } from '../enums/PropertyStatus';
 import type { PropertyInterface } from '../interfaces/PropertyInterface';
 import { PropertyService as propertyService } from '../services/property.service';
 import { useAuthStore } from '../stores/auth';
+import { HttpClient } from '../utils/HttpClient';
 
 // --- Constants ---
 const CITY_COORDS: Record<string, [number, number]> = {
@@ -33,6 +34,7 @@ const router = useRouter();
 let map: L.Map | null = null;
 const mapEl = ref<HTMLElement | null>(null);
 const markedProperties = ref<PropertyInterface[]>([]);
+const pageError = ref('');
 
 // --- Methods ---
 /**
@@ -139,13 +141,18 @@ onBeforeUnmount(() => {
 
 onMounted(async () => {
   configureLeafletIcons();
-  await loadProperties();
-  drawMap();
+  try {
+    await loadProperties();
+    drawMap();
+  } catch (error) {
+    pageError.value = HttpClient.apiErrorMessage(error);
+  }
 });
 </script>
 
 <template>
   <section>
+    <p v-if="pageError" role="alert" class="mb-4 text-sm text-red-700">{{ pageError }}</p>
     <PageHeader
       title="Property map"
       :subtitle="`${markedProperties.length} property(ies) on the map`"

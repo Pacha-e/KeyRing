@@ -16,6 +16,7 @@ import { ContractService as contractService } from '../services/contract.service
 import { PropertyService as propertyService } from '../services/property.service';
 import { useAuthStore } from '../stores/auth';
 import { CurrencyFormatter } from '../utils/format';
+import { HttpClient } from '../utils/HttpClient';
 
 // --- Types ---
 interface ContractTableRow extends ContractInterface {
@@ -29,6 +30,7 @@ const authStore = useAuthStore();
 
 // --- State ---
 const contracts = ref<ContractInterface[]>([]);
+const pageError = ref('');
 const properties = ref<PropertyInterface[]>([]);
 const selectedStatus = ref('');
 
@@ -56,13 +58,23 @@ const tableRows = computed<ContractTableRow[]>(() =>
 /** Deletes a contract after user confirmation. */
 function onDelete(id: string, tenantName: string): void {
   if (!window.confirm(`Delete contract for "${tenantName}"? This cannot be undone.`)) return;
-  void contractService.remove(id).then(reloadFromApi);
+  void contractService
+    .remove(id)
+    .then(reloadFromApi)
+    .catch((error: unknown) => {
+      pageError.value = HttpClient.apiErrorMessage(error);
+    });
 }
 
 /** Reloads contracts and properties visible to the current session. */
 async function reloadFromApi(): Promise<void> {
-  contracts.value = await contractService.listForUser(authStore.user);
-  properties.value = await propertyService.listForUser(authStore.user);
+  try {
+    contracts.value = await contractService.listForUser(authStore.user);
+    properties.value = await propertyService.listForUser(authStore.user);
+    pageError.value = '';
+  } catch (error) {
+    pageError.value = HttpClient.apiErrorMessage(error);
+  }
 }
 
 // --- Lifecycle ---
@@ -84,6 +96,8 @@ onMounted(() => void reloadFromApi());
         </router-link>
       </template>
     </PageHeader>
+
+    <p v-if="pageError" role="alert" class="mb-4 text-sm text-red-700">{{ pageError }}</p>
 
     <FilterBar>
       <FilterSelect v-model="selectedStatus" label="Status" :options="statusFilterOptions" />

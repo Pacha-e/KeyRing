@@ -18,13 +18,11 @@ Install dependencies with `pnpm install --frozen-lockfile`. Use the pnpm version
 - `src/components`: reusable UI.
 - `src/router`: routes and guards.
 - `src/stores`: domain state.
-- `src/seeders`: typed initial data.
 - `src/services`: domain service classes and HTTP boundaries.
 - `src/utils`: technical utility classes.
 - `src/interfaces`, `src/enums`, `src/dtos`: domain types, finite values, and transfer types.
-- `src/composables`: reusable Vue reactive behavior.
 - `src/assets` and `public`: bundled and directly served assets.
-- `tests`: browser-level smoke tests.
+- `tests`: browser-level smoke and session tests.
 
 See `Agents-how-to-code/rules/keyring-rules.md:9` for the course responsibility map.
 

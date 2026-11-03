@@ -1,5 +1,14 @@
 // --- External imports ---
-import { IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 // --- Internal imports ---
 import { PropertyStatus } from '../../domain/enums/property-status.js';
@@ -30,5 +39,5 @@ export class CreatePropertyDto {
 
   @IsEnum(PropertyType) type: PropertyType;
 
-  @IsOptional() @IsString() userId?: string | null;
+  @IsOptional() @IsUUID() userId?: string | null;
 }

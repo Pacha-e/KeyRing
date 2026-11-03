@@ -1,4 +1,7 @@
 <script setup lang="ts">
+// --- External imports ---
+import { computed } from 'vue';
+
 // --- Props and emits ---
 export type IconName =
   'arrow' | 'balance' | 'check' | 'chevron' | 'contract' | 'home' | 'income' | 'map' | 'users';
@@ -21,7 +24,7 @@ const PATHS: Record<IconName, string> = {
 };
 
 // --- Computed ---
-const path = PATHS[props.name];
+const path = computed(() => PATHS[props.name]);
 </script>
 
 <template>
