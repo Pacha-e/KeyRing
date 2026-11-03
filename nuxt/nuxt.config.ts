@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   app: { head: { title: 'KeyRing' } },
   compatibilityDate: '2026-11-01',
+  css: ['~/assets/css/main.css'],
   modules: ['@nuxt/eslint', '@pinia/nuxt'],
   nitro: {
     prerender: {

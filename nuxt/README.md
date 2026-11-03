@@ -49,10 +49,11 @@ docker rmi keyring-nuxt
 
 ## Folder responsibilities
 
-| Path             | Responsibility                                           |
-| ---------------- | -------------------------------------------------------- |
-| `app/app.vue`    | Root layout and page outlet.                             |
-| `app/layouts/`   | Shared application shell.                                |
-| `app/pages/`     | File-based routes.                                       |
-| `tests/e2e/`     | Browser smoke tests.                                     |
-| `nuxt.config.ts` | Modules, rendering rules, and application configuration. |
+| Path              | Responsibility                                           |
+| ----------------- | -------------------------------------------------------- |
+| `app/app.vue`     | Root layout and page outlet.                             |
+| `app/assets/css/` | Global styles and shared brand tokens.                   |
+| `app/layouts/`    | Shared application shell.                                |
+| `app/pages/`      | File-based routes.                                       |
+| `tests/e2e/`      | Browser smoke tests.                                     |
+| `nuxt.config.ts`  | Modules, rendering rules, and application configuration. |

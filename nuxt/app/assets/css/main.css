@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-border: #ded8cc;
+  --color-focus: #d98268;
+  --color-ink: #262420;
+  --color-muted: #6b655c;
+  --color-page: #f3efe6;
+  --color-primary: #b3543a;
+  --color-primary-dark: #973f28;
+  --color-sidebar: #1b2438;
+  --color-sidebar-hover: #2a3550;
+  --color-surface: #fffdf8;
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--color-primary-dark);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding: 0.85rem max(1rem, calc((100% - 70rem) / 2));
+  background: var(--color-sidebar);
+}
+
+.site-brand {
+  color: var(--color-page);
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.site-nav a {
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.8rem;
+  color: #f8fafc;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.site-nav a:hover {
+  background: var(--color-sidebar-hover);
+}
+
+.site-nav a.router-link-active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+main {
+  min-height: calc(100vh - 4.5rem);
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    align-items: flex-start;
+  }
+
+  .site-nav {
+    width: 100%;
+  }
+
+  .site-nav a {
+    padding-inline: 0.65rem;
+  }
+}
